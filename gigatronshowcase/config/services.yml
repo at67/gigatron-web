@@ -1,0 +1,16 @@
+services:
+    at67.gigatronshowcase.controller.main:
+        class: at67\gigatronshowcase\controller\main
+        arguments:
+            - '@controller.helper'
+            - '@template'
+            - '@user'
+            - '%core.root_path%'
+
+    at67.gigatronshowcase.main_listener:
+        class: at67\gigatronshowcase\event\main_listener
+        arguments:
+            - '@controller.helper'
+            - '@template'
+        tags:
+            - { name: event.listener }

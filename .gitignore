@@ -1,0 +1,17 @@
+# Build artifacts
+*.o
+*.wasm
+*.js.map
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.bak

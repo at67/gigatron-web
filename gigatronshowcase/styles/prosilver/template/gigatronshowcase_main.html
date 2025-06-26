@@ -1,0 +1,225 @@
+{% include 'overall_header.html' %}
+
+<style>
+/* Showcase Styles */
+.showcase-container {
+    max-width: 1152px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.section {
+    margin-bottom: 40px;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #105289;
+}
+
+/* ROM Selection */
+.rom-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.rom-card {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    border: 2px solid transparent;
+}
+
+.rom-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+.rom-card.active {
+    border-color: #dc2626;
+    box-shadow: 0 4px 16px rgba(220, 38, 38, 0.3);
+}
+
+.rom-screenshot {
+    width: 100%;
+    height: 120px;
+    background: #000080;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: monospace;
+    color: white;
+    font-size: 10px;
+    text-align: center;
+    padding: 8px;
+}
+
+.rom-info {
+    padding: 12px;
+}
+
+.rom-title {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 4px;
+    color: #333;
+}
+
+.rom-meta {
+    font-size: 11px;
+    color: #666;
+}
+
+/* GT1 Header */
+.gt1-header {
+    margin: 30px 0 20px 0;
+    padding: 20px 0;
+    border-top: 1px solid #e4eaf2;
+}
+
+.gt1-header .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0;
+}
+
+/* Cards */
+.card {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    min-width: 200px;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+.card-screenshot {
+    width: 100%;
+    height: 120px;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: monospace;
+    color: #00ff00;
+    font-size: 10px;
+    text-align: center;
+    padding: 8px;
+}
+
+.card-content {
+    padding: 12px;
+}
+
+.card-title {
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 4px;
+    color: #333;
+}
+
+.card-meta {
+    font-size: 11px;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.grid-horizontal {
+    display: flex;
+    gap: 15px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+}
+
+.grid-large {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+}
+</style>
+
+<div class="showcase-container">
+    <!-- ROM Selection -->
+    <div class="section">
+        <div class="section-header">
+            <h2 class="section-title">ROM Files</h2>
+	    <div style="font-size: 12px; color: #666;">Choose your Gigatron firmware</div>
+        </div>
+        <div class="rom-grid">
+            {% for rom in ROMS %}
+	    <a href="/app.php/gigatronshowcase/rom/{{ rom.filename }}" style="text-decoration: none; color: inherit;">
+	    <div class="rom-card">
+                <div class="rom-screenshot">
+                    ROM {{ rom.title }}<br>
+                    by {{ rom.author }}<br><br>
+                    *** Gigatron 32K ***<br>
+                    TTL microcomputer<br>
+                    ────────────────────
+                </div>
+                <div class="rom-info">
+                    <div class="rom-title">{{ rom.title }}</div>
+                    <div class="rom-meta">by {{ rom.author }}</div>
+                </div>
+            </div>
+	    </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- GT1 Applications Header -->
+    <div class="gt1-header">
+        <div class="section-header">
+            <h2 class="section-title">GT1 Files</h2>
+            <div style="font-size: 12px; color: #666;">Browse games, demos, utilities and more</div>
+        </div>
+    </div>
+
+    <!-- Featured GT1 Applications by Category -->
+    {% for category, files in FEATURED_GT1S %}
+    <div class="section">
+        <div class="section-header">
+            <h2 class="section-title">{{ category|title }}</h2>
+        </div>
+        <div class="grid-horizontal">
+            {% for gt1 in files %}
+	    <a href="/app.php/gigatronshowcase/author/{{ gt1.author }}/{{ gt1.category }}" style="text-decoration: none; color: inherit;">
+	    <div class="card">
+                <div class="card-screenshot">
+                    {{ gt1.title|upper }}<br><br>
+                    Category: {{ gt1.category }}<br>
+                    by {{ gt1.author }}
+                    {% if gt1.total_count > 1 %}<br>({{ gt1.total_count }} total){% endif %}
+                </div>
+                <div class="card-content">
+                    <div class="card-title">{{ gt1.title }}</div>
+                    <div class="card-meta">by {{ gt1.author }} • {{ gt1.category|title }}{% if gt1.total_count > 1 %} • +{{ gt1.total_count - 1 }} more{% endif %}</div>
+                </div>
+            </div>
+	    </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% include 'overall_footer.html' %}

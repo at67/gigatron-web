@@ -1,0 +1,23 @@
+{
+   "name": "at67/gigatronshowcase",
+   "type": "phpbb-extension",
+   "description": "Gigatron Showcase - Visual browser for ROMs and GT1 applications",
+   "version": "1.0.0",
+   "license": "BSD3",
+   "authors": [
+       {
+           "name": "at67",
+           "homepage": "https://forum.gigatron.io"
+       }
+   ],
+   "require": {
+       "php": ">=7.4.0",
+       "phpbb/phpbb": ">=3.3.0,<4.0.0@dev"
+   },
+   "extra": {
+       "display-name": "Gigatron Showcase",
+       "soft-require": {
+           "phpbb/phpbb": ">=3.3.0,<4.0.0@dev"
+       }
+   }
+}

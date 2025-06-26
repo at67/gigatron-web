@@ -1,0 +1,123 @@
+{% include 'overall_header.html' %}
+
+<style>
+.showcase-container {
+    max-width: 1152px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.breadcrumb-nav {
+    margin-bottom: 20px;
+    font-size: 12px;
+}
+
+.breadcrumb-nav a {
+    color: #105289;
+    text-decoration: none;
+}
+
+.breadcrumb-nav a:hover {
+    text-decoration: underline;
+}
+
+.author-header {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e4eaf2;
+}
+
+.author-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #105289;
+    margin-bottom: 10px;
+}
+
+.author-meta {
+    font-size: 14px;
+    color: #666;
+}
+
+.grid-large {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.card {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+.card-screenshot {
+    width: 100%;
+    height: 120px;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: monospace;
+    color: #00ff00;
+    font-size: 10px;
+    text-align: center;
+    padding: 8px;
+}
+
+.card-content {
+    padding: 12px;
+}
+
+.card-title {
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 4px;
+    color: #333;
+}
+
+.card-meta {
+    font-size: 11px;
+    color: #666;
+}
+</style>
+
+<div class="showcase-container">
+    <!-- Breadcrumb Navigation -->
+    <div class="breadcrumb-nav">
+        <a href="{{ U_BACK_TO_SHOWCASE }}">← Back to Showcase</a>
+    </div>
+
+    <!-- Author Header -->
+    <div class="author-header">
+        <div class="author-title">{{ AUTHOR|title }} - {{ CATEGORY|title }}</div>
+        <div class="author-meta">{{ AUTHOR_GT1S|length }} files in this category</div>
+    </div>
+
+    <!-- Author's Files Grid -->
+    <div class="grid-large">
+        {% for gt1 in AUTHOR_GT1S %}
+        <div class="card">
+            <div class="card-screenshot">
+                {{ gt1.title|upper }}<br><br>
+                {{ gt1.filename }}<br>
+                by {{ gt1.author }}
+            </div>
+            <div class="card-content">
+                <div class="card-title">{{ gt1.title }}</div>
+                <div class="card-meta">{{ gt1.filename }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% include 'overall_footer.html' %}

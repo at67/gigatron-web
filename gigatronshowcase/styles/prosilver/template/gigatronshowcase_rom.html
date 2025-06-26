@@ -1,0 +1,153 @@
+{% include 'overall_header.html' %}
+
+<style>
+.showcase-container {
+    max-width: 1152px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.breadcrumb-nav {
+    margin-bottom: 20px;
+    font-size: 12px;
+}
+
+.breadcrumb-nav a {
+    color: #105289;
+    text-decoration: none;
+}
+
+.breadcrumb-nav a:hover {
+    text-decoration: underline;
+}
+
+.rom-details {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.rom-screenshot {
+    width: 320px;
+    height: 240px;
+    background: #000080;
+    border: 2px solid #555;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: monospace;
+    color: white;
+    font-size: 12px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.rom-info {
+    flex: 1;
+}
+
+.rom-title {
+    font-size: 28px;
+    font-weight: bold;
+    color: #105289;
+    margin-bottom: 10px;
+}
+
+.rom-meta {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.rom-description {
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.rom-features {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 20px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 15px;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background: #dc2626;
+    color: white;
+}
+
+.btn-secondary {
+    background: #105289;
+    color: white;
+}
+
+.btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+</style>
+
+<div class="showcase-container">
+    <!-- Breadcrumb Navigation -->
+    <div class="breadcrumb-nav">
+        <a href="{{ U_BACK_TO_SHOWCASE }}">← Back to Showcase</a>
+    </div>
+
+    <!-- ROM Details -->
+    <div class="rom-details">
+        <div class="rom-screenshot">
+            *** Gigatron 32K ***<br>
+            TTL microcomputer<br>
+            {{ ROM.title }}<br><br>
+            by {{ ROM.author }}<br>
+            {{ ROM.version }}<br><br>
+            ────────────────────
+        </div>
+        
+        <div class="rom-info">
+            <div class="rom-title">{{ ROM.title }}</div>
+            <div class="rom-meta">
+                by {{ ROM.author }}
+                {% if ROM.version %} • Version {{ ROM.version }}{% endif %}
+                • {{ ROM.category }}
+            </div>
+            
+            {% if ROM.description %}
+            <div class="rom-description">{{ ROM.description }}</div>
+            {% endif %}
+            
+            {% if ROM.features %}
+            <div class="rom-features">
+                <strong>Features:</strong> {{ ROM.features }}
+            </div>
+            {% endif %}
+            
+            <div class="action-buttons">
+                <a href="{{ U_EMULATOR }}" class="btn btn-primary">▶ Play Now</a>
+                <a href="{{ ROM_DOWNLOAD_URL }}" class="btn btn-secondary" download>💾 Download ROM</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include 'overall_footer.html' %}

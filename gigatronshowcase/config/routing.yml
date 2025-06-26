@@ -1,0 +1,11 @@
+at67_gigatronshowcase_main:
+    path: /gigatronshowcase
+    defaults: { _controller: at67.gigatronshowcase.controller.main:handle }
+
+at67_gigatronshowcase_author:
+    path: /gigatronshowcase/author/{author}/{category}
+    defaults: { _controller: at67.gigatronshowcase.controller.main:author }
+
+at67_gigatronshowcase_rom:
+    path: /gigatronshowcase/rom/{filename}
+    defaults: { _controller: at67.gigatronshowcase.controller.main:rom }

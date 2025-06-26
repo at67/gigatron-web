@@ -1,0 +1,3 @@
+at67_gigatronemulator_main:
+    path: /gigatronemulator
+    defaults: { _controller: at67.gigatronemulator.controller.main:handle }

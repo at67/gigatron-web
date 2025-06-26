@@ -1,0 +1,173 @@
+/* Hidden state for toggling */
+.hidden {
+    display: none !important;
+}
+
+/* Virtual Keyboard Styles */
+.virtual-keyboard {
+    width: 480px;
+    height: 150px;
+    background-color: #2a2a2a;
+    border: 2px solid #555;
+    border-radius: 8px;
+    padding: 4px;
+    display: flex;
+    gap: 2px;
+    font-family: 'Courier New', monospace;
+    overflow: hidden;
+}
+
+.virtual-keyboard.hidden {
+    display: none;
+}
+
+.main-keyboard {
+    width: 315px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    height: 100%;
+}
+
+.nav-keys {
+    width: 78px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    height: 100%;
+}
+
+.numpad {
+    width: 85px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    height: 100%;
+}
+
+.key-row, .numpad-row, .nav-row, .function-row {
+    display: flex;
+    gap: 1px;
+    flex: 1;
+    align-items: stretch;
+}
+
+.virtual-key {
+    height: 100%;
+    min-width: 0;
+    flex: 1;
+    border: 1px solid #666;
+    border-radius: 3px;
+    background: #333;
+    color: #ccc;
+    font-size: 9px;
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Courier New', monospace;
+    text-shadow: 1px 1px 0px #000000;
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+.virtual-key:hover {
+    background: #444;
+    text-shadow: 1px 1px 0px #000000;
+}
+
+.virtual-key:active,
+.virtual-key.pressed {
+    background: #555;
+    transform: scale(0.95);
+    text-shadow: 1px 1px 0px #000000;
+}
+
+/* Function row special styling */
+.function-row .virtual-key {
+    font-size: 8px;
+}
+
+/* Special key styling */
+.virtual-key[data-key="Space"] {
+    background: #444;
+}
+
+.virtual-key[data-key="Enter"],
+.virtual-key[data-key="BKS"],
+.virtual-key[data-key="Tab"],
+.virtual-key[data-key="Caps"],
+.virtual-key[data-key="Shift"] {
+    background: #3a3a3a;
+    font-size: 7px;
+}
+
+.virtual-key.modifier-active {
+    background: #0066cc !important;
+    color: #fff !important;
+}
+
+/* Input Mode Toggle Button - matches control-btn-small */
+.input-mode-toggle {
+    width: 32px;
+    height: 32px;
+    border: 2px solid #555;
+    border-radius: 4px;
+    background: #333;
+    color: #ccc;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Courier New', monospace;
+    text-shadow: 2px 2px 0px #000001;
+}
+
+.input-mode-toggle:hover {
+    background: #444;
+    text-shadow: 2px 2px 0px #000001;
+}
+
+.input-mode-toggle:active {
+    background: #555;
+    transform: scale(0.95);
+    text-shadow: 2px 2px 0px #000001;
+}
+
+/* Volume indicator adjustments - 20% smaller dots */
+.volume-indicator {
+    display: flex;
+    align-items: center;
+    gap: 1.6px; /* Reduced from 2px */
+    margin: 0 3.2px; /* Reduced from 4px */
+}
+
+.volume-dot {
+    width: 4.8px; /* Reduced from 6px (20% smaller) */
+    height: 4.8px; /* Reduced from 6px (20% smaller) */
+    border-radius: 50%;
+    background-color: #555;
+    border: 1px solid #666;
+}
+@media (max-width: 600px) {
+    .virtual-keyboard {
+	width: 100%;
+	max-width: 480px;
+    }
+
+    .virtual-key {
+	height: 18px;
+	font-size: 7px;
+    }
+
+    .function-row .virtual-key {
+	height: 16px;
+	font-size: 6px;
+    }
+}

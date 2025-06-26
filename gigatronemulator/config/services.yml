@@ -1,0 +1,15 @@
+services:
+   at67.gigatronemulator.controller.main:
+       class: at67\gigatronemulator\controller\main
+       arguments:
+           - '@controller.helper'
+           - '@template'
+           - '@user'
+
+   at67.gigatronemulator.main_listener:
+       class: at67\gigatronemulator\event\main_listener
+       arguments:
+           - '@controller.helper'
+           - '@template'
+       tags:
+           - { name: event.listener }
