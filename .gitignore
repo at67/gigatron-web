@@ -18,3 +18,4 @@ Thumbs.db
 *.pro.user
 qt2.xml
 .*.stash
+build-emulator-WASM_c-Debug/
