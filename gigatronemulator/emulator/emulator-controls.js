@@ -4,6 +4,10 @@ let running = false;
 let targetFrameTime = 17.0;
 let intervalId = null;
 
+let lastTime = 0;
+let accumulatedTime = 0;
+const CYCLES_PER_MS = 6250; // 6.25MHz / 1000
+
 // Button state - bits are 0 when pressed, 1 when idle
 let buttonState = 0xFF;
 let pressedKeys = new Set();
@@ -35,7 +39,7 @@ Module.onRuntimeInitialized = function()
     updateVolumeDisplay();
 
     // Notify UI manager that emulator is ready
-    if (window.uiManager)
+    if(window.uiManager)
     {
         window.uiManager.emulatorReady = true;
         window.uiManager.onEmulatorReady();
@@ -47,29 +51,39 @@ function handleKeyDown(event)
     let key = event.code === 'Space' ? ' ' : (event.code.startsWith('Key') ? event.code : event.key);
 
     // Check if virtual keyboard is active and handle accordingly
-    if (window.virtualKeyboard && window.virtualKeyboard.isVisible) {
+    if(window.virtualKeyboard && window.virtualKeyboard.isVisible)
+    {
         // Keyboard mode: send ASCII or button presses
-        if (!pressedKeys.has(key)) {
+        if(!pressedKeys.has(key))
+        {
             pressedKeys.add(key);
 
             const asciiValue = getKeyAsciiValueFromPhysical(event.code, event.key);
-            if (asciiValue !== null) {
+            if(asciiValue !== null)
+            {
                 // Send ASCII value to emulator IN register
-                if (emulator && typeof Module !== 'undefined') {
+                if(emulator && typeof Module !== 'undefined')
+                {
                     Module.ccall('emulator_set_input', null, ['number', 'number'], [emulator, asciiValue]);
                 }
-            } else {
+            }
+            else
+            {
                 // Send button press for navigation/action keys
                 const buttonIndex = getPhysicalKeyButtonMapping(event.code);
-                if (buttonIndex !== null) {
+                if(buttonIndex !== null)
+                {
                     buttonDown(buttonIndex);
                 }
             }
             event.preventDefault();
         }
-    } else {
+    }
+    else
+    {
         // Controller mode: existing game controller mapping
-        if (keyMap.hasOwnProperty(key) && !pressedKeys.has(key)) {
+        if(keyMap.hasOwnProperty(key) && !pressedKeys.has(key))
+        {
             pressedKeys.add(key);
             buttonDown(keyMap[key]);
             event.preventDefault();
@@ -82,30 +96,40 @@ function handleKeyUp(event)
     let key = event.code === 'Space' ? ' ' : (event.code.startsWith('Key') ? event.code : event.key);
 
     // Check if virtual keyboard is active and handle accordingly
-    if (window.virtualKeyboard && window.virtualKeyboard.isVisible) {
+    if(window.virtualKeyboard && window.virtualKeyboard.isVisible)
+    {
         // Keyboard mode: only handle button releases for navigation/action keys
-        if (pressedKeys.has(key)) {
+        if(pressedKeys.has(key))
+        {
             pressedKeys.delete(key);
 
             const asciiValue = getKeyAsciiValueFromPhysical(event.code, event.key);
-            if (asciiValue !== null) {
+            if(asciiValue !== null)
+            {
                 // Send 0xFF IN register
-                if (emulator && typeof Module !== 'undefined') {
+                if(emulator && typeof Module !== 'undefined')
+                {
                     Module.ccall('emulator_set_input', null, ['number', 'number'], [emulator, 0xFF]);
                 }
-            } else {
+            }
+            else
+            {
                 // Send button press for navigation/action keys
                 const buttonIndex = getPhysicalKeyButtonMapping(event.code);
-                if (buttonIndex !== null) {
+                if(buttonIndex !== null)
+                {
                     buttonUp(buttonIndex);
                 }
             }
 
             event.preventDefault();
         }
-    } else {
+    }
+    else
+    {
         // Controller mode: existing game controller mapping
-        if (keyMap.hasOwnProperty(key) && pressedKeys.has(key)) {
+        if(keyMap.hasOwnProperty(key) && pressedKeys.has(key))
+        {
             pressedKeys.delete(key);
             buttonUp(keyMap[key]);
             event.preventDefault();
@@ -113,33 +137,37 @@ function handleKeyUp(event)
     }
 }
 
-function getKeyAsciiValueFromPhysical(code, key) {
+function getKeyAsciiValueFromPhysical(code, key)
+{
     // Get base ASCII value, then apply modifiers from virtual keyboard
     const baseAscii = getBaseAsciiValueFromPhysical(code);
-    if (baseAscii === null) return null;
+    if(baseAscii === null) return null;
 
     // Use virtual keyboard's modifier states and logic
-    if (window.virtualKeyboard) {
+    if(window.virtualKeyboard)
+    {
         return window.virtualKeyboard.applyModifiers(baseAscii, key);
     }
 
     return baseAscii;
 }
 
-function getBaseAsciiValueFromPhysical(code) {
+function getBaseAsciiValueFromPhysical(code)
+{
     // Base ASCII mappings for physical keyboard (without modifiers)
-    const asciiMap = {
+    const asciiMap =
+    {
         // Control codes
         'Tab': 9,
         'Enter': 10,
         'Escape': 27,
         'Backspace': 127,
 
-        // Numbers (base values)
+        // Numbers
         'Digit0': 48, 'Digit1': 49, 'Digit2': 50, 'Digit3': 51, 'Digit4': 52,
         'Digit5': 53, 'Digit6': 54, 'Digit7': 55, 'Digit8': 56, 'Digit9': 57,
 
-        // Letters (lowercase base)
+        // Letters
         'KeyA': 97, 'KeyB': 98, 'KeyC': 99, 'KeyD': 100, 'KeyE': 101,
         'KeyF': 102, 'KeyG': 103, 'KeyH': 104, 'KeyI': 105, 'KeyJ': 106,
         'KeyK': 107, 'KeyL': 108, 'KeyM': 109, 'KeyN': 110, 'KeyO': 111,
@@ -147,7 +175,7 @@ function getBaseAsciiValueFromPhysical(code) {
         'KeyU': 117, 'KeyV': 118, 'KeyW': 119, 'KeyX': 120, 'KeyY': 121,
         'KeyZ': 122,
 
-        // Symbol keys (base values)
+        // Symbol keys
         'Space': 32,
         'Minus': 45,
         'Equal': 61,
@@ -179,9 +207,11 @@ function getBaseAsciiValueFromPhysical(code) {
     return asciiMap.hasOwnProperty(code) ? asciiMap[code] : null;
 }
 
-function getPhysicalKeyButtonMapping(code) {
+function getPhysicalKeyButtonMapping(code)
+{
     // Keys that send button presses even in keyboard mode
-    const buttonMap = {
+    const buttonMap =
+    {
         // Arrow keys
         'ArrowUp': 3,
         'ArrowDown': 2,
@@ -200,7 +230,7 @@ function getPhysicalKeyButtonMapping(code) {
 
 function buttonDown(bitIndex)
 {
-    // Clear bit (pressed = 0)
+    // Clear bit, (pressed = 0)
     buttonState &= ~(1 << bitIndex);
     updateInput();
 }
@@ -214,34 +244,43 @@ function buttonUp(bitIndex)
 
 function updateInput()
 {
-    if (emulator)
+    if(emulator)
     {
         Module.ccall('emulator_set_input', null, ['number', 'number'], [emulator, buttonState]);
     }
 }
 
-function updateLEDs() {
-    if (!emulator || typeof Module === 'undefined') return;
+function updateLEDs()
+{
+    if(!emulator || typeof Module === 'undefined') return;
 
-    try {
+    try
+    {
         // Get XOUT value from emulator
         let xout = Module.ccall('emulator_get_xout', 'number', ['number'], [emulator]);
 
         // Update each LED based on lower 4 bits of XOUT
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < 4; i++)
+        {
             let mask = 1 << i;
             let state = xout & mask;
             let ledElement = document.getElementById(`led-${i}`);
 
-            if (ledElement) {
-                if (state) {
+            if(ledElement)
+            {
+                if(state)
+                {
                     ledElement.classList.add('on');
-                } else {
+                }
+                else
+                {
                     ledElement.classList.remove('on');
                 }
             }
         }
-    } catch (error) {
+    }
+    catch(error)
+    {
         // Silently ignore errors if emulator isn't ready
     }
 }
@@ -251,50 +290,61 @@ let currentFilterBits = 4;
 let isROMvX0 = false;
 
 // Function to update ROM type and show/hide filter button
-function updateROMTypeUI() {
-    if (!emulator || typeof Module === 'undefined') return;
+function updateROMTypeUI()
+{
+    if(!emulator || typeof Module === 'undefined') return;
 
-    try {
+    try
+    {
         let romType = Module.ccall('emulator_get_rom_type', 'number', ['number'], [emulator]);
-        isROMvX0 = (romType === 0x80); // ROMvX0 = 0x80
+        isROMvX0 = (romType === 0x80);
 
         const filterBtn = document.getElementById('filter-btn');
         const volumeDots = document.querySelectorAll('.volume-dot');
 
-        if (isROMvX0) {
-            // Show filter button and make volume dots smaller
+        if(isROMvX0)
+        {
+            // Show filter button and make volume bar smaller
             filterBtn.style.display = 'flex';
-            volumeDots.forEach(dot => {
+            volumeDots.forEach(dot =>
+            {
                 dot.style.width = '1.5px';
                 dot.style.height = '1.5px';
             });
-        } else {
-            // Hide filter button and restore normal volume dots
+        }
+        else
+        {
+            // Hide filter button and restore normal volume bar
             filterBtn.style.display = 'none';
-            volumeDots.forEach(dot => {
+            volumeDots.forEach(dot =>
+            {
                 dot.style.width = '2px';
                 dot.style.height = '2px';
             });
         }
-    } catch (error) {
+    }
+    catch(error)
+    {
         // Silently ignore if emulator not ready
     }
 }
 
 // Function to toggle filter bits
-function toggleFilter() {
-    if (!isROMvX0 || !emulator) return;
+function toggleFilter()
+{
+    if(!isROMvX0 || !emulator) return;
 
-    // Cycle through 4 -> 5 -> 6 -> 7 -> 8 -> 4
+    // Cycle through 4 to 8
     currentFilterBits++;
-    if (currentFilterBits > 8) currentFilterBits = 4;
+    if(currentFilterBits > 8) currentFilterBits = 4;
 
     // Update button display
     document.getElementById('filter-btn').textContent = currentFilterBits;
 
-    // Calculate inverse mask and write to RAM location 8
+    // Calculate inverse mask
     let inverseMask;
-    switch (currentFilterBits) {
+    switch(currentFilterBits)
+    {
         case 4: inverseMask = 0x0F; break;
         case 5: inverseMask = 0x07; break;
         case 6: inverseMask = 0x03; break;
@@ -302,16 +352,16 @@ function toggleFilter() {
         case 8: inverseMask = 0x00; break;
     }
 
-    // Write to RAM location 8 (need to add this function)
+    // Write to ROMvX0 audio bit mask
     Module.ccall('emulator_set_ram', null, ['number', 'number', 'number'], [emulator, 8, inverseMask]);
 }
 
 function startEmulator()
 {
-    if (!emulator || running) return;
+    if(!emulator || running) return;
     running = true;
 
-    // Fill ring buffer
+    // Fill audio ring buffer to stop startup glitches
     for(let i=0; i<4; i++)
     {
         Module.ccall('emulator_run_to_vblank', null, ['number'], [emulator]);
@@ -325,13 +375,12 @@ function startEmulator()
         audioReadIndex = writeIndex;
     }
 
-    if (audioContext.state === 'suspended')
+    if(audioContext.state === 'suspended')
     {
         audioContext.resume();
     }
 
-    // Start the interval AFTER everything is initialized
-    intervalId = setInterval(runLoop, targetFrameTime);
+    intervalId = requestAnimationFrame(runLoop);
 
     console.log("Starting emulator...");
 }
@@ -339,9 +388,10 @@ function startEmulator()
 function stopEmulator()
 {
     running = false;
+
     if(intervalId)
     {
-        clearInterval(intervalId);
+        cancelAnimationFrame(intervalId);
         intervalId = null;
     }
     console.log("Emulator stopped");
@@ -359,7 +409,7 @@ function resetEmulator()
     // Reset filter state
     currentFilterBits = 4;
     const filterBtn = document.getElementById('filter-btn');
-    if (filterBtn) filterBtn.textContent = '4';
+    if(filterBtn) filterBtn.textContent = '4';
 
     Module.ccall('emulator_reset', null, ['number'], [emulator]);
     document.getElementById('memory-model').textContent = Module.ccall('emulator_get_64k_mode', 'number', ['number'], [emulator]) ? '64KB' : '32KB';
@@ -367,20 +417,39 @@ function resetEmulator()
     console.log("Reset complete - select a ROM/GT1 file to load");
 }
 
-function runLoop()
+function runLoop(currentTime)
 {
-    if(!running) return;
+    const deltaTime = currentTime - lastTime;
+    lastTime = currentTime;
 
-    Module.ccall('emulator_run_to_vblank', null, ['number'], [emulator]);
+    // Skip first few frames until timing settles
+    if(deltaTime > 100)
+    {
+        console.log(`Skipping frame with large delta: ${deltaTime.toFixed(2)}ms`);
+        intervalId = requestAnimationFrame(runLoop);
+        return;
+    }
+    accumulatedTime += deltaTime;
+
+    // Run emulation for actual elapsed time
+    const cyclesToRun = Math.floor(accumulatedTime * CYCLES_PER_MS);
+    Module.ccall('emulator_run', null, ['number', 'number'], [emulator, cyclesToRun]);
+
+    // Update display
     let fbPtr = Module.ccall('emulator_get_framebuffer', 'number', ['number'], [emulator]);
     let fb = new Uint8Array(Module.HEAPU8.buffer, fbPtr, 640 * 480 * 4);
-
     let canvas = document.getElementById('display');
     let ctx = canvas.getContext('2d');
     let imageData = ctx.createImageData(640, 480);
     imageData.data.set(fb);
     ctx.putImageData(imageData, 0, 0);
 
-    updateAudio();
+    // Update audio on vBlank
+    if(Module.ccall('emulator_get_vblank', 'number', ['number'], [emulator])) updateAudio();
+
     updateLEDs();
+
+    accumulatedTime = 0;
+
+    intervalId = requestAnimationFrame(runLoop);
 }

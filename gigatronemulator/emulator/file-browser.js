@@ -1,7 +1,10 @@
-class FileBrowser {
-    constructor() {
+class FileBrowser
+{
+    constructor()
+    {
         this.currentFileType = 'rom';
-        this.files = {
+        this.files =
+        {
             rom: [],
             gt1: []
         };
@@ -12,10 +15,13 @@ class FileBrowser {
         this.loadFiles();
     }
 
-    initializeEventListeners() {
+    initializeEventListeners()
+    {
         // Tab switching
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.tab-btn').forEach(btn =>
+        {
+            btn.addEventListener('click', (e) =>
+            {
                 this.switchFileType(e.target.dataset.type);
             });
         });
@@ -27,11 +33,13 @@ class FileBrowser {
         document.getElementById('sort-filter').addEventListener('change', () => this.applyFilters());
     }
 
-    switchFileType(type) {
+    switchFileType(type)
+    {
         this.currentFileType = type;
 
         // Update tab appearance
-        document.querySelectorAll('.tab-btn').forEach(btn => {
+        document.querySelectorAll('.tab-btn').forEach(btn =>
+        {
             btn.classList.toggle('active', btn.dataset.type === type);
         });
 
@@ -39,8 +47,10 @@ class FileBrowser {
         this.updateFilters();
     }
 
-    async loadFiles() {
-        try {
+    async loadFiles()
+    {
+        try
+        {
             // Load ROM files
             const romResponse = await fetch('/ext/at67/gigatronemulator/emulator/scan_files.php?type=rom');
             this.files.rom = await romResponse.json();
@@ -51,18 +61,22 @@ class FileBrowser {
 
             this.renderFileTree();
             this.updateFilters();
-        } catch (error) {
+        }
+        catch(error)
+        {
             console.error('Failed to load files:', error);
             this.renderError('Failed to load files. Make sure scan_files.php is available.');
         }
     }
 
-    renderError(message) {
+    renderError(message)
+    {
         const treeElement = document.getElementById('file-tree');
         treeElement.innerHTML = `<div style="color: #ff6666; padding: 20px; text-align: center;">${message}</div>`;
     }
 
-    renderFileTree() {
+    renderFileTree()
+    {
         const files = this.getCurrentFiles();
         const tree = this.buildFileTree(files);
         const treeElement = document.getElementById('file-tree');
@@ -71,21 +85,26 @@ class FileBrowser {
         this.renderTreeNode(tree, treeElement, '');
     }
 
-    getCurrentFiles() {
+    getCurrentFiles()
+    {
         return this.files[this.currentFileType] || [];
     }
 
-    buildFileTree(files) {
+    buildFileTree(files)
+    {
         const tree = {};
 
-        files.forEach(file => {
+        files.forEach(file =>
+        {
             const parts = file.path.split('/');
             let current = tree;
 
             // Build nested structure
-            for (let i = 0; i < parts.length - 1; i++) {
+            for (let i = 0; i < parts.length - 1; i++)
+            {
                 const part = parts[i];
-                if (!current[part]) {
+                if(!current[part])
+                {
                     current[part] = {};
                 }
                 current = current[part];
@@ -99,39 +118,44 @@ class FileBrowser {
         return tree;
     }
 
-    renderTreeNode(node, container, path) {
-        Object.keys(node).sort().forEach(key => {
+    renderTreeNode(node, container, path)
+    {
+        Object.keys(node).sort().forEach(key =>
+        {
             const item = node[key];
             const currentPath = path ? `${path}/${key}` : key;
 
-            if (item.filename) {
+            if(item.filename)
+            {
                 // This is a file
                 this.renderFile(item, container, currentPath);
-            } else {
+            }
+            else
+            {
                 // This is a folder
                 this.renderFolder(key, item, container, currentPath);
             }
         });
     }
 
-    renderFolder(name, contents, container, path) {
+    renderFolder(name, contents, container, path)
+    {
         const folderDiv = document.createElement('div');
         folderDiv.className = 'folder';
 
         const headerDiv = document.createElement('div');
         headerDiv.className = 'folder-header';
-        headerDiv.innerHTML = `
-            <span class="folder-toggle">${this.expandedFolders.has(path) ? '▼' : '▶'}</span>
-            <span>${name}/</span>
-        `;
+        headerDiv.innerHTML = `<span class="folder-toggle">${this.expandedFolders.has(path) ? '▼' : '▶'}</span><span>${name}/</span>`;
 
-        headerDiv.addEventListener('click', () => {
+        headerDiv.addEventListener('click', () =>
+        {
             this.toggleFolder(path);
         });
 
         folderDiv.appendChild(headerDiv);
 
-        if (this.expandedFolders.has(path)) {
+        if(this.expandedFolders.has(path))
+        {
             const contentDiv = document.createElement('div');
             contentDiv.className = 'folder-content';
             this.renderTreeNode(contents, contentDiv, path);
@@ -141,55 +165,67 @@ class FileBrowser {
         container.appendChild(folderDiv);
     }
 
-    renderFile(file, container, path) {
+    renderFile(file, container, path)
+    {
         const fileDiv = document.createElement('div');
         fileDiv.className = 'file-item';
-        if (this.selectedFile === file) {
+        if(this.selectedFile === file)
+        {
             fileDiv.classList.add('selected');
         }
 
-        fileDiv.innerHTML = `
-            <input type="radio" name="selected-file" class="file-radio" ${this.selectedFile === file ? 'checked' : ''}>
-            <span>${file.filename}</span>
-        `;
+        fileDiv.innerHTML = `<input type="radio" name="selected-file" class="file-radio" ${this.selectedFile === file ? 'checked' : ''}>
+                             <span>${file.filename}</span>`;
 
-        fileDiv.addEventListener('click', () => {
+        fileDiv.addEventListener('click', () =>
+        {
             this.selectFile(file);
         });
 
         container.appendChild(fileDiv);
     }
 
-    toggleFolder(path) {
-        if (this.expandedFolders.has(path)) {
+    toggleFolder(path)
+    {
+        if(this.expandedFolders.has(path))
+        {
             this.expandedFolders.delete(path);
-        } else {
+        }
+        else
+        {
             this.expandedFolders.add(path);
         }
         this.renderFileTree();
     }
 
-    selectFile(file) {
+    selectFile(file)
+    {
         this.selectedFile = file;
         this.renderFileTree();
         this.updateLoadingStatus();
 
         // Notify UI manager about file selection
-        if (window.uiManager) {
+        if(window.uiManager)
+        {
             window.uiManager.onFileSelected(file);
         }
     }
 
-    updateLoadingStatus() {
+    updateLoadingStatus()
+    {
         const statusElement = document.getElementById('loading-status');
-        if (this.selectedFile) {
+        if(this.selectedFile)
+        {
             statusElement.textContent = `Selected: ${this.selectedFile.filename}`;
-        } else {
+        }
+        else
+        {
             statusElement.textContent = 'No file selected';
         }
     }
 
-    updateFilters() {
+    updateFilters()
+    {
         const files = this.getCurrentFiles();
 
         // Get unique values for filters
@@ -202,7 +238,8 @@ class FileBrowser {
         this.populateFilter('language-filter', languages);
     }
 
-    populateFilter(selectId, options) {
+    populateFilter(selectId, options)
+    {
         const select = document.getElementById(selectId);
         const currentValue = select.value;
 
@@ -210,7 +247,8 @@ class FileBrowser {
         select.innerHTML = select.children[0].outerHTML;
 
         // Add new options
-        options.sort().forEach(option => {
+        options.sort().forEach(option =>
+        {
             const optionElement = document.createElement('option');
             optionElement.value = option;
             optionElement.textContent = option;
@@ -218,12 +256,14 @@ class FileBrowser {
         });
 
         // Restore selection if still valid
-        if (options.includes(currentValue)) {
+        if(options.includes(currentValue))
+        {
             select.value = currentValue;
         }
     }
 
-    applyFilters() {
+    applyFilters()
+    {
         // For now, just re-render the tree
         // TODO: Implement actual filtering logic
         this.renderFileTree();
@@ -231,6 +271,7 @@ class FileBrowser {
 }
 
 // Initialize file browser when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () =>
+{
     window.fileBrowser = new FileBrowser();
 });

@@ -1,8 +1,11 @@
-class VirtualKeyboard {
-    constructor() {
+class VirtualKeyboard
+{
+    constructor()
+    {
         this.isVisible = false;
         this.pressedKeys = new Set();
-        this.modifierStates = {
+        this.modifierStates =
+        {
             shift: false,
             capsLock: false,
             leftShift: false,
@@ -12,11 +15,13 @@ class VirtualKeyboard {
         this.setupEventListeners();
     }
 
-    initializeKeyboard() {
+    initializeKeyboard()
+    {
         this.createKeyboardHTML();
     }
 
-    createKeyboardHTML() {
+    createKeyboardHTML()
+    {
         const keyboardContainer = document.createElement('div');
         keyboardContainer.id = 'virtual-keyboard';
         keyboardContainer.className = 'virtual-keyboard hidden';
@@ -78,11 +83,13 @@ class VirtualKeyboard {
         controls.parentNode.insertBefore(keyboardContainer, controls.nextSibling);
     }
 
-    createRow(className, keys) {
+    createRow(className, keys)
+    {
         const row = document.createElement('div');
         row.className = `key-row ${className}`;
 
-        keys.forEach(keyDef => {
+        keys.forEach(keyDef =>
+        {
             const key = typeof keyDef === 'string' ? { key: keyDef, width: 1 } : keyDef;
             const keyElement = this.createKey(key.key, key.width);
             row.appendChild(keyElement);
@@ -91,7 +98,8 @@ class VirtualKeyboard {
         return row;
     }
 
-    createKey(keyText, width = 1) {
+    createKey(keyText, width = 1)
+    {
         const key = document.createElement('button');
         key.className = 'virtual-key';
         key.textContent = keyText;
@@ -101,7 +109,8 @@ class VirtualKeyboard {
         return key;
     }
 
-    createArrowKeys() {
+    createArrowKeys()
+    {
         const navSection = document.createElement('div');
         navSection.className = 'nav-keys';
 
@@ -162,7 +171,8 @@ class VirtualKeyboard {
         return navSection;
     }
 
-    createNumpad() {
+    createNumpad()
+    {
         const numpad = document.createElement('div');
         numpad.className = 'numpad';
 
@@ -176,11 +186,13 @@ class VirtualKeyboard {
             ['00', 'Del', 'Ins']
         ];
 
-        numpadKeys.forEach((row) => {
+        numpadKeys.forEach((row) =>
+        {
             const rowElement = document.createElement('div');
             rowElement.className = 'numpad-row';
 
-            row.forEach(keyDef => {
+            row.forEach(keyDef =>
+            {
                 const key = typeof keyDef === 'string' ? { key: keyDef, width: 1 } : keyDef;
                 const keyElement = this.createKey(key.key, key.width);
                 rowElement.appendChild(keyElement);
@@ -192,10 +204,13 @@ class VirtualKeyboard {
         return numpad;
     }
 
-    setupEventListeners() {
+    setupEventListeners()
+    {
         // Virtual key mouse events
-        document.addEventListener('mousedown', (e) => {
-            if (e.target.classList.contains('virtual-key')) {
+        document.addEventListener('mousedown', (e) =>
+        {
+            if(e.target.classList.contains('virtual-key'))
+            {
                 const key = e.target.dataset.key;
                 this.handleVirtualKeyDown(key);
                 e.target.classList.add('pressed');
@@ -203,8 +218,10 @@ class VirtualKeyboard {
             }
         });
 
-        document.addEventListener('mouseup', (e) => {
-            if (e.target.classList.contains('virtual-key')) {
+        document.addEventListener('mouseup', (e) =>
+        {
+            if(e.target.classList.contains('virtual-key'))
+            {
                 const key = e.target.dataset.key;
                 this.handleVirtualKeyUp(key);
                 e.target.classList.remove('pressed');
@@ -213,8 +230,10 @@ class VirtualKeyboard {
         });
 
         // Touch events
-        document.addEventListener('touchstart', (e) => {
-            if (e.target.classList.contains('virtual-key')) {
+        document.addEventListener('touchstart', (e) =>
+        {
+            if(e.target.classList.contains('virtual-key'))
+            {
                 const key = e.target.dataset.key;
                 this.handleVirtualKeyDown(key);
                 e.target.classList.add('pressed');
@@ -222,8 +241,10 @@ class VirtualKeyboard {
             }
         });
 
-        document.addEventListener('touchend', (e) => {
-            if (e.target.classList.contains('virtual-key')) {
+        document.addEventListener('touchend', (e) =>
+        {
+            if(e.target.classList.contains('virtual-key'))
+            {
                 const key = e.target.dataset.key;
                 this.handleVirtualKeyUp(key);
                 e.target.classList.remove('pressed');
@@ -232,64 +253,84 @@ class VirtualKeyboard {
         });
 
         // Physical keyboard events for visual feedback
-        document.addEventListener('keydown', (e) => {
-            if (this.isVisible) {
+        document.addEventListener('keydown', (e) =>
+        {
+            if(this.isVisible)
+            {
                 this.updateModifierState(e.code, true);
 
                 const virtualKey = this.mapPhysicalToVirtual(e.code, e.key);
-                if (virtualKey) {
+                if(virtualKey)
+                {
                     this.setVirtualKeyPressed(virtualKey, true);
                 }
             }
         });
 
-        document.addEventListener('keyup', (e) => {
-            if (this.isVisible) {
+        document.addEventListener('keyup', (e) =>
+        {
+            if(this.isVisible)
+            {
                 this.updateModifierState(e.code, false);
 
                 const virtualKey = this.mapPhysicalToVirtual(e.code, e.key);
-                if (virtualKey) {
+                if(virtualKey)
+                {
                     this.setVirtualKeyPressed(virtualKey, false);
                 }
             }
         });
     }
 
-    handleVirtualKeyDown(key) {
+    handleVirtualKeyDown(key)
+    {
         // Handle modifier keys first
-        if (key === 'Shift') {
+        if(key === 'Shift')
+        {
             this.modifierStates.shift = true;
             this.updateShiftVisual();
             return;
         }
 
-        if (key === 'Caps') {
+        if(key === 'Caps')
+        {
             this.modifierStates.capsLock = !this.modifierStates.capsLock;
             this.updateCapsLockVisual();
             return;
         }
 
-        if (this.isVisible) {
+        if(this.isVisible)
+        {
             // Keyboard mode: send ASCII or button presses
             const asciiValue = this.getKeyAsciiValue(key);
-            if (asciiValue !== null) {
+            if(asciiValue !== null)
+            {
                 this.sendAsciiToEmulator(asciiValue);
-            } else {
+            }
+            else
+            {
                 const buttonIndex = this.getKeyButtonMapping(key);
-                if (buttonIndex !== null && typeof buttonDown === 'function') {
-                    if (!this.pressedKeys.has(key)) {
+                if(buttonIndex !== null && typeof buttonDown === 'function')
+                {
+                    if(!this.pressedKeys.has(key))
+                    {
                         this.pressedKeys.add(key);
                         buttonDown(buttonIndex);
                     }
                 }
             }
-        } else {
+        }
+        else
+        {
             // Controller mode
-            if (!this.pressedKeys.has(key)) {
+            if(!this.pressedKeys.has(key))
+            {
                 this.pressedKeys.add(key);
                 const mappedKey = this.mapVirtualKeyToEmulator(key);
-                if (mappedKey && typeof handleKeyDown === 'function') {
-                    const syntheticEvent = {
+                if(mappedKey && typeof handleKeyDown === 'function')
+                {
+                    const syntheticEvent =
+                    {
                         code: mappedKey.startsWith('Key') ? mappedKey : mappedKey,
                         key: mappedKey === ' ' ? ' ' : key,
                         preventDefault: () => {}
@@ -300,39 +341,53 @@ class VirtualKeyboard {
         }
     }
 
-    handleVirtualKeyUp(key) {
+    handleVirtualKeyUp(key)
+    {
         // Handle modifier keys
-        if (key === 'Shift') {
+        if(key === 'Shift')
+        {
             this.modifierStates.shift = false;
             this.updateShiftVisual();
             return;
         }
 
-        if (key === 'Caps') {
+        if(key === 'Caps')
+        {
             return;
         }
 
-        if (this.isVisible) {
+        if(this.isVisible)
+        {
             // Keyboard mode: send 0xFF or button presses
             const asciiValue = this.getKeyAsciiValue(key);
-            if (asciiValue !== null) {
+            if(asciiValue !== null)
+            {
                 this.sendAsciiToEmulator(0xFF);
-            } else {
+            }
+            else
+            {
                 const buttonIndex = this.getKeyButtonMapping(key);
-                if (buttonIndex !== null && typeof buttonDown === 'function') {
-                    if (!this.pressedKeys.has(key)) {
-                        this.pressedKeys.add(key);
-                        buttonDown(buttonIndex);
+                if(buttonIndex !== null && typeof buttonDown === 'function')
+                {
+                    if(this.pressedKeys.has(key))
+                    {
+                        this.pressedKeys.delete(key);
+                        buttonUp(buttonIndex);
                     }
                 }
             }
-        } else {
+        }
+        else
+        {
             // Controller mode
-            if (this.pressedKeys.has(key)) {
+            if(this.pressedKeys.has(key))
+            {
                 this.pressedKeys.delete(key);
                 const mappedKey = this.mapVirtualKeyToEmulator(key);
-                if (mappedKey && typeof handleKeyUp === 'function') {
-                    const syntheticEvent = {
+                if(mappedKey && typeof handleKeyUp === 'function')
+                {
+                    const syntheticEvent =
+                    {
                         code: mappedKey.startsWith('Key') ? mappedKey : mappedKey,
                         key: mappedKey === ' ' ? ' ' : key,
                         preventDefault: () => {}
@@ -343,8 +398,10 @@ class VirtualKeyboard {
         }
     }
 
-    updateModifierState(code, pressed) {
-        switch (code) {
+    updateModifierState(code, pressed)
+    {
+        switch (code)
+        {
             case 'ShiftLeft':
                 this.modifierStates.leftShift = pressed;
                 break;
@@ -352,7 +409,8 @@ class VirtualKeyboard {
                 this.modifierStates.rightShift = pressed;
                 break;
             case 'CapsLock':
-                if (pressed) {
+                if(pressed)
+            {
                     this.modifierStates.capsLock = !this.modifierStates.capsLock;
                     this.updateCapsLockVisual();
                 }
@@ -363,37 +421,50 @@ class VirtualKeyboard {
         this.updateShiftVisual();
     }
 
-    updateShiftVisual() {
+    updateShiftVisual()
+    {
         const shiftKeys = document.querySelectorAll('[data-key="Shift"]');
-        shiftKeys.forEach(key => {
-            if (this.modifierStates.shift) {
+        shiftKeys.forEach(key =>
+        {
+            if(this.modifierStates.shift)
+                              {
                 key.classList.add('modifier-active');
-            } else {
+            }
+            else
+            {
                 key.classList.remove('modifier-active');
             }
         });
     }
 
-    updateCapsLockVisual() {
+    updateCapsLockVisual()
+    {
         const capsKeys = document.querySelectorAll('[data-key="Caps"]');
-        capsKeys.forEach(key => {
-            if (this.modifierStates.capsLock) {
+        capsKeys.forEach(key =>
+        {
+            if(this.modifierStates.capsLock)
+                             {
                 key.classList.add('modifier-active');
-            } else {
+            }
+            else
+            {
                 key.classList.remove('modifier-active');
             }
         });
     }
 
-    getKeyAsciiValue(key) {
+    getKeyAsciiValue(key)
+    {
         const baseAscii = this.getBaseAsciiValue(key);
-        if (baseAscii === null) return null;
+        if(baseAscii === null) return null;
 
         return this.applyModifiers(baseAscii, key);
     }
 
-    getBaseAsciiValue(key) {
-        const asciiMap = {
+    getBaseAsciiValue(key)
+    {
+        const asciiMap =
+        {
             // Control codes
             'Tab': 9,
             'Enter': 10,
@@ -425,18 +496,23 @@ class VirtualKeyboard {
         return asciiMap.hasOwnProperty(key) ? asciiMap[key] : null;
     }
 
-    applyModifiers(baseAscii, key) {
+    applyModifiers(baseAscii, key)
+    {
         // Letters: Caps Lock XOR Shift = uppercase
-        if (baseAscii >= 97 && baseAscii <= 122) {
-            if (this.modifierStates.capsLock !== this.modifierStates.shift) {
+        if(baseAscii >= 97 && baseAscii <= 122)
+        {
+            if(this.modifierStates.capsLock !== this.modifierStates.shift)
+            {
                 return baseAscii - 32;
             }
             return baseAscii;
         }
 
         // Shift symbols
-        if (this.modifierStates.shift) {
-            const shiftMap = {
+        if(this.modifierStates.shift)
+        {
+            const shiftMap =
+            {
                 49: 33, 50: 64, 51: 35, 52: 36, 53: 37, 54: 94, 55: 38, 56: 42, 57: 40, 48: 41,
                 45: 95, 61: 43, 91: 123, 93: 125, 92: 124, 59: 58, 39: 34, 44: 60, 46: 62, 47: 63, 96: 126
             };
@@ -446,8 +522,10 @@ class VirtualKeyboard {
         return baseAscii;
     }
 
-    getKeyButtonMapping(key) {
-        const buttonMap = {
+    getKeyButtonMapping(key)
+    {
+        const buttonMap =
+        {
             // Arrow keys
             '↑': 3, '↓': 2, '←': 1, '→': 0,
             // Navigation keys that map to game buttons
@@ -460,14 +538,18 @@ class VirtualKeyboard {
         return buttonMap.hasOwnProperty(key) ? buttonMap[key] : null;
     }
 
-    sendAsciiToEmulator(asciiValue) {
-        if (emulator && typeof Module !== 'undefined') {
+    sendAsciiToEmulator(asciiValue)
+    {
+        if(emulator && typeof Module !== 'undefined')
+        {
             Module.ccall('emulator_set_input', null, ['number', 'number'], [emulator, asciiValue]);
         }
     }
 
-    mapVirtualKeyToEmulator(virtualKey) {
-        const keyMapping = {
+    mapVirtualKeyToEmulator(virtualKey)
+    {
+        const keyMapping =
+        {
             'ArrowLeft': 'ArrowLeft', 'ArrowRight': 'ArrowRight',
             'ArrowUp': 'ArrowUp', 'ArrowDown': 'ArrowDown',
             'Z': 'KeyZ', 'X': 'KeyX', 'Space': ' ', 'Enter': 'Enter',
@@ -481,8 +563,10 @@ class VirtualKeyboard {
         return keyMapping[virtualKey] || virtualKey;
     }
 
-    mapPhysicalToVirtual(code, key) {
-        const physicalToVirtualMap = {
+    mapPhysicalToVirtual(code, key)
+    {
+        const physicalToVirtualMap =
+        {
             'KeyA': 'A', 'KeyB': 'B', 'KeyC': 'C', 'KeyD': 'D', 'KeyE': 'E',
             'KeyF': 'F', 'KeyG': 'G', 'KeyH': 'H', 'KeyI': 'I', 'KeyJ': 'J',
             'KeyK': 'K', 'KeyL': 'L', 'KeyM': 'M', 'KeyN': 'N', 'KeyO': 'O',
@@ -499,45 +583,58 @@ class VirtualKeyboard {
             'Delete': 'Del', 'Insert': 'Ins'
         };
 
-        if (physicalToVirtualMap[code]) {
+        if(physicalToVirtualMap[code])
+        {
             return physicalToVirtualMap[code];
         }
 
-        if (key.length === 1) {
+        if(key.length === 1)
+        {
             return key;
         }
 
         return null;
     }
 
-    setVirtualKeyPressed(virtualKey, pressed) {
+    setVirtualKeyPressed(virtualKey, pressed)
+    {
         const virtualKeyElements = document.querySelectorAll(`[data-key="${virtualKey}"]`);
-        virtualKeyElements.forEach(element => {
-            if (pressed) {
+        virtualKeyElements.forEach(element =>
+        {
+            if(pressed)
+            {
                 element.classList.add('pressed');
-            } else {
+            }
+            else
+            {
                 element.classList.remove('pressed');
             }
         });
     }
 
-    updateInputModeDisplay() {
+    updateInputModeDisplay()
+    {
         const toggleBtn = document.getElementById('input-mode-toggle');
 
-        if (toggleBtn) {
+        if(toggleBtn)
+        {
             toggleBtn.textContent = this.isVisible ? '⌨️' : '🎮';
         }
     }
 
-    toggle() {
+    toggle()
+    {
         this.isVisible = !this.isVisible;
         const keyboard = document.getElementById('virtual-keyboard');
         const controls = document.querySelector('.controls');
 
-        if (this.isVisible) {
+        if(this.isVisible)
+        {
             keyboard.classList.remove('hidden');
             controls.classList.add('hidden');
-        } else {
+        }
+        else
+        {
             keyboard.classList.add('hidden');
             controls.classList.remove('hidden');
         }
@@ -547,7 +644,8 @@ class VirtualKeyboard {
         this.updateHelpPanel();
     }
 
-    hide() {
+    hide()
+    {
         this.isVisible = false;
         const keyboard = document.getElementById('virtual-keyboard');
         const controls = document.querySelector('.controls');
@@ -563,7 +661,8 @@ class VirtualKeyboard {
         this.updateHelpPanel();
     }
 
-    show() {
+    show()
+    {
         this.isVisible = true;
         const keyboard = document.getElementById('virtual-keyboard');
         const controls = document.querySelector('.controls');
@@ -576,17 +675,21 @@ class VirtualKeyboard {
         this.updateHelpPanel();
     }
 
-    updateHelpPanel() {
+    updateHelpPanel()
+    {
         const helpPanel = document.querySelector('.keyboard-info');
-        if (!helpPanel) return;
+        if(!helpPanel) return;
 
-        if (this.isVisible) {
+        if(this.isVisible)
+        {
             helpPanel.innerHTML = `
                 <strong>Keyboard Controls:</strong><br>
                 Arrow Keys = D-Pad | Delete = A Button | Insert = B Button<br>
                 Page Up = Start | Page Down = Select
             `;
-        } else {
+        }
+        else
+        {
             helpPanel.innerHTML = `
                 <strong>Keyboard Controls:</strong><br>
                 Arrow Keys = D-Pad | Z = A Button | X = B Button<br>
@@ -597,13 +700,16 @@ class VirtualKeyboard {
 }
 
 // Global function
-function toggleInputMode() {
-    if (window.virtualKeyboard) {
+function toggleInputMode()
+{
+    if(window.virtualKeyboard)
+    {
         window.virtualKeyboard.toggle();
     }
 }
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () =>
+{
     window.virtualKeyboard = new VirtualKeyboard();
 });

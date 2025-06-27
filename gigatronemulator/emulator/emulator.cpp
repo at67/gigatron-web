@@ -5,6 +5,7 @@
 #include <cstring>
 #include <chrono>
 #include <thread>
+#include <algorithm>
 
 
 enum RomType {ROMERR=0x00, ROMv1=0x1c, ROMv2=0x20, ROMv3=0x28, ROMv4=0x38, ROMv5a=0x40, ROMv6=0x48, ROMv7=0x50, ROMvX0=0x80, ROMvX1=0x88, SDCARD=0xF0, DEVROM=0xF8};
@@ -35,6 +36,7 @@ private:
 	int _vgaX=0, _vgaY=VSYNC_START;
 
 	bool _is64k=false;
+	bool _vBlank = false;
 	bool _initAudio=true;
 
 	uint32_t _colours[COLOUR_PALETTE]={0};
@@ -51,6 +53,7 @@ public:
 
 	uint8_t getXOUT() {return _XOUT;}
 	uint8_t getRomType() {return _romType;}
+	int getVBlank() {bool vBlank = _vBlank; _vBlank = false; return vBlank;}
 
 	uint8_t* getFramebuffer() {return _framebuffer;}
 
@@ -464,10 +467,10 @@ void Emulator::cycle(const State& S, State& T)
 	uint8_t B = S._undef; // Data Bus
 	switch(bus)
 	{
-		case 0: B=S._D;                   break;
-		case 1: if (!W) B = getRAM(addr); break;
-		case 2: B=S._AC;                  break;
-		case 3: B=_IN;                    break;
+		case 0: B=S._D;                  break;
+		case 1: if(!W) B = getRAM(addr); break;
+		case 2: B=S._AC;                 break;
+		case 3: B=_IN;                   break;
 		default: break;
 	}
 
@@ -548,6 +551,8 @@ void Emulator::process()
 		_vgaX = 0;
 
 		_XOUT = _stateT._AC;
+
+		// Get valid XOUT on every 4th scanline
 		if((_vgaY & 3) == 3)
 		{
 			// Input
@@ -558,7 +563,7 @@ void Emulator::process()
 			float derivative = input - lastInput;
 			lastInput = input;
 
-			// Integrate to restore Bass
+			// Integrate, (to restore low frequencies)
 			static float integrator = 0.0f;
 			integrator = integrator*0.9f + derivative;
 
@@ -571,8 +576,8 @@ void Emulator::process()
 	_stateS = _stateT;
 	_clock++;
 
-	// Wait until wavetable has been initialised in RAM, theoretically
-	// this is firmware dependent, but we are waiting a LONG time
+	// Wait until wavetable has been initialised in RAM, theoretically this is
+	// firmware dependent, but we are waiting a LONG time; so all good
 	if(_initAudio  &&  _clock > AUDIO_INITIALISED)
 	{
 		_initAudio = false;
@@ -582,10 +587,18 @@ void Emulator::process()
 
 void Emulator::run(uint64_t cycles)
 {
-	for(uint64_t c=0; c<cycles; c++)
-	{
-		process();
-	}
+   for(uint64_t c=0; c<cycles; c++)
+   {
+	   process();
+	   if(_vSync < 0)
+	   {
+		   _vBlank = true;
+		   _vgaY = VSYNC_START;
+
+		   // Skip first short vBlank, Gigatron is guaranteed to produce AUDIO_PER_FRAME samples in one frame
+		   if(_audioWriteIndex  &&  _audioWriteIndex % AUDIO_PER_FRAME !=0) _audioWriteIndex = 0;
+	   }
+   }
 }
 
 void Emulator::runToVBlank()
@@ -595,7 +608,11 @@ void Emulator::runToVBlank()
 		process();
 		if(_vSync < 0)
 		{
+			_vBlank = true;
 			_vgaY = VSYNC_START;
+
+			// Skip first short vBlank, Gigatron is guaranteed to produce AUDIO_PER_FRAME samples in one frame
+			if(_audioWriteIndex  &&  _audioWriteIndex % AUDIO_PER_FRAME !=0) _audioWriteIndex = 0;
 			break;
 		}
 	}
@@ -746,7 +763,7 @@ extern "C"
 
 	void emulator_wait_microseconds(int microseconds)
 	{
-		if (microseconds > 0)
+		if(microseconds > 0)
 		{
 			std::this_thread::sleep_for(std::chrono::microseconds(microseconds));
 		}
@@ -760,6 +777,11 @@ extern "C"
 	uint8_t emulator_get_rom_type(Emulator* emu)
 	{
 		return emu->getRomType();
+	}
+
+	int emulator_get_vblank(Emulator* emu)
+	{
+		return emu->getVBlank();
 	}
 
 	void emulator_set_ram(Emulator* emu, uint16_t addr, uint8_t value)

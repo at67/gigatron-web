@@ -1693,6 +1693,7 @@ var _emulator_set_64k_mode = Module['_emulator_set_64k_mode'] = makeInvalidEarly
 var _emulator_wait_microseconds = Module['_emulator_wait_microseconds'] = makeInvalidEarlyAccess('_emulator_wait_microseconds');
 var _emulator_get_xout = Module['_emulator_get_xout'] = makeInvalidEarlyAccess('_emulator_get_xout');
 var _emulator_get_rom_type = Module['_emulator_get_rom_type'] = makeInvalidEarlyAccess('_emulator_get_rom_type');
+var _emulator_get_vblank = Module['_emulator_get_vblank'] = makeInvalidEarlyAccess('_emulator_get_vblank');
 var _emulator_set_ram = Module['_emulator_set_ram'] = makeInvalidEarlyAccess('_emulator_set_ram');
 var _fflush = makeInvalidEarlyAccess('_fflush');
 var _strerror = makeInvalidEarlyAccess('_strerror');
@@ -1723,6 +1724,7 @@ function assignWasmExports(wasmExports) {
   Module['_emulator_wait_microseconds'] = _emulator_wait_microseconds = createExportWrapper('emulator_wait_microseconds', 1);
   Module['_emulator_get_xout'] = _emulator_get_xout = createExportWrapper('emulator_get_xout', 1);
   Module['_emulator_get_rom_type'] = _emulator_get_rom_type = createExportWrapper('emulator_get_rom_type', 1);
+  Module['_emulator_get_vblank'] = _emulator_get_vblank = createExportWrapper('emulator_get_vblank', 1);
   Module['_emulator_set_ram'] = _emulator_set_ram = createExportWrapper('emulator_set_ram', 3);
   _fflush = createExportWrapper('fflush', 1);
   _strerror = createExportWrapper('strerror', 1);

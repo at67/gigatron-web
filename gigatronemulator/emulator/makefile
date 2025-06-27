@@ -20,6 +20,7 @@ EXPORTS = _emulator_create \
 	  _emulator_wait_microseconds \
 	  _emulator_get_xout \
 	  _emulator_get_rom_type \
+	  _emulator_get_vblank \
 	  _emulator_set_ram \
 	  _malloc \
 	  _free

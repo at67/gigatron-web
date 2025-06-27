@@ -5,27 +5,21 @@ let wasAutoMuted = false;
 let userMutedState = false;
 
 let tailTime = 0;
-let duration = 0;
 let SAMPLE_BUFFER_SIZE = 130
-let SAMPLE_RATE = SAMPLE_BUFFER_SIZE*58.82;
+let SAMPLE_RATE = SAMPLE_BUFFER_SIZE*59.98;
 let RING_BUFFER_SIZE = SAMPLE_BUFFER_SIZE*4
 
 let audioReadIndex = 0;
-let lastSample = 0.0;
-
-let debugCounter = 0;
 
 
 function handleVisibilityChange()
 {
     if(document.hidden)
     {
-        // Page is hidden/minimized
         autoMute();
     }
     else
     {
-        // Page is visible again
         autoUnmute();
     }
 }
@@ -108,13 +102,8 @@ function initAudio()
 {
     audioContext = new AudioContext({sampleRate: SAMPLE_RATE});
 
-    // Fixed duration for SAMPLE_BUFFER_SIZE samples
-    duration = SAMPLE_BUFFER_SIZE / SAMPLE_RATE;
-
-    // Start 4 buffers ahead
-    tailTime = audioContext.currentTime + (duration * 4);
+    tailTime = 0;
     audioReadIndex = 0;
-    lastSample = 0.0;
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('focus', handleWindowFocus);
@@ -127,74 +116,60 @@ function updateAudio()
     if(audioContext.state === 'suspended') audioContext.resume();
 
     let currentTime = audioContext.currentTime;
-    let queuedTime = tailTime - currentTime;
 
-    // Only add buffer if queue is getting low (less than 5 buffers ahead)
-    if(queuedTime < (duration * 5))
+    let audioWriteIndex = Module.ccall('emulator_get_audio_write_index', 'number', ['number'], [emulator]);
+
+    // Prevent tailTime from falling behind
+    if(tailTime < currentTime) tailTime = currentTime;
+
+    let numAudioSamples = audioWriteIndex - audioReadIndex;
+
+    // If muted or readindex is behind, then reset read pointer and return
+    if(isMuted  ||  numAudioSamples < 0)
     {
-        // Get indices
-        let writeIndex = Module.ccall('emulator_get_audio_write_index', 'number', ['number'], [emulator]);
-
-        // If muted, just advance read pointer and return
-        if(isMuted)
-        {
-            audioReadIndex = writeIndex;
-            return;
-        }
-
-        // Get raw audio buffer from C++
-        let bufferPtr = Module.ccall('emulator_get_audio_buffer', 'number', ['number'], [emulator]);
-        let audioRingBuffer = new Float32Array(Module.HEAPF32.buffer, bufferPtr, RING_BUFFER_SIZE);
-
-        // Create sample output buffer
-        let outputSamples = new Float32Array(SAMPLE_BUFFER_SIZE);
-
-        // Read exactly SAMPLE_BUFFER_SIZE samples from ring buffer
-        for(let i=0; i<SAMPLE_BUFFER_SIZE; i++)
-        {
-            outputSamples[i] = audioRingBuffer[(audioReadIndex + i) % RING_BUFFER_SIZE];
-        }
-
-        // Advance read pointer by actual samples consumed from producer
-        audioReadIndex = (audioReadIndex + SAMPLE_BUFFER_SIZE) % RING_BUFFER_SIZE;
-
-        // Prevent tailTime from falling behind
-        if(tailTime < currentTime) tailTime = currentTime;
-
-        // Create and schedule sample audio buffer
-        let buffer = audioContext.createBuffer(1, SAMPLE_BUFFER_SIZE, SAMPLE_RATE);
-        let channelData = buffer.getChannelData(0);
-
-        let volume = currentVolume;
-        for(let i=0; i<SAMPLE_BUFFER_SIZE; i++)
-        {
-            channelData[i] = outputSamples[i] * volume;
-        }
-
-        let source = audioContext.createBufferSource();
-        source.buffer = buffer;
-        source.connect(audioContext.destination);
-        source.start(tailTime);
-        tailTime += duration;
+        audioReadIndex = audioWriteIndex;
+        return;
     }
 
-    // DEBUG logging
-    //queuedTime = tailTime - currentTime;
-    //let queuedBuffers = Math.round(queuedTime / duration);
-    //if(++debugCounter >= 60)
-    //{
-    //    console.log(`Audio queue: ${queuedBuffers} buffers, ${queuedTime.toFixed(3)}s queued`);
-    //    debugCounter = 0;
-    //}
+    // Get raw audio buffer from C++
+    let bufferPtr = Module.ccall('emulator_get_audio_buffer', 'number', ['number'], [emulator]);
+    let audioRingBuffer = new Float32Array(Module.HEAPF32.buffer, bufferPtr, RING_BUFFER_SIZE);
+
+    // Create sample output buffer
+    let outputSamples = new Float32Array(numAudioSamples);
+    for(let i=0; i<numAudioSamples; i++)
+    {
+        outputSamples[i] = audioRingBuffer[(audioReadIndex + i) % RING_BUFFER_SIZE];
+    }
+
+    // Advance read pointer by actual samples consumed from producer
+    audioReadIndex = audioReadIndex + numAudioSamples;
+
+    // Create and schedule sample audio buffer
+    let buffer = audioContext.createBuffer(1, numAudioSamples, SAMPLE_RATE);
+    let channelData = buffer.getChannelData(0);
+
+    buffer.getChannelData(0).set(outputSamples);
+    let source = audioContext.createBufferSource();
+    source.buffer = buffer;
+
+    // Create gain node for volume control
+    let gainNode = audioContext.createGain();
+    gainNode.gain.value = currentVolume;
+
+    // Connect source to gain to destination
+    source.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    source.start(tailTime);
+    tailTime += numAudioSamples / SAMPLE_RATE;
 }
 
 function resetAudio()
 {
-    if (!audioContext || !emulator) return;
+    if(!audioContext || !emulator) return;
 
     let writeIndex = Module.ccall('emulator_get_audio_write_index', 'number', ['number'], [emulator]);
 
     tailTime = audioContext.currentTime;
     audioReadIndex = writeIndex;
-    lastSample = 0.0;
 }
