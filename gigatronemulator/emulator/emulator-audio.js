@@ -125,7 +125,7 @@ function updateAudio()
     let numAudioSamples = audioWriteIndex - audioReadIndex;
 
     // If muted or readindex is behind, then reset read pointer and return
-    if(isMuted  ||  numAudioSamples < 0)
+    if(isMuted  ||  numAudioSamples <= 0)
     {
         audioReadIndex = audioWriteIndex;
         return;

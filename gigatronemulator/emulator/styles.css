@@ -39,6 +39,7 @@
     border-radius: 4px;
     font-family: 'Courier New', monospace;
     text-shadow: 2px 2px 0px #000001;
+    font-size: 14px;
 }
 
 .tab-btn.active {

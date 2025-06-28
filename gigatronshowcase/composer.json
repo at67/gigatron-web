@@ -1,7 +1,7 @@
 {
    "name": "at67/gigatronshowcase",
    "type": "phpbb-extension",
-   "description": "Gigatron Showcase - Visual browser for ROMs and GT1 applications",
+   "description": "Gigatron Showcase - Visual browser for ROM firmware and GT1 applications",
    "version": "1.0.0",
    "license": "BSD3",
    "authors": [

@@ -143,7 +143,6 @@ class UIManager
                     // Mark ROM as loaded
                     document.getElementById('current-rom').textContent = file.filename;
                     this.romLoaded = true;
-                    currentFilterBits = 4;
                     document.getElementById('filter-btn').textContent = '4';
                     updateROMTypeUI();
                     console.log(`UI Manager: ROM ${file.filename} loaded successfully`);

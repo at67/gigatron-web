@@ -46,6 +46,9 @@ private:
 	float _audioBuffer[AUDIO_BUFFER_SIZE]={0};
 	int _audioWriteIndex=0;
 
+	uint64_t _lastVCPUDispatch = 0;
+	static const uint64_t WATCHDOG_TIMEOUT_CYCLES = CLOCK_FREQUENCY * 3;
+
 public:
 	Emulator();
 
@@ -59,6 +62,8 @@ public:
 
 	float* getAudioBuffer() {return _audioBuffer;}
 	int getAudioWriteIndex() {return _audioWriteIndex;}
+
+	bool isWatchdogTriggered() {return _lastVCPUDispatch > 0  &&  (_clock - _lastVCPUDispatch) > WATCHDOG_TIMEOUT_CYCLES;}
 
 	uint8_t getROM(uint16_t address, int page);
 
@@ -87,6 +92,8 @@ public:
 
 	void processPixel(const State& S, int vgaX, int vgaY);
 	void processPixel();
+
+	void watchdog(void);
 	void process();
 
 	void run(uint64_t cycles);
@@ -314,10 +321,14 @@ void Emulator::reset()
 
 	_vgaX = 0, _vgaY = VSYNC_START;
 	_hSync = 0, _vSync = 0;
+
+	_lastVCPUDispatch = _clock;
 }
 
 void Emulator::cycle(const State& S, State& T)
 {
+	if(S._PC == 0x0309) _lastVCPUDispatch = _clock;
+
 	// New state is old state unless something changes
 	T = S;
 
@@ -537,8 +548,20 @@ void Emulator::processPixel()
 	}
 }
 
+void Emulator::watchdog(void)
+{
+	if(isWatchdogTriggered())
+	{
+		printf("Watchdog triggered - performing reset\n");
+		reset();
+		return; // Exit the run loop after reset
+	}
+}
+
 void Emulator::process()
 {
+	watchdog();
+
 	cycle(_stateS, _stateT);
 	_hSync = (_stateT._OUT & 0x40) - (_stateS._OUT & 0x40);
 	_vSync = (_stateT._OUT & 0x80) - (_stateS._OUT & 0x80);
@@ -587,18 +610,18 @@ void Emulator::process()
 
 void Emulator::run(uint64_t cycles)
 {
-   for(uint64_t c=0; c<cycles; c++)
-   {
-	   process();
-	   if(_vSync < 0)
-	   {
+	for(uint64_t c=0; c<cycles; c++)
+	{
+		process();
+		if(_vSync < 0)
+		{
 		   _vBlank = true;
 		   _vgaY = VSYNC_START;
 
 		   // Skip first short vBlank, Gigatron is guaranteed to produce AUDIO_PER_FRAME samples in one frame
 		   if(_audioWriteIndex  &&  _audioWriteIndex % AUDIO_PER_FRAME !=0) _audioWriteIndex = 0;
-	   }
-   }
+		}
+	}
 }
 
 void Emulator::runToVBlank()

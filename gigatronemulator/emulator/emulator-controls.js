@@ -311,6 +311,9 @@ function updateROMTypeUI()
                 dot.style.width = '1.5px';
                 dot.style.height = '1.5px';
             });
+
+            // Reset ROMvX0 filter bits to 4, (inverse bit mask)
+            Module.ccall('emulator_set_ram', null, ['number', 'number', 'number'], [emulator, 8, 0x0F]);
         }
         else
         {
