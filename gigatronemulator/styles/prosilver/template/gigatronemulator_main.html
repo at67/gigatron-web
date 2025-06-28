@@ -65,23 +65,18 @@
 	    </div>
 
 	    <div class="controls-wrapper">
+		<!-- System controls row with RAM status in center -->
 		<div class="controls-row">
 		    <div class="control-group">
 			<button class="control-btn-small" onclick="resetEmulator()">RESET</button>
-			<button class="control-btn-small" id="input-mode-toggle" onclick="toggleInputMode()">🎮</button>
+			<button class="control-btn-small icon-btn" id="input-mode-toggle" onclick="toggleInputMode()">🎮</button>
 		    </div>
 
-		    <div class="status-panel" id="status-panel">
-			<div class="status-line">
-			    <span id="current-rom">No ROM</span>&nbsp;&nbsp;
-			    <span id="memory-model">32KB</span>
-			</div>
-			<div class="status-line"><span id="current-gt1">No GT1</span></div>
-		    </div>
+		    <div class="ram-status" id="ram-status">64K RAM</div>
 
 		    <div class="control-group">
-			<button class="control-btn-small" id="mute-btn" onclick="toggleMute()">🔊</button>
-			<button class="control-btn-small" onclick="decreaseVolume()">-</button>
+			<button class="control-btn-small icon-btn" id="mute-btn" onclick="toggleMute()">🔊</button>
+			<button class="control-btn-small icon-btn" onclick="decreaseVolume()">-</button>
 			<div class="volume-indicator" id="volume-indicator">
 			    <div class="volume-dot active"></div>
 			    <div class="volume-dot active"></div>
@@ -94,8 +89,29 @@
 			    <div class="volume-dot"></div>
 			    <div class="volume-dot"></div>
 			</div>
-			<button class="control-btn-small" onclick="increaseVolume()">+</button>
-			<button class="control-btn-small" id="filter-btn" onclick="toggleFilter()" style="font-size: 12px; font-weight: bold; display: none;">4</button>
+			<button class="control-btn-small icon-btn" onclick="increaseVolume()">+</button>
+			<button class="control-btn-small icon-btn" id="filter-btn" onclick="toggleFilter()" style="font-size: 12px; font-weight: bold; display: none;">4</button>
+		    </div>
+		</div>
+
+		<!-- File status panel with downloads -->
+		<div class="status-panel">
+		    <div class="status-item">
+			<div>
+			    <div class="status-file" id="status-rom-name">No ROM</div>
+			    <div class="status-meta">ROM Firmware</div>
+			</div>
+			<a href="#" class="download-btn" id="download-rom" style="display: none;">⬇ DL</a>
+		    </div>
+
+		    <div class="status-separator"></div>
+
+		    <div class="status-item">
+			<div>
+			    <div class="status-file" id="status-gt1-name">No GT1</div>
+			    <div class="status-meta">GT1 Program</div>
+			</div>
+			<a href="#" class="download-btn" id="download-gt1" style="display: none;">⬇ DL</a>
 		    </div>
 		</div>
 

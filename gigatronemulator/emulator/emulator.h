@@ -34,8 +34,8 @@
 
 #define AUDIO_INITIALISED (CLOCK_FREQUENCY * 5.0)
 #define AUDIO_CHANNELS    4
-#define AUDIO_SAMPLE_RATE 7800.0
-#define AUDIO_PER_FRAME	  130
+#define AUDIO_PER_FRAME	  260	// x2 here to get sample rate over 8000Hz for some browsers
+#define AUDIO_SAMPLE_RATE (AUDIO_PER_FRAME*59.98)
 #define AUDIO_BUFFER_SIZE (AUDIO_PER_FRAME*4)
 
 #define ZERO_CONST_ADDRESS 0x0000

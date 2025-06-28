@@ -55,13 +55,46 @@ class FileBrowser
     {
         this.currentFileType = type;
 
+        // Clear search when switching file types
+        this.searchQuery = '';
+        const searchInput = document.getElementById('search-input');
+        if(searchInput) searchInput.value = '';
+
         // Update tab appearance
         document.querySelectorAll('.tab-btn').forEach(btn =>
         {
             btn.classList.toggle('active', btn.dataset.type === type);
         });
 
+        // Restore selection based on what's actually loaded
+        this.selectedFile = null;
+        if(type === 'rom')
+        {
+            const loadedRomName = document.getElementById('status-rom-name').textContent;
+            if(loadedRomName && loadedRomName !== 'No ROM')
+            {
+                this.selectedFile = this.files.rom.find(f => f.filename === loadedRomName) || null;
+            }
+        }
+        else if(type === 'gt1')
+        {
+            const loadedGt1Name = document.getElementById('status-gt1-name').textContent;
+            if(loadedGt1Name && loadedGt1Name !== 'No GT1')
+            {
+                this.selectedFile = this.files.gt1.find(f => f.filename === loadedGt1Name) || null;
+            }
+        }
+
+        // Apply search (this will collapse everything since search is cleared)
         this.applySearch();
+
+        // THEN expand only the path to the selected file
+        if(this.selectedFile && this.selectedFile.path.includes('/'))
+        {
+            const folderPath = this.selectedFile.path.substring(0, this.selectedFile.path.lastIndexOf('/'));
+            this.expandPathToFile(folderPath);
+            this.renderFileTree(); // Re-render with the expanded path
+        }
     }
 
     async loadFiles()

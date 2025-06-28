@@ -5,7 +5,7 @@ let wasAutoMuted = false;
 let userMutedState = false;
 
 let tailTime = 0;
-let SAMPLE_BUFFER_SIZE = 130
+let SAMPLE_BUFFER_SIZE = 260
 let SAMPLE_RATE = SAMPLE_BUFFER_SIZE*59.98;
 let RING_BUFFER_SIZE = SAMPLE_BUFFER_SIZE*4
 
@@ -100,7 +100,9 @@ function updateVolumeDisplay()
 
 function initAudio()
 {
-    audioContext = new AudioContext({sampleRate: SAMPLE_RATE});
+    audioContext = new AudioContext({sampleRate: SAMPLE_RATE}); // latencyHint: 0.06, 'interactive', 'balanced', 'playback'
+    console.log(`Audio: ${SAMPLE_RATE} : ${audioContext.sampleRate}`);
+    console.log(`Requested latency: 0.05, Actual baseLatency: ${audioContext.baseLatency}`);
 
     tailTime = 0;
     audioReadIndex = 0;
@@ -120,9 +122,12 @@ function updateAudio()
     let audioWriteIndex = Module.ccall('emulator_get_audio_write_index', 'number', ['number'], [emulator]);
 
     // Prevent tailTime from falling behind
-    if(tailTime < currentTime) tailTime = currentTime;
+    const minBufferLead = audioContext.baseLatency < 0.02 ? 0.030779490984919288 : 0.0; // dumb browsers like firefox need help
+    if(tailTime < currentTime + minBufferLead) tailTime = currentTime + minBufferLead;
 
     let numAudioSamples = audioWriteIndex - audioReadIndex;
+
+    //console.log(`Audio: ${numAudioSamples} : ${currentTime.toFixed(2)} : ${tailTime.toFixed(2)}`);
 
     // If muted or readindex is behind, then reset read pointer and return
     if(isMuted  ||  numAudioSamples <= 0)

@@ -54,7 +54,6 @@ class UIManager
     {
         console.log('UI Manager: File selected', file.filename);
         this.currentFile = file;
-        console.log('DEBUG: emulatorReady =', this.emulatorReady, 'emulator =', emulator, 'typeof emulator =', typeof emulator);
         if(this.emulatorReady)
         {
             this.loadFileIntoEmulator(file);
@@ -63,6 +62,32 @@ class UIManager
         {
             console.log('UI Manager: Emulator not ready, will load file when ready');
         }
+    }
+
+    updateStatusPanel(file, fileType)
+    {
+        if(fileType === 'rom')
+        {
+            // Update ROM status
+            document.getElementById('status-rom-name').textContent = file.filename;
+            document.getElementById('download-rom').style.display = 'flex';
+            document.getElementById('download-rom').href = `/ext/at67/gigatronemulator/roms/${file.filename}`;
+            document.getElementById('download-rom').download = file.filename;
+        }
+        else if(fileType === 'gt1')
+        {
+            // Update GT1 status
+            document.getElementById('status-gt1-name').textContent = file.filename;
+            document.getElementById('download-gt1').style.display = 'flex';
+            document.getElementById('download-gt1').href = `/ext/at67/gigatronemulator/gt1/${file.path}`;
+            document.getElementById('download-gt1').download = file.filename;
+        }
+    }
+
+    updateRamStatus(is64k)
+    {
+        const ramStatus = document.getElementById('ram-status');
+        ramStatus.textContent = is64k ? '64K RAM' : '32K RAM';
     }
 
     loadFileIntoEmulator(file)
@@ -100,13 +125,16 @@ class UIManager
 
         // Determine file path based on type
         let filePath;
+        let fileType;
         if(file.filename.endsWith('.rom'))
         {
             filePath = `/ext/at67/gigatronemulator/roms/${file.filename}`;
+            fileType = 'rom';
         }
         else if(file.filename.endsWith('.gt1'))
         {
             filePath = `/ext/at67/gigatronemulator/gt1/${file.path}`;
+            fileType = 'gt1';
         }
         else
         {
@@ -132,7 +160,7 @@ class UIManager
                 Module.HEAPU8.set(new Uint8Array(data), dataPtr);
 
                 // Use correct loading function based on file type
-                if(file.filename.endsWith('.rom'))
+                if(fileType === 'rom')
                 {
                     Module.ccall('emulator_load_rom', null, ['number', 'number'], [emulator, dataPtr]);
 
@@ -141,30 +169,34 @@ class UIManager
                     setTimeout(() => {startEmulator();}, 100);
 
                     // Mark ROM as loaded
-                    document.getElementById('current-rom').textContent = file.filename;
                     this.romLoaded = true;
-                    document.getElementById('filter-btn').textContent = '4';
+
+                    // Update status panel
+                    this.updateStatusPanel(file, 'rom');
+
+                    // Update ROM type UI
                     updateROMTypeUI();
+
                     console.log(`UI Manager: ROM ${file.filename} loaded successfully`);
                 }
-                else if(file.filename.endsWith('.gt1'))
+                else if(fileType === 'gt1')
                 {
                     Module.ccall('emulator_load_gt1', null, ['number', 'number', 'number'], [emulator, dataPtr, data.byteLength]);
 
-                    let is64k = Module.ccall('emulator_get_64k_mode', 'number', ['number'], [emulator]) ? '64KB' : '32KB';
-                    document.getElementById('memory-model').textContent = is64k;
-                    console.log('UI Manager: ', is64k);
+                    let is64k = Module.ccall('emulator_get_64k_mode', 'number', ['number'], [emulator]);
+
+                    // Update status panels
+                    this.updateStatusPanel(file, 'gt1');
+                    this.updateRamStatus(is64k);
 
                     // Start emulator state
-                    document.getElementById('current-gt1').textContent = file.filename;
                     setTimeout(() => {startEmulator();}, 100);
 
                     console.log(`UI Manager: GT1 ${file.filename} loaded successfully - ready to run`);
                 }
 
                 Module._free(dataPtr);
-
-                resetAudio()
+                resetAudio();
 
                 // Update status
                 document.getElementById('loading-status').textContent = `Loaded: ${file.filename}`;

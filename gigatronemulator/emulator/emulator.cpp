@@ -590,7 +590,8 @@ void Emulator::process()
 			static float integrator = 0.0f;
 			integrator = integrator*0.9f + derivative;
 
-			// Output
+			// Output, x2 to get sample rate over 8000Hz for some browsers
+			_audioBuffer[_audioWriteIndex++ % AUDIO_BUFFER_SIZE] = integrator;
 			_audioBuffer[_audioWriteIndex++ % AUDIO_BUFFER_SIZE] = integrator;
 		}
 		_vgaY++;

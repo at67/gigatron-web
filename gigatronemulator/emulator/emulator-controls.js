@@ -406,6 +406,13 @@ function resetEmulator()
 
     console.log("Resetting emulator...");
 
+    // Clear file browser selection
+    if(window.fileBrowser.currentFileType === 'gt1')
+    {
+        window.fileBrowser.selectedFile = null;
+        window.fileBrowser.renderFileTree();
+    }
+
     buttonState = 0xFF;
     pressedKeys.clear();
 
@@ -415,7 +422,22 @@ function resetEmulator()
     if(filterBtn) filterBtn.textContent = '4';
 
     Module.ccall('emulator_reset', null, ['number'], [emulator]);
-    document.getElementById('memory-model').textContent = Module.ccall('emulator_get_64k_mode', 'number', ['number'], [emulator]) ? '64KB' : '32KB';
+
+    // Update RAM status in new status panel
+    const is64k = Module.ccall('emulator_get_64k_mode', 'number', ['number'], [emulator]);
+    const ramStatus = document.getElementById('ram-status');
+    ramStatus.textContent = is64k ? '64K RAM' : '32K RAM';
+
+    // Reset GT1 status text
+    document.getElementById('status-gt1-name').textContent = 'No GT1';
+    document.getElementById('download-gt1').style.display = 'none';
+
+    // Clear GT1 selection and collapse tree if we're viewing GT1 tab
+    if(window.fileBrowser && window.fileBrowser.currentFileType === 'gt1')
+    {
+        window.fileBrowser.selectedFile = null;
+        window.fileBrowser.applySearch(); // This will collapse everything since no search and no selection
+    }
 
     console.log("Reset complete - select a ROM/GT1 file to load");
 }
