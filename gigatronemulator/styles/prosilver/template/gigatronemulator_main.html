@@ -15,21 +15,15 @@
 	</div>
 
 	<div class="browser-filters">
-	    <select id="category-filter" class="filter-select">
-		<option value="">All Categories</option>
-	    </select>
-	    <select id="author-filter" class="filter-select">
-		<option value="">All Authors</option>
-	    </select>
-	    <select id="language-filter" class="filter-select">
-		<option value="">All Languages</option>
-	    </select>
-	    <select id="sort-filter" class="filter-select">
-		<option value="name">Sort by Name</option>
-		<option value="author">Sort by Author</option>
-		<option value="date">Sort by Date</option>
-		<option value="size">Sort by Size</option>
-	    </select>
+	    <div class="search-container">
+		<input type="text" id="search-input" class="search-input" placeholder="Search everything...">
+		<button class="search-btn" id="search-btn">
+		    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<circle cx="11" cy="11" r="8"></circle>
+			<path d="m21 21-4.35-4.35"></path>
+		    </svg>
+		</button>
+	    </div>
 	</div>
 
 	<div class="file-tree" id="file-tree">

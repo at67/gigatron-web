@@ -10,6 +10,7 @@ class FileBrowser
         };
         this.selectedFile = null;
         this.expandedFolders = new Set();
+        this.searchQuery = '';
 
         this.initializeEventListeners();
         this.loadFiles();
@@ -26,11 +27,28 @@ class FileBrowser
             });
         });
 
-        // Filter changes
-        document.getElementById('category-filter').addEventListener('change', () => this.applyFilters());
-        document.getElementById('author-filter').addEventListener('change', () => this.applyFilters());
-        document.getElementById('language-filter').addEventListener('change', () => this.applyFilters());
-        document.getElementById('sort-filter').addEventListener('change', () => this.applyFilters());
+        // Search functionality
+        const searchInput = document.getElementById('search-input');
+        if(searchInput)
+        {
+            searchInput.addEventListener('input', (e) =>
+            {
+                const newQuery = e.target.value.trim();
+                this.searchQuery = newQuery;
+                this.applySearch();
+            });
+
+            // Prevent emulator from capturing keystrokes when search is focused
+            searchInput.addEventListener('keydown', (e) =>
+            {
+                e.stopPropagation();
+            });
+
+            searchInput.addEventListener('keyup', (e) =>
+            {
+                e.stopPropagation();
+            });
+        }
     }
 
     switchFileType(type)
@@ -43,8 +61,7 @@ class FileBrowser
             btn.classList.toggle('active', btn.dataset.type === type);
         });
 
-        this.renderFileTree();
-        this.updateFilters();
+        this.applySearch();
     }
 
     async loadFiles()
@@ -59,8 +76,7 @@ class FileBrowser
             const gt1Response = await fetch('/ext/at67/gigatronemulator/emulator/scan_files.php?type=gt1');
             this.files.gt1 = await gt1Response.json();
 
-            this.renderFileTree();
-            this.updateFilters();
+            this.applySearch();
         }
         catch(error)
         {
@@ -75,12 +91,170 @@ class FileBrowser
         treeElement.innerHTML = `<div style="color: #ff6666; padding: 20px; text-align: center;">${message}</div>`;
     }
 
-    renderFileTree()
+    applySearch()
     {
         const files = this.getCurrentFiles();
-        const tree = this.buildFileTree(files);
-        const treeElement = document.getElementById('file-tree');
+        const filteredFiles = this.searchQuery ? this.searchFiles(files, this.searchQuery) : files;
+        const tree = this.buildFileTree(filteredFiles);
 
+        if(this.searchQuery)
+        {
+            // Only expand for search results
+            this.expandSearchResults(tree, this.searchQuery);
+        }
+        else
+        {
+            // Clear search - reset to collapsed state
+            this.resetToCollapsedState();
+        }
+
+        this.renderFileTree(tree);
+    }
+
+    searchFiles(files, query)
+    {
+        const lowerQuery = query.toLowerCase();
+
+        const results = files.filter(file =>
+        {
+            // Search in filename
+            const filenameMatch = file.filename.toLowerCase().includes(lowerQuery);
+
+            // Search in author
+            const authorMatch = file.author && file.author.toLowerCase().includes(lowerQuery);
+
+            // Search in category
+            const categoryMatch = file.category && file.category.toLowerCase().includes(lowerQuery);
+
+            // Search in full path
+            const pathMatch = file.path.toLowerCase().includes(lowerQuery);
+
+            const matches = filenameMatch || authorMatch || categoryMatch || pathMatch;
+
+            return matches;
+        });
+
+        return results;
+    }
+
+    resetToCollapsedState()
+    {
+        // Clear all expanded folders to return to collapsed state
+        this.expandedFolders.clear();
+    }
+
+    expandSearchResults(tree, query)
+    {
+        const lowerQuery = query.toLowerCase();
+
+        this.expandTreeRecursively(tree, '', lowerQuery);
+    }
+
+    expandTreeRecursively(node, currentPath, query)
+    {
+        Object.keys(node).forEach(key =>
+        {
+            const item = node[key];
+            const itemPath = currentPath ? `${currentPath}/${key}` : key;
+
+            if(item.filename)
+            {
+                // This is a file - expand path to it
+                this.expandPathToFile(currentPath);
+            }
+            else
+            {
+                // This is a folder
+                const hasMatchingContent = this.folderHasMatchingContent(item, query);
+
+                if(hasMatchingContent)
+                {
+                    this.expandedFolders.add(itemPath);
+
+                    // Check what type of match this is
+                    const keyLower = key.toLowerCase();
+                    if(keyLower.includes(query))
+                    {
+                        // This folder name matches the search
+                        const depth = itemPath.split('/').length;
+                        if(depth === 1)
+                        {
+                            // Category level match - expand to show authors (Option C)
+                            this.expandToAuthorLevel(item, itemPath);
+                        }
+                        else if(depth === 2)
+                        {
+                            // Author level match - expand to show all files
+                            this.expandToFileLevel(item, itemPath);
+                        }
+                    }
+
+                    // Continue recursively
+                    this.expandTreeRecursively(item, itemPath, query);
+                }
+            }
+        });
+    }
+
+    folderHasMatchingContent(folder, query)
+    {
+        return Object.keys(folder).some(key =>
+        {
+            const item = folder[key];
+            if(item.filename)
+            {
+                // Check if this file matches
+                return item.filename.toLowerCase().includes(query) ||
+                       (item.author && item.author.toLowerCase().includes(query)) ||
+                       (item.category && item.category.toLowerCase().includes(query));
+            }
+            else
+            {
+                // Check folder name or recurse
+                return key.toLowerCase().includes(query) ||
+                       this.folderHasMatchingContent(item, query);
+            }
+        });
+    }
+
+    expandToAuthorLevel(categoryFolder, categoryPath)
+    {
+        // Expand category to show authors, but keep author folders collapsed
+        Object.keys(categoryFolder).forEach(authorKey =>
+        {
+            const authorPath = `${categoryPath}/${authorKey}`;
+            // Don't auto-expand author folders for category matches
+        });
+    }
+
+    expandToFileLevel(authorFolder, authorPath)
+    {
+        // Already expanded by adding to expandedFolders above
+    }
+
+    expandPathToFile(path)
+    {
+        const parts = path.split('/');
+        let currentPath = '';
+
+        for(let i = 0; i < parts.length; i++)
+        {
+            if(i > 0) currentPath += '/';
+            currentPath += parts[i];
+            this.expandedFolders.add(currentPath);
+        }
+    }
+
+    renderFileTree(tree = null)
+    {
+        if(!tree)
+        {
+            const files = this.getCurrentFiles();
+            const filteredFiles = this.searchQuery ? this.searchFiles(files, this.searchQuery) : files;
+            tree = this.buildFileTree(filteredFiles);
+        }
+
+        const treeElement = document.getElementById('file-tree');
         treeElement.innerHTML = '';
         this.renderTreeNode(tree, treeElement, '');
     }
@@ -100,7 +274,7 @@ class FileBrowser
             let current = tree;
 
             // Build nested structure
-            for (let i = 0; i < parts.length - 1; i++)
+            for(let i = 0; i < parts.length - 1; i++)
             {
                 const part = parts[i];
                 if(!current[part])
@@ -222,51 +396,6 @@ class FileBrowser
         {
             statusElement.textContent = 'No file selected';
         }
-    }
-
-    updateFilters()
-    {
-        const files = this.getCurrentFiles();
-
-        // Get unique values for filters
-        const categories = [...new Set(files.map(f => f.category).filter(Boolean))];
-        const authors = [...new Set(files.map(f => f.author).filter(Boolean))];
-        const languages = [...new Set(files.map(f => f.language).filter(Boolean))];
-
-        this.populateFilter('category-filter', categories);
-        this.populateFilter('author-filter', authors);
-        this.populateFilter('language-filter', languages);
-    }
-
-    populateFilter(selectId, options)
-    {
-        const select = document.getElementById(selectId);
-        const currentValue = select.value;
-
-        // Clear existing options except "All"
-        select.innerHTML = select.children[0].outerHTML;
-
-        // Add new options
-        options.sort().forEach(option =>
-        {
-            const optionElement = document.createElement('option');
-            optionElement.value = option;
-            optionElement.textContent = option;
-            select.appendChild(optionElement);
-        });
-
-        // Restore selection if still valid
-        if(options.includes(currentValue))
-        {
-            select.value = currentValue;
-        }
-    }
-
-    applyFilters()
-    {
-        // For now, just re-render the tree
-        // TODO: Implement actual filtering logic
-        this.renderFileTree();
     }
 }
 

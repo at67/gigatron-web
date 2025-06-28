@@ -23,6 +23,13 @@ class main
 	    throw new \phpbb\exception\http_exception(403, 'NOT_AUTHORISED');
 	}
 
+	// REGISTERED MEMBERS ONLY CHECK
+	//global $phpbb_container;
+	//$auth = $phpbb_container->get('auth');
+	//if (!$auth->acl_get('u_')) {
+	//    throw new \phpbb\exception\http_exception(403, 'NOT_AUTHORISED');
+	//}
+
 	$this->template->assign_vars(array(
 	    'EMULATOR_BASE_PATH' => '/ext/at67/gigatronemulator/emulator/',
 	));
