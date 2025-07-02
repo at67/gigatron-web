@@ -92,6 +92,83 @@ class main
 	return $this->helper->render('gigatronshowcase_rom.html', $selectedRom['title'] . ' - ROM Details');
     }
 
+    public function gt1($category, $author, $filename, $folder = null)
+    {
+	// Build filepath based on whether we have a folder or not
+	if ($folder !== null) {
+	    // Subfolder case: games/at67/Invader/Invader.gt1
+	    $filepath = $folder . '/' . $filename;
+	} else {
+	    // Direct file case: games/at67/Tetris.gt1
+	    $filepath = $filename;
+	}
+
+	// Find the specific GT1 file
+	$allGt1s = $this->scanGT1s();
+	$selectedGt1 = null;
+
+	// Build the full path we're looking for
+	$targetPath = $category . '/' . $author . '/' . $filepath;
+
+	foreach ($allGt1s as $gt1) {
+	    if ($gt1['path'] === $targetPath) {
+		$selectedGt1 = $gt1;
+		break;
+	    }
+	}
+
+	if (!$selectedGt1) {
+	    throw new \phpbb\exception\http_exception(404, 'GT1 file not found');
+	}
+
+	// Try to load metadata from .ini file
+	$gt1Path = $this->root_path . 'ext/at67/gigatronemulator/gt1/';
+	$fullFilePath = $gt1Path . $selectedGt1['path'];
+	$iniFile = str_replace('.gt1', '.ini', $fullFilePath);
+
+	// Load metadata if .ini file exists
+	if (file_exists($iniFile)) {
+	    $metadata = $this->parseIniMetadata($iniFile);
+	    $selectedGt1 = array_merge($selectedGt1, $metadata);
+	}
+
+	// Calculate file size
+	if (file_exists($fullFilePath)) {
+	    $fileSize = filesize($fullFilePath);
+	    $selectedGt1['filesize'] = $this->formatFileSize($fileSize);
+	}
+
+	// Parse compatible ROMs if specified
+	$compatibleRoms = array();
+	if (isset($selectedGt1['compatible_roms'])) {
+	    $compatibleRoms = array_map('trim', explode(',', $selectedGt1['compatible_roms']));
+	    $selectedGt1['compatible_roms'] = $compatibleRoms;
+	}
+
+	$this->template->assign_vars(array(
+	    'GT1' => $selectedGt1,
+	    'AUTHOR' => $author,
+	    'CATEGORY' => $category,
+	    'GT1_DOWNLOAD_URL' => '/ext/at67/gigatronemulator/gt1/' . $selectedGt1['path'],
+	    'U_BACK_TO_AUTHOR' => $this->helper->route('at67_gigatronshowcase_author', array(
+		'author' => $author,
+		'category' => $category
+	    )),
+	    'U_EMULATOR' => $this->helper->route('at67_gigatronemulator_main'),  // ADD THIS LINE
+	    'COMPATIBLE_ROMS' => $compatibleRoms,
+	));
+
+	return $this->helper->render('gigatronshowcase_gt1.html', $selectedGt1['title'] . ' - GT1 Details');
+    }
+
+    private function formatFileSize($bytes)
+    {
+	if ($bytes >= 1024) {
+	    return round($bytes / 1024, 1) . ' KB';
+	}
+	return $bytes . ' bytes';
+    }
+
     private function getFeaturedGT1s($gt1s)
     {
 	$featured = array();

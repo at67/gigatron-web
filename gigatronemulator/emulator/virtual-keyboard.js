@@ -684,7 +684,7 @@ class VirtualKeyboard
         {
             helpPanel.innerHTML = `
                 <strong>Keyboard Controls:</strong><br>
-                Arrow Keys = D-Pad | Delete = A Button | Insert = B Button<br>
+                Arrows = D-Pad | Delete = A Button | Insert = B Button<br>
                 Page Up = Start | Page Down = Select
             `;
         }
@@ -692,7 +692,7 @@ class VirtualKeyboard
         {
             helpPanel.innerHTML = `
                 <strong>Keyboard Controls:</strong><br>
-                Arrow Keys = D-Pad | Z = A Button | X = B Button<br>
+                Arrows = D-Pad | Z = A Button | X = B Button<br>
                 Space = Select | Enter = Start
             `;
         }

@@ -588,7 +588,7 @@ void Emulator::process()
 
 			// Integrate, (to restore low frequencies)
 			static float integrator = 0.0f;
-			integrator = integrator*0.9f + derivative;
+			integrator = integrator*0.98f + derivative;
 
 			// Output, x2 to get sample rate over 8000Hz for some browsers
 			_audioBuffer[_audioWriteIndex++ % AUDIO_BUFFER_SIZE] = integrator;

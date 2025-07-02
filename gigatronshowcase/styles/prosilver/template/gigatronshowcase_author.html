@@ -104,19 +104,27 @@
 
     <!-- Author's Files Grid -->
     <div class="grid-large">
-        {% for gt1 in AUTHOR_GT1S %}
-        <div class="card">
-            <div class="card-screenshot">
-                {{ gt1.title|upper }}<br><br>
-                {{ gt1.filename }}<br>
-                by {{ gt1.author }}
-            </div>
-            <div class="card-content">
-                <div class="card-title">{{ gt1.title }}</div>
-                <div class="card-meta">{{ gt1.filename }}</div>
-            </div>
-        </div>
-        {% endfor %}
+	{% for gt1 in AUTHOR_GT1S %}
+	{% set has_subfolder = '/' in gt1.path and gt1.path != (gt1.category ~ '/' ~ gt1.author ~ '/' ~ gt1.filename) %}
+	{% if has_subfolder %}
+	    {% set folder_name = gt1.path|split('/')|slice(2, 1)|first %}
+	    <a href="/app.php/gigatronshowcase/gt1/{{ gt1.category }}/{{ gt1.author }}/{{ folder_name }}/{{ gt1.filename }}" style="text-decoration: none; color: inherit;">
+	{% else %}
+	    <a href="/app.php/gigatronshowcase/gt1/{{ gt1.category }}/{{ gt1.author }}/{{ gt1.filename }}" style="text-decoration: none; color: inherit;">
+	{% endif %}
+	    <div class="card">
+		<div class="card-screenshot">
+		    {{ gt1.title|upper }}<br><br>
+		    {{ gt1.filename }}<br>
+		    by {{ gt1.author }}
+		</div>
+		<div class="card-content">
+		    <div class="card-title">{{ gt1.title }}</div>
+		    <div class="card-meta">{{ gt1.filename }}</div>
+		</div>
+	    </div>
+	</a>
+	{% endfor %}
     </div>
 </div>
 
