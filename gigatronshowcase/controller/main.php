@@ -10,9 +10,9 @@ class main
 
     public function __construct(\phpbb\controller\helper $helper, \phpbb\template\template $template, \phpbb\user $user, $root_path)
     {
-        $this->helper = $helper;
-        $this->template = $template;
-        $this->user = $user;
+	$this->helper = $helper;
+	$this->template = $template;
+	$this->user = $user;
 	$this->root_path = $root_path;
     }
 
@@ -33,6 +33,7 @@ class main
 	$this->template->assign_vars(array(
 	    'ROMS' => $roms,
 	    'FEATURED_GT1S' => $featuredGT1s,
+	    'FEATURED_GT1' => $this->getFeaturedGT1(),
 	));
 
 	return $this->helper->render('gigatronshowcase_main.html', 'Gigatron Showcase');
@@ -301,6 +302,57 @@ class main
 	}
     }
 
+    private function getCategoryOrder()
+    {
+	$categoryOrderFile = $this->root_path . 'ext/at67/gigatronemulator/gt1/categories.ini';
+	$categoryOrder = array();
+
+	if (file_exists($categoryOrderFile)) {
+	    $iniData = parse_ini_file($categoryOrderFile);
+	    if ($iniData !== false) {
+		ksort($iniData);
+		$categoryOrder = array_values($iniData);
+	    }
+	}
+
+	return $categoryOrder;
+    }
+
+    private function getRomOrder()
+    {
+	$romOrderFile = $this->root_path . 'ext/at67/gigatronemulator/roms/roms.ini';
+	$romOrder = array();
+
+	if (file_exists($romOrderFile)) {
+	    $iniData = parse_ini_file($romOrderFile);
+	    if ($iniData !== false) {
+		ksort($iniData);
+		foreach ($iniData as $order => $filename) {
+		    $romOrder[(int)$order] = $filename;
+		}
+	    }
+	}
+
+	return $romOrder;
+    }
+
+    private function getFeaturedGT1()
+    {
+	// For now, return a placeholder featured GT1
+	return array(
+	    'title' => 'Snake Game v2.1',
+	    'author' => 'at67',
+	    'category' => 'Games',
+	    'description' => 'Classic snake game reimagined for the Gigatron. Navigate the snake to eat food and grow longer while avoiding walls and your own tail. Features smooth movement, score tracking, and increasing difficulty levels.',
+	    'rating' => '4.8/5',
+	    'year' => '2025',
+	    'screenshot_exists' => false,
+	    'screenshot_url' => null,
+	    'path' => 'games/at67/Snake.gt1',
+	    'filename' => 'Snake.gt1'
+	);
+    }
+
     private function getFeaturedGT1s($gt1s)
     {
 	$featured = array();
@@ -313,7 +365,37 @@ class main
 	    $grouped[$category][$author][] = $gt1;
 	}
 
-	// Pick first item from each author in each category
+	// Get category order from INI
+	$categoryOrder = $this->getCategoryOrder();
+
+	// Process categories in the specified order first
+	if (!empty($categoryOrder)) {
+	    foreach ($categoryOrder as $categoryName) {
+		if (isset($grouped[$categoryName])) {
+		    $featured[$categoryName] = array();
+
+		    foreach ($grouped[$categoryName] as $author => $files) {
+			// Sort files alphabetically and take first one
+			usort($files, function($a, $b) {
+			    return strcmp($a['filename'], $b['filename']);
+			});
+
+			$featuredFile = $files[0];
+			$featuredFile['total_count'] = count($files);
+
+			// Add screenshot info using reusable method
+			$featuredFile = $this->addScreenshotInfo($featuredFile);
+
+			$featured[$categoryName][] = $featuredFile;
+		    }
+
+		    // Remove from grouped so we don't process it again
+		    unset($grouped[$categoryName]);
+		}
+	    }
+	}
+
+	// Process any remaining categories not in the order file
 	foreach ($grouped as $category => $authors) {
 	    $featured[$category] = array();
 
@@ -338,87 +420,113 @@ class main
 
     private function scanRoms()
     {
-        $roms = array();
-        $romsPath = $this->root_path . 'ext/at67/gigatronemulator/roms/';
-        
-        if (is_dir($romsPath)) {
-            $files = scandir($romsPath);
-            foreach ($files as $file) {
-                if ($file === '.' || $file === '..' || strpos($file, ':Zone.Identifier') !== false) continue;
-                
-                if (pathinfo($file, PATHINFO_EXTENSION) === 'rom') {
-                    $romData = array(
-                        'filename' => $file,
-                        'path' => $file,
-                        'title' => pathinfo($file, PATHINFO_FILENAME),
-                        'author' => 'Unknown',
-                        'version' => '',
-                        'description' => '',
-                        'features' => '',
-                        'category' => 'Firmware',
-                    );
+	$roms = array();
+	$romsPath = $this->root_path . 'ext/at67/gigatronemulator/roms/';
 
-                    // Check for .ini metadata file
-                    $iniFile = $romsPath . pathinfo($file, PATHINFO_FILENAME) . '.ini';
-                    if (file_exists($iniFile)) {
-                        $metadata = $this->parseIniMetadata($iniFile);
-                        $romData = array_merge($romData, $metadata);
-                    }
+	if (is_dir($romsPath)) {
+	    $files = scandir($romsPath);
+	    foreach ($files as $file) {
+		if ($file === '.' || $file === '..' || strpos($file, ':Zone.Identifier') !== false) continue;
 
-                    $roms[] = $romData;
-                }
-            }
-        }
-        
-        return $roms;
+		if (pathinfo($file, PATHINFO_EXTENSION) === 'rom') {
+		    $romData = array(
+			'filename' => $file,
+			'path' => $file,
+			'title' => pathinfo($file, PATHINFO_FILENAME),
+			'author' => 'Unknown',
+			'version' => '',
+			'description' => '',
+			'features' => '',
+			'category' => 'Firmware',
+		    );
+
+		    // Check for .ini metadata file
+		    $iniFile = $romsPath . pathinfo($file, PATHINFO_FILENAME) . '.ini';
+		    if (file_exists($iniFile)) {
+			$metadata = $this->parseIniMetadata($iniFile);
+			$romData = array_merge($romData, $metadata);
+		    }
+
+		    $roms[] = $romData;
+		}
+	    }
+	}
+
+	// Order ROMs according to roms.ini
+	$romOrder = $this->getRomOrder();
+	if (!empty($romOrder)) {
+	    $orderedRoms = array();
+	    $remainingRoms = array();
+
+	    // First add ROMs in specified order
+	    foreach ($romOrder as $order => $filename) {
+		foreach ($roms as $rom) {
+		    if ($rom['filename'] === $filename) {
+			$orderedRoms[] = $rom;
+			break;
+		    }
+		}
+	    }
+
+	    // Then add any remaining ROMs not in the order file
+	    foreach ($roms as $rom) {
+		if (!in_array($rom['filename'], $romOrder)) {
+		    $remainingRoms[] = $rom;
+		}
+	    }
+
+	    $roms = array_merge($orderedRoms, $remainingRoms);
+	}
+
+	return $roms;
     }
 
     private function parseIniMetadata($iniFile)
     {
-        $metadata = array();
-        $content = file_get_contents($iniFile);
-        
-        if ($content !== false) {
-            $lines = explode("\n", $content);
-            foreach ($lines as $line) {
-                $line = trim($line);
-                
-                // Skip empty lines, comments, and section headers
-                if (empty($line) || $line[0] === '#' || $line[0] === '[') {
-                    continue;
-                }
-                
-                // Parse key=value pairs
-                $parts = explode('=', $line, 2);
-                if (count($parts) === 2) {
-                    $key = trim($parts[0]);
-                    $value = trim($parts[1]);
-                    $metadata[$key] = $value;
-                }
-            }
-        }
-        
-        return $metadata;
+	$metadata = array();
+	$content = file_get_contents($iniFile);
+
+	if ($content !== false) {
+	    $lines = explode("\n", $content);
+	    foreach ($lines as $line) {
+		$line = trim($line);
+
+		// Skip empty lines, comments, and section headers
+		if (empty($line) || $line[0] === '#' || $line[0] === '[') {
+		    continue;
+		}
+
+		// Parse key=value pairs
+		$parts = explode('=', $line, 2);
+		if (count($parts) === 2) {
+		    $key = trim($parts[0]);
+		    $value = trim($parts[1]);
+		    $metadata[$key] = $value;
+		}
+	    }
+	}
+
+	return $metadata;
     }
 
     private function scanGT1s()
     {
-        $gt1s = array();
-        $gt1Path = $this->root_path . 'ext/at67/gigatronemulator/gt1/';
-        
-        if (is_dir($gt1Path)) {
-            $categories = scandir($gt1Path);
-            foreach ($categories as $category) {
-                if ($category === '.' || $category === '..') continue;
-                
-                $categoryPath = $gt1Path . $category . '/';
-                if (is_dir($categoryPath)) {
-                    $authors = scandir($categoryPath);
-                    foreach ($authors as $author) {
-                        if ($author === '.' || $author === '..') continue;
-                        
-                        $authorPath = $categoryPath . $author . '/';
-			    if (is_dir($authorPath)) {
+	$gt1s = array();
+	$gt1Path = $this->root_path . 'ext/at67/gigatronemulator/gt1/';
+
+	if (is_dir($gt1Path)) {
+	    $categories = scandir($gt1Path);
+	    foreach ($categories as $category) {
+		if ($category === '.' || $category === '..') continue;
+
+		$categoryPath = $gt1Path . $category . '/';
+		if (is_dir($categoryPath)) {
+		    $authors = scandir($categoryPath);
+		    foreach ($authors as $author) {
+			if ($author === '.' || $author === '..') continue;
+
+			$authorPath = $categoryPath . $author . '/';
+			if (is_dir($authorPath)) {
 			    $files = scandir($authorPath);
 			    foreach ($files as $file) {
 				if ($file === '.' || $file === '..') continue;
@@ -426,36 +534,36 @@ class main
 				$filePath = $authorPath . $file;
 
 				if (is_dir($filePath)) {
-				// Check subdirectory for gt1 files (like at67/Invader/)
-				$subFiles = scandir($filePath . '/');
-				foreach ($subFiles as $subFile) {
-				    if (pathinfo($subFile, PATHINFO_EXTENSION) === 'gt1') {
-					$gt1s[] = array(
-					    'filename' => $subFile,
-					    'author' => $author,
-					    'category' => $category,
-					    'path' => $category . '/' . $author . '/' . $file . '/' . $subFile,
-					    'title' => pathinfo($subFile, PATHINFO_FILENAME),
-					);
+				    // Check subdirectory for gt1 files (like at67/Invader/)
+				    $subFiles = scandir($filePath . '/');
+				    foreach ($subFiles as $subFile) {
+					if (pathinfo($subFile, PATHINFO_EXTENSION) === 'gt1') {
+					    $gt1s[] = array(
+						'filename' => $subFile,
+						'author' => $author,
+						'category' => $category,
+						'path' => $category . '/' . $author . '/' . $file . '/' . $subFile,
+						'title' => pathinfo($subFile, PATHINFO_FILENAME),
+					    );
+					}
 				    }
-				}
 				} elseif (pathinfo($file, PATHINFO_EXTENSION) === 'gt1') {
-				// Direct gt1 file in author folder (like delpozzo/)
-				$gt1s[] = array(
-				    'filename' => $file,
-				    'author' => $author,
-				    'category' => $category,
-				    'path' => $category . '/' . $author . '/' . $file,
-				    'title' => pathinfo($file, PATHINFO_FILENAME),
-				);
+				    // Direct gt1 file in author folder (like delpozzo/)
+				    $gt1s[] = array(
+					'filename' => $file,
+					'author' => $author,
+					'category' => $category,
+					'path' => $category . '/' . $author . '/' . $file,
+					'title' => pathinfo($file, PATHINFO_FILENAME),
+				    );
 				}
 			    }
-                        }
-                    }
-                }
-            }
-        }
-        
-        return $gt1s;
+			}
+		    }
+		}
+	    }
+	}
+
+	return $gt1s;
     }
 }
