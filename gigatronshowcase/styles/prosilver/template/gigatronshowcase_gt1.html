@@ -73,13 +73,13 @@
     position: relative;
 }
 
-.screenshot::before {
-    content: "{{ GT1.title|upper }}";
-    position: absolute;
-    top: 20px;
-    font-size: 16px;
-    font-weight: bold;
-    color: white;
+.screenshot-image {
+    width: 480px;
+    height: 360px;
+    border: 2px solid #2a5298;
+    border-radius: 8px;
+    display: block;
+    margin: 0 auto;
 }
 
 .screenshot-placeholder {
@@ -272,14 +272,19 @@
 	    <!-- Centered Screenshot Section -->
 	    <div class="screenshot-section-centered">
 		<div class="screenshot">
-		    <div class="screenshot-placeholder">
-			Screenshot placeholder<br>
-			(480×360 pixels)
-		    </div>
+		    {% if SCREENSHOT_EXISTS %}
+			<img src="{{ SCREENSHOT_URL }}" alt="{{ GT1.title }} Screenshot" class="screenshot-image" />
+		    {% else %}
+			<div class="screenshot-placeholder">
+			    Screenshot placeholder<br>
+			    (480×360 pixels)
+			</div>
+		    {% endif %}
 		</div>
 		<div class="button-group">
 		    <a href="{{ GT1_DOWNLOAD_URL }}" class="download-btn">📥 {{ GT1.filename }}</a>
 		    <a href="{{ U_EMULATOR }}?autoload_rom={{ GT1.preferred_rom|default('ROMv6') }}.rom&autoload_gt1={{ GT1.path }}" class="emulator-btn">🎮 Emulator</a>
+		    <a href="{{ U_EMULATOR_SCREENSHOT }}" class="emulator-btn">📷 Screenshot</a>
 		</div>
 	    </div>
 	    <!-- Full Width Info Section -->

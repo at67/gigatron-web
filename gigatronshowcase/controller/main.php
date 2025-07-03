@@ -132,6 +132,12 @@ class main
 	    $selectedGt1 = array_merge($selectedGt1, $metadata);
 	}
 
+	// Check if screenshot exists
+	$screenshotFilename = str_replace('.gt1', '.png', basename($selectedGt1['path']));
+	$screenshotPath = dirname($fullFilePath) . '/' . $screenshotFilename;
+	$screenshotExists = file_exists($screenshotPath);
+	$screenshotUrl = $screenshotExists ? '/ext/at67/gigatronemulator/gt1/' . dirname($selectedGt1['path']) . '/' . $screenshotFilename . '?' . filemtime($screenshotPath) : null;
+
 	// Calculate file size
 	if (file_exists($fullFilePath)) {
 	    $fileSize = filesize($fullFilePath);
@@ -149,12 +155,15 @@ class main
 	    'GT1' => $selectedGt1,
 	    'AUTHOR' => $author,
 	    'CATEGORY' => $category,
+	    'SCREENSHOT_EXISTS' => $screenshotExists,
+	    'SCREENSHOT_URL' => $screenshotUrl,
 	    'GT1_DOWNLOAD_URL' => '/ext/at67/gigatronemulator/gt1/' . $selectedGt1['path'],
 	    'U_BACK_TO_AUTHOR' => $this->helper->route('at67_gigatronshowcase_author', array(
 		'author' => $author,
 		'category' => $category
 	    )),
-	    'U_EMULATOR' => $this->helper->route('at67_gigatronemulator_main'),  // ADD THIS LINE
+	    'U_EMULATOR' => $this->helper->route('at67_gigatronemulator_main'),
+	    'U_EMULATOR_SCREENSHOT' => $this->helper->route('at67_gigatronemulator_main') . '?autoload_rom=' . urlencode($selectedGt1['preferred_rom'] ?? 'ROMv6') . '.rom&autoload_gt1=' . urlencode($selectedGt1['path']) . '&screenshot_mode=1',
 	    'COMPATIBLE_ROMS' => $compatibleRoms,
 	));
 
@@ -167,6 +176,113 @@ class main
 	    return round($bytes / 1024, 1) . ' KB';
 	}
 	return $bytes . ' bytes';
+    }
+
+    public function saveScreenshot()
+    {
+	global $phpbb_container;
+	$auth = $phpbb_container->get('auth');
+	if (!$auth->acl_get('a_')) {
+	    return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'NOT_AUTHORISED'], 403);
+	}
+
+	$request = $phpbb_container->get('request');
+	$gt1Path = $request->variable('gt1_path', '');
+
+	if (empty($gt1Path)) {
+	    return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'Missing gt1_path parameter'], 400);
+	}
+
+	// Enhanced path validation - prevent directory traversal
+	if (strpos($gt1Path, '..') !== false || strpos($gt1Path, '\\') !== false) {
+	    return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'Invalid path'], 400);
+	}
+
+	$fullGt1Path = $this->root_path . 'ext/at67/gigatronemulator/gt1/' . $gt1Path;
+	if (!file_exists($fullGt1Path)) {
+	    return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'GT1 file not found'], 404);
+	}
+
+	// Get uploaded file through phpBB
+	$uploadedFile = $request->file('screenshot');
+
+	if (!$uploadedFile) {
+	    return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'No file uploaded'], 400);
+	}
+
+	// Enhanced file size validation
+	if ($uploadedFile['size'] > 524288) { // 512KB  limit
+	    return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'File too large'], 400);
+	}
+
+	// Validate file type more strictly
+	$finfo = finfo_open(FILEINFO_MIME_TYPE);
+	$mimeType = finfo_file($finfo, $uploadedFile['tmp_name']);
+	finfo_close($finfo);
+
+	if ($mimeType !== 'image/png') {
+	    return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'File must be PNG'], 400);
+	}
+
+	// Check disk space (require at least 10MB free)
+	$gt1Directory = dirname($fullGt1Path);
+	if (disk_free_space($gt1Directory) < 10485760) {
+	    return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'Insufficient disk space'], 500);
+	}
+
+	// Generate screenshot filename
+	$gt1Filename = basename($gt1Path);
+	$screenshotFilename = str_replace('.gt1', '.png', $gt1Filename);
+	$screenshotPath = $gt1Directory . '/' . $screenshotFilename;
+
+	if (move_uploaded_file($uploadedFile['tmp_name'], $screenshotPath)) {
+	    try {
+		// Enhanced image processing with error handling
+		$sourceImage = imagecreatefrompng($screenshotPath);
+		if ($sourceImage === false) {
+		    throw new \Exception('Failed to create image from PNG');
+		}
+
+		// Validate image dimensions to prevent memory exhaustion
+		$width = imagesx($sourceImage);
+		$height = imagesy($sourceImage);
+		if ($width != 640 || $height != 480) {
+		    imagedestroy($sourceImage);
+		    unlink($screenshotPath);
+		    return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'Invalid image dimensions'], 400);
+		}
+
+		$resizedImage = imagecreatetruecolor(480, 360);
+		if ($resizedImage === false) {
+		    imagedestroy($sourceImage);
+		    throw new Exception('Failed to create resized image');
+		}
+
+		if (!imagecopyresampled($resizedImage, $sourceImage, 0, 0, 0, 0, 480, 360, $width, $height)) {
+		    imagedestroy($sourceImage);
+		    imagedestroy($resizedImage);
+		    throw new Exception('Failed to resize image');
+		}
+
+		if (!imagepng($resizedImage, $screenshotPath)) {
+		    throw new Exception('Failed to save resized image');
+		}
+
+		imagedestroy($sourceImage);
+		imagedestroy($resizedImage);
+
+	    } catch (Exception $e) {
+		// Clean up on error
+		if (file_exists($screenshotPath)) {
+		    unlink($screenshotPath);
+		}
+		return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'Image processing failed: ' . $e->getMessage()], 500);
+	    }
+
+	    return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => true, 'message' => 'Screenshot saved successfully', 'filename' => $screenshotFilename]);
+	} else {
+	    return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'Failed to save screenshot'], 500);
+	}
     }
 
     private function getFeaturedGT1s($gt1s)
