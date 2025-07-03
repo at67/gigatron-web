@@ -490,6 +490,9 @@ class main
 			$featured[$categoryName][] = $featuredFile;
 		    }
 
+		    // Shuffle the authors within this category
+		    shuffle($featured[$categoryName]);
+
 		    // Remove from grouped so we don't process it again
 		    unset($grouped[$categoryName]);
 		}
@@ -514,6 +517,9 @@ class main
 
 		$featured[$category][] = $featuredFile;
 	    }
+
+	    // Shuffle the authors within this category
+	    shuffle($featured[$category]);
 	}
 
 	return $featured;
