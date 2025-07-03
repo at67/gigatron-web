@@ -113,10 +113,10 @@ function captureScreenshot() {
             method: 'POST',
             body: formData
         })
-        .then(response => response.json())
+        .then(response => {
+            return response.json();
+        })
             .then(data => {
-                console.log('Full server response:', JSON.stringify(data, null, 2));
-
                 if (data.success) {
                     console.log('Screenshot saved successfully:', data.filename);
                     window.location.href = document.referrer + '?refresh=' + Date.now();

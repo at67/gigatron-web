@@ -327,7 +327,7 @@ void Emulator::reset()
 
 void Emulator::cycle(const State& S, State& T)
 {
-	if(S._PC == 0x0309) _lastVCPUDispatch = _clock;
+	if(S._PC == 0x0309  ||  S._PC == 0x0e23) _lastVCPUDispatch = _clock;
 
 	// New state is old state unless something changes
 	T = S;
