@@ -32,7 +32,7 @@
 #define WAVE_TABLE_SIZE	  256
 #define WAVE_TABLE_START  0x0700
 
-#define AUDIO_INITIALISED (CLOCK_FREQUENCY * 5.0)
+#define AUDIO_INITIALISED (CLOCK_FREQUENCY * 0.5)
 #define AUDIO_CHANNELS    4
 #define AUDIO_PER_FRAME	  260	// x2 here to get sample rate over 8000Hz for some browsers
 #define AUDIO_SAMPLE_RATE (AUDIO_PER_FRAME*59.98)

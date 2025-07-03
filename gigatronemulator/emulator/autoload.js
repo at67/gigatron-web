@@ -67,7 +67,7 @@ function handleAutoLoading() {
                         if (gt1File) {
                             window.uiManager.onFileSelected(gt1File);
                         }
-                    }, 1000);
+                    }, 2000);
                 }
             } else if (autoloadGt1) {
                 console.log('Auto-loading GT1:', autoloadGt1);
