@@ -295,7 +295,7 @@
     <!-- Featured GT1 Section -->
     <div class="featured-section">
 	<div class="section-header">
-	    <h2 class="section-title">Featured GT1</h2>
+	    <h2 class="section-title">Featured Author</h2>
 	    <div class="section-subtitle"></div>
 	</div>
 	<div class="featured-card">
@@ -311,10 +311,10 @@
 	    </div>
 	    <div class="featured-content">
 		<div class="featured-title">{{ FEATURED_GT1.title }}</div>
-		<div class="featured-meta">🎮 {{ FEATURED_GT1.category }} • 🏷️ by {{ FEATURED_GT1.author }} • 📅 {{ FEATURED_GT1.year }} • ⭐ {{ FEATURED_GT1.rating }}</div>
+		<div class="featured-meta">🎮 {{ FEATURED_GT1.category }} • 🏷️ by {{ FEATURED_GT1.author }} • {{ FEATURED_GT1.preferred_rom|default('ROMv6') }} • 📅 {{ FEATURED_GT1.year }} • ⭐ {{ FEATURED_GT1.rating }}</div>
 		<div class="featured-description">{{ FEATURED_GT1.description }}</div>
 		<div class="featured-buttons">
-		    <a href="/app.php/gigatronemulator/main?autoload_rom=ROMv6.rom&autoload_gt1={{ FEATURED_GT1.path }}" class="btn btn-primary">▶ Play Now</a>
+		    <a href="{{ U_EMULATOR }}?autoload_rom={{ FEATURED_GT1.preferred_rom|default('ROMv6') }}.rom&autoload_gt1={{ FEATURED_GT1.path }}" class="btn btn-primary">▶ Play Now</a>
 		    <a href="/app.php/gigatronshowcase/gt1/{{ FEATURED_GT1.category }}/{{ FEATURED_GT1.author }}/{{ FEATURED_GT1.filename }}" class="btn btn-secondary">ℹ More Info</a>
 		    <a href="/ext/at67/gigatronemulator/gt1/{{ FEATURED_GT1.path }}" class="btn btn-tertiary" download>💾 Download</a>
 		</div>

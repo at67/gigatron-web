@@ -34,6 +34,7 @@ class main
 	    'ROMS' => $roms,
 	    'FEATURED_GT1S' => $featuredGT1s,
 	    'FEATURED_GT1' => $this->getFeaturedGT1(),
+	    'U_EMULATOR' => $this->helper->route('at67_gigatronemulator_main'),
 	));
 
 	return $this->helper->render('gigatronshowcase_main.html', 'Gigatron Showcase');
@@ -338,19 +339,119 @@ class main
 
     private function getFeaturedGT1()
     {
-	// For now, return a placeholder featured GT1
-	return array(
-	    'title' => 'Snake Game v2.1',
-	    'author' => 'at67',
-	    'category' => 'Games',
-	    'description' => 'Classic snake game reimagined for the Gigatron. Navigate the snake to eat food and grow longer while avoiding walls and your own tail. Features smooth movement, score tracking, and increasing difficulty levels.',
-	    'rating' => '4.8/5',
-	    'year' => '2025',
-	    'screenshot_exists' => false,
-	    'screenshot_url' => null,
-	    'path' => 'games/at67/Snake.gt1',
-	    'filename' => 'Snake.gt1'
-	);
+	// Get today's featured author
+	$featuredAuthor = $this->getFeaturedAuthors();
+
+	// Get all GT1s for this author
+	$allGt1s = $this->scanGT1s();
+	$authorGt1s = array();
+
+	foreach ($allGt1s as $gt1) {
+	    if ($gt1['author'] === $featuredAuthor) {
+		$authorGt1s[] = $gt1;
+	    }
+	}
+
+	if (empty($authorGt1s)) {
+	    throw new \phpbb\exception\http_exception(500, 'Featured author "' . $featuredAuthor . '" has no GT1 files');
+	}
+
+	// Randomly select one GT1 from this author
+	$selectedGt1 = $authorGt1s[array_rand($authorGt1s)];
+
+	// Load metadata from .ini file
+	$gt1Path = $this->root_path . 'ext/at67/gigatronemulator/gt1/';
+	$fullFilePath = $gt1Path . $selectedGt1['path'];
+	$iniFile = str_replace('.gt1', '.ini', $fullFilePath);
+
+	if (file_exists($iniFile)) {
+	    $metadata = $this->parseIniMetadata($iniFile);
+	    $selectedGt1 = array_merge($selectedGt1, $metadata);
+	}
+
+	// Add screenshot info
+	$selectedGt1 = $this->addScreenshotInfo($selectedGt1);
+
+	// Ensure required fields are set
+	if (!isset($selectedGt1['description'])) {
+	    $selectedGt1['description'] = 'No description available.';
+	}
+	if (!isset($selectedGt1['rating'])) {
+	    $selectedGt1['rating'] = '0/10';
+	}
+	if (!isset($selectedGt1['year'])) {
+	    $selectedGt1['year'] = 'Unknown';
+	}
+
+	return $selectedGt1;
+    }
+
+    private function getFeaturedAuthors()
+    {
+	$featuredIni = $this->root_path . 'ext/at67/gigatronshowcase/featured.ini';
+	$shuffleIni = $this->root_path . 'ext/at67/gigatronshowcase/featured_shuffle.ini';
+
+	// Read the featured authors list
+	if (!file_exists($featuredIni)) {
+	    return 'at67'; // fallback
+	}
+
+	$featuredData = parse_ini_file($featuredIni);
+	if ($featuredData === false || empty($featuredData)) {
+	    return 'at67'; // fallback
+	}
+
+	ksort($featuredData);
+	$authors = array_values($featuredData);
+	$authorCount = count($authors);
+	$today = date('Y-m-d');
+
+	// Try to read existing shuffle file
+	$validShuffleData = false;
+	$cycleStart = null;
+	$shuffledAuthors = array();
+
+	if (file_exists($shuffleIni)) {
+	    $shuffleData = parse_ini_file($shuffleIni);
+	    if ($shuffleData !== false && isset($shuffleData['cycle_start'])) {
+		$cycleStart = $shuffleData['cycle_start'];
+		$daysSinceStart = (strtotime($today) - strtotime($cycleStart)) / (60 * 60 * 24);
+
+		// Check if current cycle is still valid
+		if ($daysSinceStart >= 0 && $daysSinceStart < $authorCount) {
+		    // Extract shuffled authors
+		    unset($shuffleData['cycle_start']);
+		    ksort($shuffleData);
+		    $shuffledAuthors = array_values($shuffleData);
+
+		    // Verify we have the right number of authors
+		    if (count($shuffledAuthors) === $authorCount) {
+			$validShuffleData = true;
+		    }
+		}
+	    }
+	}
+
+	// Create new shuffle cycle if needed
+	if (!$validShuffleData) {
+	    $shuffledAuthors = $authors;
+	    shuffle($shuffledAuthors);
+	    $cycleStart = $today;
+
+	    // Save new shuffle file
+	    $shuffleContent = "cycle_start=" . $cycleStart . "\n";
+	    for ($i = 0; $i < count($shuffledAuthors); $i++) {
+		$shuffleContent .= ($i + 1) . "=" . $shuffledAuthors[$i] . "\n";
+	    }
+
+	    file_put_contents($shuffleIni, $shuffleContent);
+	}
+
+	// Calculate which author to return today
+	$daysSinceStart = (strtotime($today) - strtotime($cycleStart)) / (60 * 60 * 24);
+	$currentDay = (int)$daysSinceStart % $authorCount;
+
+	return $shuffledAuthors[$currentDay];
     }
 
     private function getFeaturedGT1s($gt1s)
