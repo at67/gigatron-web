@@ -270,6 +270,13 @@ class main
 		    return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'Invalid image dimensions'], 400);
 		}
 
+		// Process scanlines - copy scanline 0 to lines 1,2,3 in every group of 4
+		for ($y = 0; $y < $height; $y += 4) {
+		    if ($y + 1 < $height) imagecopy($sourceImage, $sourceImage, 0, $y + 1, 0, $y, $width, 1);
+		    if ($y + 2 < $height) imagecopy($sourceImage, $sourceImage, 0, $y + 2, 0, $y, $width, 1);
+		    if ($y + 3 < $height) imagecopy($sourceImage, $sourceImage, 0, $y + 3, 0, $y, $width, 1);
+		}
+
 		$resizedImage = imagecreatetruecolor(480, 360);
 		if ($resizedImage === false) {
 		    imagedestroy($sourceImage);

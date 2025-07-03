@@ -48,6 +48,11 @@ Module.onRuntimeInitialized = function()
 
 function handleKeyDown(event)
 {
+    // Always prevent default for arrow keys to stop page scrolling
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        event.preventDefault();
+    }
+
     let key = event.code === 'Space' ? ' ' : (event.code.startsWith('Key') ? event.code : event.key);
 
     // Check if virtual keyboard is active and handle accordingly
