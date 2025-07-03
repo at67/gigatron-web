@@ -39,12 +39,7 @@
     color: #666;
 }
 
-.grid-large {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 20px;
-}
-
+/* Cards */
 .card {
     background: white;
     border-radius: 8px;
@@ -52,6 +47,7 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     transition: transform 0.2s, box-shadow 0.2s;
     cursor: pointer;
+    min-width: 200px;
 }
 
 .card:hover {
@@ -71,6 +67,7 @@
     font-size: 10px;
     text-align: center;
     padding: 8px;
+    box-sizing: border-box;
 }
 
 .card-content {
@@ -88,18 +85,31 @@
     font-size: 11px;
     color: #666;
 }
+
+.grid-large {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.screenshot-image-main {
+    width: 160px;
+    height: 120px;
+    object-fit: cover;
+    display: block;
+}
 </style>
 
 <div class="showcase-container">
     <!-- Breadcrumb Navigation -->
     <div class="breadcrumb-nav">
-        <a href="{{ U_BACK_TO_SHOWCASE }}">← Back to Showcase</a>
+	<a href="{{ U_BACK_TO_SHOWCASE }}">← Back to Showcase</a>
     </div>
 
     <!-- Author Header -->
     <div class="author-header">
-        <div class="author-title">{{ AUTHOR|title }} - {{ CATEGORY|title }}</div>
-        <div class="author-meta">{{ AUTHOR_GT1S|length }} files in this category</div>
+	<div class="author-title">{{ AUTHOR|title }} - {{ CATEGORY|title }}</div>
+	<div class="author-meta">{{ AUTHOR_GT1S|length }} files in this category</div>
     </div>
 
     <!-- Author's Files Grid -->
@@ -114,9 +124,13 @@
 	{% endif %}
 	    <div class="card">
 		<div class="card-screenshot">
-		    {{ gt1.title|upper }}<br><br>
-		    {{ gt1.filename }}<br>
-		    by {{ gt1.author }}
+		    {% if gt1.screenshot_exists %}
+			<img src="{{ gt1.screenshot_url }}" alt="{{ gt1.title }} Screenshot" class="screenshot-image-main" />
+		    {% else %}
+			<div style="width: 160px; height: 120px; display: flex; align-items: center; justify-content: center;">
+			    No Screenshot<br>Available
+			</div>
+		    {% endif %}
 		</div>
 		<div class="card-content">
 		    <div class="card-title">{{ gt1.title }}</div>

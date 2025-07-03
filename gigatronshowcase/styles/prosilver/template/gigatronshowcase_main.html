@@ -9,7 +9,7 @@
 }
 
 .section {
-    margin-bottom: 40px;
+    margin-bottom: 0px;
 }
 
 .section-header {
@@ -114,7 +114,7 @@
 }
 
 .card-screenshot {
-    width: 100%;
+    width: 160px;
     height: 120px;
     background: #000;
     display: flex;
@@ -125,6 +125,7 @@
     font-size: 10px;
     text-align: center;
     padding: 8px;
+    box-sizing: border-box;
 }
 
 .card-content {
@@ -153,8 +154,39 @@
 
 .grid-large {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fill, 160px);
     gap: 20px;
+}
+
+.card {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    width: 160px;
+}
+
+.card-screenshot {
+    width: 100%;
+    height: 120px;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: monospace;
+    color: #00ff00;
+    font-size: 10px;
+    text-align: center;
+    padding: 0px;
+}
+
+.screenshot-image-main {
+    width: 160px;
+    height: 120px;
+    object-fit: cover;
+    display: block;
 }
 </style>
 
@@ -201,23 +233,26 @@
             <h2 class="section-title">{{ category|title }}</h2>
         </div>
         <div class="grid-horizontal">
-            {% for gt1 in files %}
+	    {% for gt1 in files %}
 	    <a href="/app.php/gigatronshowcase/author/{{ gt1.author }}/{{ gt1.category }}" style="text-decoration: none; color: inherit;">
 	    <div class="card">
-                <div class="card-screenshot">
-                    {{ gt1.title|upper }}<br><br>
-                    Category: {{ gt1.category }}<br>
-                    by {{ gt1.author }}
-                    {% if gt1.total_count > 1 %}<br>({{ gt1.total_count }} total){% endif %}
-                </div>
-                <div class="card-content">
-                    <div class="card-title">{{ gt1.title }}</div>
-                    <div class="card-meta">by {{ gt1.author }} • {{ gt1.category|title }}{% if gt1.total_count > 1 %} • +{{ gt1.total_count - 1 }} more{% endif %}</div>
-                </div>
-            </div>
+		<div class="card-screenshot">
+		    {% if gt1.screenshot_exists %}
+			<img src="{{ gt1.screenshot_url }}" alt="{{ gt1.title }} Screenshot" class="screenshot-image-main" />
+		    {% else %}
+			<div style="width: 160px; height: 120px; display: flex; align-items: center; justify-content: center;">
+			    No Screenshot<br>Available
+			</div>
+		    {% endif %}
+		</div>
+		<div class="card-content">
+		    <div class="card-title">{{ gt1.title }}</div>
+		    <div class="card-meta">by {{ gt1.author }} • {{ gt1.category|title }}{% if gt1.total_count > 1 %} • +{{ gt1.total_count - 1 }} more{% endif %}</div>
+		</div>
+	    </div>
 	    </a>
-            {% endfor %}
-        </div>
+	    {% endfor %}
+	</div>
     </div>
     {% endfor %}
 </div>

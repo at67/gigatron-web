@@ -46,6 +46,8 @@ class main
 
 	foreach ($allGt1s as $gt1) {
 	    if ($gt1['author'] === $author && $gt1['category'] === $category) {
+		// Add screenshot info to each GT1
+		$gt1 = $this->addScreenshotInfo($gt1);
 		$authorGt1s[] = $gt1;
 	    }
 	}
@@ -176,6 +178,20 @@ class main
 	    return round($bytes / 1024, 1) . ' KB';
 	}
 	return $bytes . ' bytes';
+    }
+
+    private function addScreenshotInfo($gt1)
+    {
+	// Check if screenshot exists for this GT1
+	$gt1Path = $this->root_path . 'ext/at67/gigatronemulator/gt1/';
+	$fullFilePath = $gt1Path . $gt1['path'];
+	$screenshotFilename = str_replace('.gt1', '.png', basename($gt1['path']));
+	$screenshotPath = dirname($fullFilePath) . '/' . $screenshotFilename;
+	$screenshotExists = file_exists($screenshotPath);
+	$gt1['screenshot_exists'] = $screenshotExists;
+	$gt1['screenshot_url'] = $screenshotExists ? '/ext/at67/gigatronemulator/gt1/' . dirname($gt1['path']) . '/' . $screenshotFilename . '?' . filemtime($screenshotPath) : null;
+
+	return $gt1;
     }
 
     public function saveScreenshot()
@@ -309,6 +325,10 @@ class main
 
 		$featuredFile = $files[0];
 		$featuredFile['total_count'] = count($files);
+
+		// Add screenshot info using reusable method
+		$featuredFile = $this->addScreenshotInfo($featuredFile);
+
 		$featured[$category][] = $featuredFile;
 	    }
 	}
