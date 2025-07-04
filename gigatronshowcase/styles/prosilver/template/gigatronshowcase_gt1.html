@@ -329,6 +329,10 @@
 			<div class="meta-value">{{ GT1.filesize|default('Unknown') }}</div>
 		    </div>
 		    <div class="meta-row">
+			<div class="meta-label">RAM Model:</div>
+			<div class="meta-value">{{ GT1.ram_model|default('32K RAM') }}</div>
+		    </div>
+		    <div class="meta-row">
 			<div class="meta-label">Downloads:</div>
 			<div class="meta-value">{{ GT1.downloads|default(0) }}</div>
 		    </div>
@@ -353,6 +357,16 @@
 
 				<span class="rating-text">({{ rating }}/10)</span>
 			    </div>
+			</div>
+		    </div>
+		    <div class="meta-row">
+			<div class="meta-label">Source Code:</div>
+			<div class="meta-value">
+			    {% if GT1.source_code %}
+				<a href="{{ GT1.source_code }}" target="_blank" style="color: #2a5298; text-decoration: none;">📁 View Source</a>
+			    {% else %}
+				<span style="color: #666; font-style: italic;">Not available</span>
+			    {% endif %}
 			</div>
 		    </div>
 		    <div class="meta-row">

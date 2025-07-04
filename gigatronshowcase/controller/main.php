@@ -164,6 +164,17 @@ class main
 	    $selectedGt1 = array_merge($selectedGt1, $metadata);
 	}
 
+	// Check for RAM model - default to 32K, auto-detect 64K from filename, or use .ini value
+	if (!isset($selectedGt1['ram_model'])) {
+	    // Default to 32K RAM
+	    $selectedGt1['ram_model'] = '32K RAM';
+
+	    // Check if filename contains "64k"
+	    if (stripos($selectedGt1['filename'], '64k') !== false) {
+		$selectedGt1['ram_model'] = '64K RAM';
+	    }
+	}
+
 	// Check if screenshot exists
 	$screenshotFilename = str_replace('.gt1', '.png', basename($selectedGt1['path']));
 	$screenshotPath = dirname($fullFilePath) . '/' . $screenshotFilename;
