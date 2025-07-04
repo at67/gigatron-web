@@ -76,14 +76,14 @@ class main
 	$selectedRom = null;
 
 	foreach ($roms as $rom) {
-	if ($rom['filename'] === $filename) {
-	    $selectedRom = $rom;
-	    break;
-	}
+	    if ($rom['filename'] === $filename) {
+		$selectedRom = $rom;
+		break;
+	    }
 	}
 
 	if (!$selectedRom) {
-	throw new \phpbb\exception\http_exception(404, 'ROM not found');
+	    throw new \phpbb\exception\http_exception(404, 'ROM not found');
 	}
 
 	// Check for ROM screenshot (similar to GT1 logic)
@@ -92,6 +92,24 @@ class main
 	$screenshotPath = $romsPath . $screenshotFilename;
 	$screenshotExists = file_exists($screenshotPath);
 	$screenshotUrl = $screenshotExists ? '/ext/at67/gigatronemulator/roms/' . $screenshotFilename . '?' . filemtime($screenshotPath) : null;
+
+	// Calculate file size
+	$romFilePath = $romsPath . $selectedRom['filename'];
+	if (file_exists($romFilePath)) {
+	    $fileSize = filesize($romFilePath);
+	    $selectedRom['filesize'] = $this->formatFileSize($fileSize);
+	}
+
+	// Ensure required metadata fields are set with defaults
+	if (!isset($selectedRom['description'])) {
+	    $selectedRom['description'] = 'No description available.';
+	}
+	if (!isset($selectedRom['downloads'])) {
+	    $selectedRom['downloads'] = '0';
+	}
+	if (!isset($selectedRom['date'])) {
+	    $selectedRom['date'] = 'Unknown';
+	}
 
 	$this->template->assign_vars(array(
 	'ROM' => $selectedRom,
@@ -587,7 +605,6 @@ class main
 			'version' => '',
 			'description' => '',
 			'features' => '',
-			'category' => 'Firmware',
 		    );
 
 		    // Check for .ini metadata file

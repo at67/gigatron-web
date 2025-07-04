@@ -133,6 +133,7 @@ function updateAudio()
     if(isMuted  ||  numAudioSamples <= 0)
     {
         audioReadIndex = audioWriteIndex;
+        tailTime = currentTime;
         return;
     }
 

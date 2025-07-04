@@ -7,149 +7,287 @@
     padding: 20px;
 }
 
-.breadcrumb-nav {
-    margin-bottom: 20px;
-    font-size: 12px;
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    background: white;
+    border: 1px solid #d4d4d4;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.breadcrumb-nav a {
-    color: #105289;
+.header {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: white;
+    padding: 20px 30px;
+    border-radius: 8px 8px 0 0;
+}
+
+.back-link {
+    color: #b8d4f1;
     text-decoration: none;
+    font-size: 14px;
+    margin-bottom: 10px;
+    display: inline-block;
 }
 
-.breadcrumb-nav a:hover {
+.back-link:hover {
+    color: white;
     text-decoration: underline;
 }
 
-.rom-details {
-    display: flex;
-    gap: 30px;
+.title {
+    font-size: 32px;
+    font-weight: bold;
+    margin: 0;
+}
+
+.subtitle {
+    font-size: 16px;
+    opacity: 0.9;
+    margin: 5px 0 0 0;
+}
+
+.content {
+    padding: 30px;
+}
+
+.screenshot-section-centered {
+    text-align: center;
     margin-bottom: 30px;
 }
 
-.rom-screenshot {
-    width: 320px;
-    height: 240px;
+.screenshot {
+    width: 480px;
+    height: 360px;
     background: #000080;
-    border: 2px solid #555;
+    border: 2px solid #2a5298;
     border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: monospace;
     color: white;
-    font-size: 12px;
-    text-align: center;
-    flex-shrink: 0;
-}
-
-.rom-info {
-    flex: 1;
-}
-
-.rom-title {
-    font-size: 28px;
-    font-weight: bold;
-    color: #105289;
-    margin-bottom: 10px;
-}
-
-.rom-meta {
+    font-family: 'Courier New', monospace;
     font-size: 14px;
+    margin: 0 auto 20px auto;
+    position: relative;
+}
+
+.screenshot-image {
+    width: 480px;
+    height: 360px;
+    border: 2px solid #2a5298;
+    border-radius: 8px;
+    display: block;
+    margin: 0 auto;
+}
+
+.screenshot-placeholder {
     color: #666;
-    margin-bottom: 15px;
+    font-size: 12px;
+    opacity: 0.7;
 }
 
-.rom-description {
-    font-size: 14px;
-    line-height: 1.5;
-    margin-bottom: 20px;
-    color: #333;
-}
-
-.rom-features {
-    font-size: 14px;
-    color: #555;
-    margin-bottom: 20px;
-}
-
-.action-buttons {
-    display: flex;
-    gap: 15px;
-}
-
-.btn {
+.download-btn {
+    background: #2a5298;
+    color: white;
     padding: 12px 24px;
     border: none;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: bold;
     cursor: pointer;
     text-decoration: none;
-    display: inline-flex;
+    display: inline-block;
+    transition: background 0.3s ease;
+}
+
+.download-btn:hover {
+    background: #1e3c72;
+    color: white;
+}
+
+.info-section-full {
+    width: 100%;
+}
+
+.metadata {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.metadata h3 {
+    margin: 0 0 15px 0;
+    color: #2a5298;
+    font-size: 18px;
+    border-bottom: 2px solid #2a5298;
+    padding-bottom: 5px;
+}
+
+.meta-row {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    margin-bottom: 12px;
     align-items: center;
-    gap: 8px;
 }
 
-.btn-primary {
-    background: #dc2626;
+.meta-label {
+    font-weight: bold;
+    color: #555;
+    font-size: 14px;
+}
+
+.meta-value {
+    color: #333;
+    font-size: 14px;
+}
+
+.description {
+    font-style: italic;
+    color: #666;
+    line-height: 1.4;
+}
+
+.details {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 20px;
+}
+
+.details h3 {
+    margin: 0 0 15px 0;
+    color: #2a5298;
+    font-size: 18px;
+    border-bottom: 2px solid #2a5298;
+    padding-bottom: 5px;
+}
+
+.details-text {
+    line-height: 1.6;
+    color: #444;
+    font-size: 16px;
+}
+
+.button-group {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.emulator-btn {
+    background: #2a5298;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: background 0.3s ease;
+}
+
+.emulator-btn:hover {
+    background: #1e3c72;
     color: white;
 }
 
-.btn-secondary {
-    background: #105289;
-    color: white;
-}
+@media (max-width: 768px) {
+    .screenshot-section-centered {
+	margin-bottom: 20px;
+    }
 
-.btn:hover {
-    opacity: 0.9;
-    transform: translateY(-1px);
+    .screenshot {
+	width: 100%;
+	max-width: 320px;
+	height: 240px;
+	margin: 0 auto 20px auto;
+    }
 }
 </style>
 
 <div class="showcase-container">
-    <!-- Breadcrumb Navigation -->
-    <div class="breadcrumb-nav">
-        <a href="{{ U_BACK_TO_SHOWCASE }}">← Back to Showcase</a>
-    </div>
-
-    <!-- ROM Details -->
-    <div class="rom-details">
-	<div class="rom-screenshot">
-	    {% if SCREENSHOT_EXISTS %}
-		<img src="{{ SCREENSHOT_URL }}" alt="{{ ROM.title }} Screenshot" style="width: 320px; height: 240px; object-fit: cover; display: block;" />
-	    {% else %}
-		*** Gigatron 32K ***<br>
-		TTL microcomputer<br>
-		{{ ROM.title }}<br><br>
-		by {{ ROM.author }}<br>
-		{{ ROM.version }}<br><br>
-		────────────────────
-	    {% endif %}
+    <div class="container">
+	<div class="header">
+	    <a href="{{ U_BACK_TO_SHOWCASE }}" class="back-link">← Back to Showcase</a>
+	    <h1 class="title">{{ ROM.title }}</h1>
+	    <p class="subtitle">ROM Firmware Details</p>
 	</div>
 
-        <div class="rom-info">
-            <div class="rom-title">{{ ROM.title }}</div>
-            <div class="rom-meta">
-                by {{ ROM.author }}
-                {% if ROM.version %} • Version {{ ROM.version }}{% endif %}
-                • {{ ROM.category }}
-            </div>
-            
-            {% if ROM.description %}
-            <div class="rom-description">{{ ROM.description }}</div>
-            {% endif %}
-            
-            {% if ROM.features %}
-            <div class="rom-features">
-                <strong>Features:</strong> {{ ROM.features }}
-            </div>
-            {% endif %}
+	<div class="content">
+	    <!-- Centered Screenshot Section -->
+	    <div class="screenshot-section-centered">
+		<div class="screenshot">
+		    {% if SCREENSHOT_EXISTS %}
+			<img src="{{ SCREENSHOT_URL }}" alt="{{ ROM.title }} Screenshot" class="screenshot-image" />
+		    {% else %}
+			<div class="screenshot-placeholder">
+			    *** Gigatron 32K ***<br>
+			    TTL microcomputer<br>
+			    {{ ROM.title }}<br><br>
+			    by {{ ROM.author }}<br>
+			    {{ ROM.version }}<br><br>
+			    ────────────────────
+			</div>
+		    {% endif %}
+		</div>
+		<div class="button-group">
+		    <a href="{{ ROM_DOWNLOAD_URL }}" class="download-btn">📥 {{ ROM.filename }}</a>
+		    <a href="{{ U_EMULATOR_SCREENSHOT }}" class="emulator-btn">📷 Screenshot</a>
+		</div>
+	    </div>
 
-	    <div class="action-buttons">
-		<a href="{{ U_EMULATOR }}" class="btn btn-primary">▶ Play Now</a>
-		<a href="{{ ROM_DOWNLOAD_URL }}" class="btn btn-secondary" download>💾 Download ROM</a>
-		<a href="{{ U_EMULATOR_SCREENSHOT }}" class="btn btn-secondary">📷 Screenshot</a>
+	    <!-- Full Width Info Section -->
+	    <div class="info-section-full">
+		<div class="metadata">
+		    <h3>Firmware Details</h3>
+		    <div class="meta-row">
+			<div class="meta-label">Author:</div>
+			<div class="meta-value">{{ ROM.author|default('Unknown') }}</div>
+		    </div>
+		    <div class="meta-row">
+			<div class="meta-label">Version:</div>
+			<div class="meta-value">{{ ROM.version|default('Unknown') }}</div>
+		    </div>
+		    <div class="meta-row">
+			<div class="meta-label">Release Date:</div>
+			<div class="meta-value">{{ ROM.date|default('Unknown') }}</div>
+		    </div>
+		    <div class="meta-row">
+			<div class="meta-label">File Size:</div>
+			<div class="meta-value">{{ ROM.filesize|default('Unknown') }}</div>
+		    </div>
+		    <div class="meta-row">
+			<div class="meta-label">Downloads:</div>
+			<div class="meta-value">{{ ROM.downloads|default('0') }}</div>
+		    </div>
+		    {% if ROM.source_code %}
+		    <div class="meta-row">
+			<div class="meta-label">Source Code:</div>
+			<div class="meta-value">
+			    <a href="{{ ROM.source_code }}" target="_blank" style="color: #2a5298; text-decoration: none;">📁 View Source</a>
+			</div>
+		    </div>
+		    {% endif %}
+		    <div class="meta-row">
+			<div class="meta-label">Description:</div>
+			<div class="meta-value description">{{ ROM.description|default('No description available.') }}</div>
+		    </div>
+		</div>
+
+		{% if ROM.details %}
+		<div class="details">
+		    <h3>Details</h3>
+		    <div class="details-text">
+			{{ ROM.details|nl2br }}
+		    </div>
+		</div>
+		{% endif %}
 	    </div>
 	</div>
     </div>

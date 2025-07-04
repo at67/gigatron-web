@@ -268,8 +268,8 @@
     <!-- Fixed ROM Section -->
     <div class="rom-section">
 	<div class="section-header">
-	    <h2 class="section-title">Select Firmware (ROM)</h2>
-	    <div class="section-subtitle">Choose your Gigatron firmware</div>
+	    <h2 class="section-title">ROM</h2>
+	    <div class="section-subtitle">Gigatron Firmware</div>
 	</div>
 	<div class="rom-grid">
 	    {% for rom in ROMS %}
@@ -318,7 +318,7 @@
 		<div class="featured-meta">🎮 {{ FEATURED_GT1.category }} • 🏷️ by {{ FEATURED_GT1.author }} • {{ FEATURED_GT1.preferred_rom|default('ROMv6') }} • 📅 {{ FEATURED_GT1.year }} • ⭐ {{ FEATURED_GT1.rating }}</div>
 		<div class="featured-description">{{ FEATURED_GT1.description }}</div>
 		<div class="featured-buttons">
-		    <a href="{{ U_EMULATOR }}?autoload_rom={{ FEATURED_GT1.preferred_rom|default('ROMv6') }}.rom&autoload_gt1={{ FEATURED_GT1.path }}" class="btn btn-primary">▶ Play Now</a>
+		    <a href="{{ U_EMULATOR }}?autoload_rom={{ FEATURED_GT1.preferred_rom|default('ROMv6') }}.rom&autoload_gt1={{ FEATURED_GT1.path }}" class="btn btn-primary">▶ Run Now</a>
 		    <a href="/app.php/gigatronshowcase/gt1/{{ FEATURED_GT1.category }}/{{ FEATURED_GT1.author }}/{{ FEATURED_GT1.filename }}" class="btn btn-secondary">ℹ More Info</a>
 		    <a href="/ext/at67/gigatronemulator/gt1/{{ FEATURED_GT1.path }}" class="btn btn-tertiary" download>💾 Download</a>
 		</div>
@@ -329,8 +329,8 @@
     <!-- GT1 Sections -->
     <div class="gt1-sections">
 	<div class="section-header">
-	    <h2 class="section-title">Select GT1 (Application)</h2>
-	    <div class="section-subtitle">Browse games, demos, utilities and more</div>
+	    <h2 class="section-title">GT1</h2>
+	    <div class="section-subtitle">Games, Demos, Utils and more</div>
 	</div>
 
 	<!-- Featured GT1 Applications by Category -->
