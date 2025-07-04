@@ -93,9 +93,14 @@ function captureScreenshot() {
 
     const urlParams = new URLSearchParams(window.location.search);
     const gt1Path = urlParams.get('autoload_gt1');
+    const romFilename = urlParams.get('autoload_rom');
 
-    if (!gt1Path) {
-        alert('Error: Could not determine GT1 file path');
+    // Determine mode: GT1 takes priority, ROM as fallback
+    let isGt1Mode = gt1Path !== null && gt1Path !== '';
+    let isRomMode = !isGt1Mode && romFilename !== null && romFilename !== '';
+
+    if (!isGt1Mode && !isRomMode) {
+        alert('Error: Could not determine file context for screenshot');
         return;
     }
 
@@ -107,7 +112,16 @@ function captureScreenshot() {
 
         const formData = new FormData();
         formData.append('screenshot', blob, 'screenshot.png');
-        formData.append('gt1_path', gt1Path);
+
+        if (isGt1Mode) {
+            // GT1 mode (existing behavior)
+            formData.append('gt1_path', gt1Path);
+            console.log('Screenshot mode: GT1, path:', gt1Path);
+        } else {
+            // ROM mode (new behavior)
+            formData.append('rom_filename', romFilename);
+            console.log('Screenshot mode: ROM, filename:', romFilename);
+        }
 
         fetch('/app.php/gigatronshowcase/screenshot/save', {
             method: 'POST',
@@ -116,16 +130,16 @@ function captureScreenshot() {
         .then(response => {
             return response.json();
         })
-            .then(data => {
-                if (data.success) {
-                    console.log('Screenshot saved successfully:', data.filename);
-                    window.location.href = document.referrer + '?refresh=' + Date.now();
-                } else {
-                    console.error('Server error:', data.error);
-                    console.log('Debug data:', data.debug);
-                    alert('Error saving screenshot: ' + data.error);
-                }
-            })
+        .then(data => {
+            if (data.success) {
+                console.log('Screenshot saved successfully:', data.filename);
+                window.location.href = document.referrer + '?refresh=' + Date.now();
+            } else {
+                console.error('Server error:', data.error);
+                console.log('Debug data:', data.debug);
+                alert('Error saving screenshot: ' + data.error);
+            }
+        })
         .catch(error => {
             alert('Error uploading screenshot: ' + error.message);
         });

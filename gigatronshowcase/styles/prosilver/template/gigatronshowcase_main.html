@@ -37,6 +37,7 @@
     padding: 20px 0;
     border-bottom: 1px solid #e4eaf2;
     margin-bottom: 30px;
+    z-index: 1;
 }
 
 .rom-grid {
@@ -275,11 +276,15 @@
 	    <a href="/app.php/gigatronshowcase/rom/{{ rom.filename }}" style="text-decoration: none; color: inherit;">
 	    <div class="rom-card">
 		<div class="rom-screenshot">
-		    ROM {{ rom.title }}<br>
-		    by {{ rom.author }}<br><br>
-		    *** Gigatron 32K ***<br>
-		    TTL microcomputer<br>
-		    ────────────────────
+		    {% if rom.screenshot_exists %}
+			<img src="{{ rom.screenshot_url }}" alt="{{ rom.title }} Screenshot" style="width: 184px; height: 104px; object-fit: cover; display: block;" />
+		    {% else %}
+			ROM {{ rom.title }}<br>
+			by {{ rom.author }}<br><br>
+			*** Gigatron 32K ***<br>
+			TTL microcomputer<br>
+			────────────────────
+		    {% endif %}
 		</div>
 		<div class="rom-info">
 		    <div class="rom-title">{{ rom.title }}</div>

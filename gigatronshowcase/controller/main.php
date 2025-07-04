@@ -76,21 +76,31 @@ class main
 	$selectedRom = null;
 
 	foreach ($roms as $rom) {
-	    if ($rom['filename'] === $filename) {
-		$selectedRom = $rom;
-		break;
-	    }
+	if ($rom['filename'] === $filename) {
+	    $selectedRom = $rom;
+	    break;
+	}
 	}
 
 	if (!$selectedRom) {
-	    throw new \phpbb\exception\http_exception(404, 'ROM not found');
+	throw new \phpbb\exception\http_exception(404, 'ROM not found');
 	}
 
+	// Check for ROM screenshot (similar to GT1 logic)
+	$romsPath = $this->root_path . 'ext/at67/gigatronemulator/roms/';
+	$screenshotFilename = str_replace('.rom', '.png', $selectedRom['filename']);
+	$screenshotPath = $romsPath . $screenshotFilename;
+	$screenshotExists = file_exists($screenshotPath);
+	$screenshotUrl = $screenshotExists ? '/ext/at67/gigatronemulator/roms/' . $screenshotFilename . '?' . filemtime($screenshotPath) : null;
+
 	$this->template->assign_vars(array(
-	    'ROM' => $selectedRom,
-	    'U_BACK_TO_SHOWCASE' => $this->helper->route('at67_gigatronshowcase_main'),
-	    'U_EMULATOR' => $this->helper->route('at67_gigatronemulator_main'),
-	    'ROM_DOWNLOAD_URL' => '/ext/at67/gigatronemulator/roms/' . $selectedRom['filename'],
+	'ROM' => $selectedRom,
+	'SCREENSHOT_EXISTS' => $screenshotExists,
+	'SCREENSHOT_URL' => $screenshotUrl,
+	'U_BACK_TO_SHOWCASE' => $this->helper->route('at67_gigatronshowcase_main'),
+	'U_EMULATOR' => $this->helper->route('at67_gigatronemulator_main'),
+	'ROM_DOWNLOAD_URL' => '/ext/at67/gigatronemulator/roms/' . $selectedRom['filename'],
+	'U_EMULATOR_SCREENSHOT' => $this->helper->route('at67_gigatronemulator_main') . '?autoload_rom=' . urlencode($selectedRom['filename']) . '&screenshot_mode=1',
 	));
 
 	return $this->helper->render('gigatronshowcase_rom.html', $selectedRom['title'] . ' - ROM Details');
@@ -206,19 +216,51 @@ class main
 
 	$request = $phpbb_container->get('request');
 	$gt1Path = $request->variable('gt1_path', '');
+	$romFilename = $request->variable('rom_filename', '');
 
-	if (empty($gt1Path)) {
-	    return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'Missing gt1_path parameter'], 400);
+	// Simple logic: GT1 takes priority if both exist, ROM only if GT1 doesn't exist
+	if (!empty($gt1Path)) {
+	    // GT1 mode (existing behavior) - takes priority
+	    $isRomMode = false;
+	    $isGt1Mode = true;
+	} elseif (!empty($romFilename)) {
+	    // ROM mode (new behavior) - only if no GT1
+	    $isRomMode = true;
+	    $isGt1Mode = false;
+	} else {
+	    // Neither parameter provided
+	    return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'Missing required parameters (gt1_path or rom_filename)'], 400);
 	}
 
 	// Enhanced path validation - prevent directory traversal
-	if (strpos($gt1Path, '..') !== false || strpos($gt1Path, '\\') !== false) {
-	    return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'Invalid path'], 400);
-	}
+	if ($isRomMode) {
+	    if (strpos($romFilename, '..') !== false || strpos($romFilename, '/') !== false || strpos($romFilename, '\\') !== false) {
+		return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'Invalid ROM filename'], 400);
+	    }
 
-	$fullGt1Path = $this->root_path . 'ext/at67/gigatronemulator/gt1/' . $gt1Path;
-	if (!file_exists($fullGt1Path)) {
-	    return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'GT1 file not found'], 404);
+	    $fullRomPath = $this->root_path . 'ext/at67/gigatronemulator/roms/' . $romFilename;
+	    if (!file_exists($fullRomPath)) {
+		return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'ROM file not found'], 404);
+	    }
+
+	    $targetDirectory = dirname($fullRomPath);
+	    $screenshotFilename = str_replace('.rom', '.png', $romFilename);
+	    $screenshotPath = $targetDirectory . '/' . $screenshotFilename;
+	} else {
+	    // GT1 mode - existing logic
+	    if (strpos($gt1Path, '..') !== false || strpos($gt1Path, '\\') !== false) {
+		return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'Invalid path'], 400);
+	    }
+
+	    $fullGt1Path = $this->root_path . 'ext/at67/gigatronemulator/gt1/' . $gt1Path;
+	    if (!file_exists($fullGt1Path)) {
+		return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'GT1 file not found'], 404);
+	    }
+
+	    $targetDirectory = dirname($fullGt1Path);
+	    $gt1Filename = basename($gt1Path);
+	    $screenshotFilename = str_replace('.gt1', '.png', $gt1Filename);
+	    $screenshotPath = $targetDirectory . '/' . $screenshotFilename;
 	}
 
 	// Get uploaded file through phpBB
@@ -229,7 +271,7 @@ class main
 	}
 
 	// Enhanced file size validation
-	if ($uploadedFile['size'] > 524288) { // 512KB  limit
+	if ($uploadedFile['size'] > 524288) { // 512KB limit
 	    return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'File too large'], 400);
 	}
 
@@ -243,15 +285,9 @@ class main
 	}
 
 	// Check disk space (require at least 10MB free)
-	$gt1Directory = dirname($fullGt1Path);
-	if (disk_free_space($gt1Directory) < 10485760) {
+	if (disk_free_space($targetDirectory) < 10485760) {
 	    return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'Insufficient disk space'], 500);
 	}
-
-	// Generate screenshot filename
-	$gt1Filename = basename($gt1Path);
-	$screenshotFilename = str_replace('.gt1', '.png', $gt1Filename);
-	$screenshotPath = $gt1Directory . '/' . $screenshotFilename;
 
 	if (move_uploaded_file($uploadedFile['tmp_name'], $screenshotPath)) {
 	    try {
@@ -560,6 +596,13 @@ class main
 			$metadata = $this->parseIniMetadata($iniFile);
 			$romData = array_merge($romData, $metadata);
 		    }
+
+		    // Check for ROM screenshot
+		    $screenshotFilename = str_replace('.rom', '.png', $file);
+		    $screenshotPath = $romsPath . $screenshotFilename;
+		    $screenshotExists = file_exists($screenshotPath);
+		    $romData['screenshot_exists'] = $screenshotExists;
+		    $romData['screenshot_url'] = $screenshotExists ? '/ext/at67/gigatronemulator/roms/' . $screenshotFilename . '?' . filemtime($screenshotPath) : null;
 
 		    $roms[] = $romData;
 		}

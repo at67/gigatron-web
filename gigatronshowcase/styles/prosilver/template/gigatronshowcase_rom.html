@@ -115,15 +115,19 @@
 
     <!-- ROM Details -->
     <div class="rom-details">
-        <div class="rom-screenshot">
-            *** Gigatron 32K ***<br>
-            TTL microcomputer<br>
-            {{ ROM.title }}<br><br>
-            by {{ ROM.author }}<br>
-            {{ ROM.version }}<br><br>
-            ────────────────────
-        </div>
-        
+	<div class="rom-screenshot">
+	    {% if SCREENSHOT_EXISTS %}
+		<img src="{{ SCREENSHOT_URL }}" alt="{{ ROM.title }} Screenshot" style="width: 320px; height: 240px; object-fit: cover; display: block;" />
+	    {% else %}
+		*** Gigatron 32K ***<br>
+		TTL microcomputer<br>
+		{{ ROM.title }}<br><br>
+		by {{ ROM.author }}<br>
+		{{ ROM.version }}<br><br>
+		────────────────────
+	    {% endif %}
+	</div>
+
         <div class="rom-info">
             <div class="rom-title">{{ ROM.title }}</div>
             <div class="rom-meta">
@@ -141,12 +145,13 @@
                 <strong>Features:</strong> {{ ROM.features }}
             </div>
             {% endif %}
-            
-            <div class="action-buttons">
-                <a href="{{ U_EMULATOR }}" class="btn btn-primary">▶ Play Now</a>
-                <a href="{{ ROM_DOWNLOAD_URL }}" class="btn btn-secondary" download>💾 Download ROM</a>
-            </div>
-        </div>
+
+	    <div class="action-buttons">
+		<a href="{{ U_EMULATOR }}" class="btn btn-primary">▶ Play Now</a>
+		<a href="{{ ROM_DOWNLOAD_URL }}" class="btn btn-secondary" download>💾 Download ROM</a>
+		<a href="{{ U_EMULATOR_SCREENSHOT }}" class="btn btn-secondary">📷 Screenshot</a>
+	    </div>
+	</div>
     </div>
 </div>
 
