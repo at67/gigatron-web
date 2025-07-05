@@ -1,21 +1,4 @@
 <?php
-/**
- * Shared security functions for GT1 file access verification
- */
-
-/**
- * Verify current user has access to a GT1 file (owns it or is admin)
- * Admins: trusted to use correct URLs, just verify file exists
- * Users: verify they actually own the file via filesystem check
- *
- * @param string $category
- * @param string $urlAuthor Author from URL parameter
- * @param string $filename
- * @param string|null $folder
- * @param string $root_path
- * @return array Verified file info
- * @throws \phpbb\exception\http_exception
- */
 function verifyUserFileAccess($category, $urlAuthor, $filename, $folder, $root_path)
 {
     global $phpbb_container;
@@ -76,14 +59,6 @@ function verifyUserFileAccess($category, $urlAuthor, $filename, $folder, $root_p
     }
 }
 
-/**
- * Validate GT1 file format based on the C++ emulator logic
- * Ensures the file follows proper GT1 segment structure with terminator
- *
- * @param string $filePath Path to the GT1 file to validate
- * @param string &$errorMessage Reference to store error message if validation fails
- * @return bool True if valid, false if invalid
- */
 function validateGT1File($filePath, &$errorMessage = null)
 {
     if (!file_exists($filePath)) {
@@ -184,4 +159,11 @@ function validateGT1File($filePath, &$errorMessage = null)
     }
 
     return true;
+}
+
+function logUserAction($action, $category, $folder, $inName, $outName, $fileSize, $userName)
+{
+    $logFile = __DIR__ . '/users.log';
+    $logEntry = date('Y-m-d H:i:s') . " $action $category $folder $inName $outName $fileSize $userName\n";
+    file_put_contents($logFile, $logEntry, FILE_APPEND | LOCK_EX);
 }

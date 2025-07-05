@@ -214,6 +214,15 @@ class main
                 return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'Image processing failed: ' . $e->getMessage()], 500);
             }
 
+            // Log screenshot action
+            require_once __DIR__ . '/security.php';
+            $username = $user->data['username'];
+            if ($isGt1Mode) {
+                logUserAction('SCREENSHOT', $category, $folder, basename($gt1Path), $screenshotFilename, $uploadedFile['size'], $username);
+            } else {
+                logUserAction('SCREENSHOT', 'roms', null, $romFilename, $screenshotFilename, $uploadedFile['size'], $username);
+            }
+
             return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => true, 'message' => 'Screenshot saved successfully', 'filename' => $screenshotFilename]);
         } else {
             return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'Failed to save screenshot'], 500);

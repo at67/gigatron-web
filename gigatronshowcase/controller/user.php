@@ -145,6 +145,8 @@ class user
                 'details' => $details,
             ));
 
+            logUserAction('CREATE', $category, null, $filename, null, filesize($targetFile), $username);
+
             // Redirect to the new GT1 page
             $redirectUrl = $this->helper->route('at67_gigatronshowcase_gt1_file', array(
                 'category' => $category,
@@ -341,6 +343,9 @@ class user
                 'details' => $details,
             ));
 
+            $fileSize = file_exists($currentGt1Path) ? filesize($currentGt1Path) : 0;
+            logUserAction('EDIT', $category, $folder, $filename, null, $fileSize, $fileInfo['actual_author']);
+
             // If category changed, move files
             if ($newCategory !== $category) {
                 // Determine the actual author for new path
@@ -368,6 +373,7 @@ class user
 
                 rename($currentGt1Path, $newGt1Path);
                 rename($currentIniPath, $newIniPath);
+
                 // Move existing screenshot (captured via emulator) if it exists
                 $currentScreenshotPath = str_replace('.gt1', '.png', $currentGt1Path);
                 if (file_exists($currentScreenshotPath)) {
@@ -516,6 +522,9 @@ class user
             $gt1Path = $fileInfo['file_path'];
             $iniPath = str_replace('.gt1', '.ini', $gt1Path);
             $screenshotPath = str_replace('.gt1', '.png', $gt1Path);
+
+            $fileSize = file_exists($gt1Path) ? filesize($gt1Path) : 0;
+            logUserAction('DELETE', $category, $folder, $filename, null, $fileSize, $fileInfo['actual_author']);
 
             // Delete files
             if (file_exists($gt1Path)) {
