@@ -180,6 +180,13 @@ class user
             throw new \phpbb\exception\http_exception(403, 'NOT_AUTHORISED');
         }
 
+        // Validate path components
+        $validated = $this->validateAndSanitizePath($category, $author, $filename, $folder);
+        $category = $validated['category'];
+        $author = $validated['author'];
+        $filename = $validated['filename'];
+        $folder = $validated['folder'];
+
         $username = $this->user->data['username'];
 
         // Check if user owns this GT1
@@ -187,6 +194,7 @@ class user
             throw new \phpbb\exception\http_exception(403, 'You can only edit your own GT1 applications');
         }
 
+        // Rest of method continues unchanged...
         // Build the correct file path
         if ($folder !== null) {
             $filepath = $folder . '/' . $filename;
@@ -253,6 +261,13 @@ class user
             throw new \phpbb\exception\http_exception(403, 'NOT_AUTHORISED');
         }
 
+        // Validate path components
+        $validated = $this->validateAndSanitizePath($category, $author, $filename, $folder);
+        $category = $validated['category'];
+        $author = $validated['author'];
+        $filename = $validated['filename'];
+        $folder = $validated['folder'];
+
         $username = $this->user->data['username'];
         if ($author !== $username) {
             throw new \phpbb\exception\http_exception(403, 'You can only edit your own GT1 applications');
@@ -272,6 +287,14 @@ class user
         $compatibleRoms = trim($request->variable('compatible_roms', ''));
         $sourceCode = trim($request->variable('source_code', ''));
         $details = trim($request->variable('details', ''));
+
+        // Validate new category
+        $this->validatePathComponent($newCategory, 'category');
+        $allowedCategories = $this->getAvailableCategories();
+        if (!in_array($newCategory, $allowedCategories)) {
+            $this->template->assign_var('ERROR', 'Invalid category selected');
+            return $this->editForm($category, $author, $filename, $folder);
+        }
 
         // Validate required fields
         if (empty($title) || empty($newCategory) || empty($description)) {
@@ -340,20 +363,17 @@ class user
                     }
                     $newGt1Path = $newFolderDir . $filename;
                     $newIniPath = str_replace('.gt1', '.ini', $newGt1Path);
-                    // Move existing screenshot if it exists
-                    $currentScreenshotPath = str_replace('.gt1', '.png', $currentGt1Path);
                     $newScreenshotPath = str_replace('.gt1', '.png', $newGt1Path);
                 } else {
                     $newGt1Path = $newDir . $filename;
                     $newIniPath = str_replace('.gt1', '.ini', $newGt1Path);
-                    // Move existing screenshot if it exists
-                    $currentScreenshotPath = str_replace('.gt1', '.png', $currentGt1Path);
                     $newScreenshotPath = str_replace('.gt1', '.png', $newGt1Path);
                 }
 
                 rename($currentGt1Path, $newGt1Path);
                 rename($currentIniPath, $newIniPath);
                 // Move existing screenshot (captured via emulator) if it exists
+                $currentScreenshotPath = str_replace('.gt1', '.png', $currentGt1Path);
                 if (file_exists($currentScreenshotPath)) {
                     rename($currentScreenshotPath, $newScreenshotPath);
                 }
@@ -388,6 +408,13 @@ class user
         if (!$auth->acl_get('u_')) {
             throw new \phpbb\exception\http_exception(403, 'NOT_AUTHORISED');
         }
+
+        // Validate path components
+        $validated = $this->validateAndSanitizePath($category, $author, $filename, $folder);
+        $category = $validated['category'];
+        $author = $validated['author'];
+        $filename = $validated['filename'];
+        $folder = $validated['folder'];
 
         $username = $this->user->data['username'];
         if ($author !== $username) {
@@ -448,15 +475,6 @@ class user
                     'folder' => $folder
                 )
             ),
-            'U_PROCESS_EDIT' => $this->helper->route(
-                $folder !== null ? 'at67_gigatronshowcase_process_edit_folder' : 'at67_gigatronshowcase_process_edit',
-                array(
-                    'category' => $category,
-                    'author' => $author,
-                    'filename' => $filename,
-                    'folder' => $folder
-                )
-            ),
         ));
 
         return $this->helper->render('user_delete.html', 'Delete GT1 Application');
@@ -470,6 +488,13 @@ class user
         if (!$auth->acl_get('u_')) {
             throw new \phpbb\exception\http_exception(403, 'NOT_AUTHORISED');
         }
+
+        // Validate path components
+        $validated = $this->validateAndSanitizePath($category, $author, $filename, $folder);
+        $category = $validated['category'];
+        $author = $validated['author'];
+        $filename = $validated['filename'];
+        $folder = $validated['folder'];
 
         $username = $this->user->data['username'];
         if ($author !== $username) {
@@ -580,5 +605,71 @@ class user
         }
 
         file_put_contents($iniPath, $content, LOCK_EX);
+    }
+
+    private function validatePathComponent($path, $type = 'path')
+    {
+        if (empty($path)) {
+            return true; // Allow empty paths (like null folder)
+        }
+
+        // Check for directory traversal attempts
+        if (strpos($path, '..') !== false) {
+            throw new \phpbb\exception\http_exception(400, "Invalid $type: contains directory traversal");
+        }
+
+        // Check for absolute paths
+        if (strpos($path, '/') === 0 || strpos($path, '\\') === 0) {
+            throw new \phpbb\exception\http_exception(400, "Invalid $type: cannot be absolute path");
+        }
+
+        // Check for path separators in filenames (folders can have them)
+        if ($type === 'filename' && (strpos($path, '/') !== false || strpos($path, '\\') !== false)) {
+            throw new \phpbb\exception\http_exception(400, "Invalid filename: cannot contain path separators");
+        }
+
+        // Check for null bytes
+        if (strpos($path, "\0") !== false) {
+            throw new \phpbb\exception\http_exception(400, "Invalid $type: contains null byte");
+        }
+
+        // Check for dangerous characters
+        $dangerousChars = ['<', '>', ':', '"', '|', '?', '*'];
+        foreach ($dangerousChars as $char) {
+            if (strpos($path, $char) !== false) {
+                throw new \phpbb\exception\http_exception(400, "Invalid $type: contains forbidden character '$char'");
+            }
+        }
+
+        return true;
+    }
+
+    private function validateAndSanitizePath($category, $author, $filename, $folder = null)
+    {
+        // Validate each component
+        $this->validatePathComponent($category, 'category');
+        $this->validatePathComponent($author, 'author');
+        $this->validatePathComponent($filename, 'filename');
+        if ($folder !== null) {
+            $this->validatePathComponent($folder, 'folder');
+        }
+
+        // Additional filename validation
+        if (!preg_match('/^[a-zA-Z0-9_\-\.\(\)\[\] ]+\.gt1$/', $filename)) {
+            throw new \phpbb\exception\http_exception(400, 'Filename contains invalid characters or wrong format');
+        }
+
+        // Validate category against allowed categories
+        $allowedCategories = $this->getAvailableCategories();
+        if (!in_array($category, $allowedCategories)) {
+            throw new \phpbb\exception\http_exception(400, 'Invalid category');
+        }
+
+        return [
+            'category' => $category,
+            'author' => $author,
+            'filename' => $filename,
+            'folder' => $folder
+        ];
     }
 }
