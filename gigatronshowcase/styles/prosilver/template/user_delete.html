@@ -1,0 +1,296 @@
+{% include 'overall_header.html' %}
+
+<style>
+.showcase-container {
+    max-width: 1152px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    background: white;
+    border: 1px solid #d4d4d4;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.header {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: white;
+    padding: 20px 30px;
+    border-radius: 8px 8px 0 0;
+}
+
+.back-link {
+    color: #b8d4f1;
+    text-decoration: none;
+    font-size: 14px;
+    margin-bottom: 10px;
+    display: inline-block;
+}
+
+.back-link:hover {
+    color: white;
+    text-decoration: underline;
+}
+
+.title {
+    font-size: 32px;
+    font-weight: bold;
+    margin: 0;
+}
+
+.subtitle {
+    font-size: 16px;
+    opacity: 0.9;
+    margin: 5px 0 0 0;
+}
+
+.content {
+    padding: 30px;
+}
+
+.gt1-info {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.gt1-info h3 {
+    margin: 0 0 15px 0;
+    color: #2a5298;
+    font-size: 18px;
+    border-bottom: 2px solid #2a5298;
+    padding-bottom: 5px;
+}
+
+.info-row {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    margin-bottom: 12px;
+    align-items: center;
+}
+
+.info-label {
+    font-weight: bold;
+    color: #555;
+    font-size: 14px;
+}
+
+.info-value {
+    color: #333;
+    font-size: 14px;
+}
+
+.warning-section {
+    background: #f8d7da;
+    border: 2px solid #f5c6cb;
+    border-radius: 8px;
+    padding: 25px;
+    margin-bottom: 30px;
+}
+
+.warning-title {
+    color: #721c24;
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.warning-text {
+    color: #721c24;
+    line-height: 1.5;
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+.warning-list {
+    color: #721c24;
+    margin: 15px 0;
+    padding-left: 20px;
+}
+
+.warning-list li {
+    margin-bottom: 8px;
+    font-size: 15px;
+}
+
+.confirmation-section {
+    background: white;
+    border: 2px solid #dc3545;
+    border-radius: 8px;
+    padding: 25px;
+    margin-bottom: 30px;
+}
+
+.confirmation-title {
+    color: #dc3545;
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.form-control {
+    width: 250px;
+    padding: 12px;
+    border: 2px solid #dc3545;
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #dc3545;
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.2);
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: background 0.3s ease;
+    margin-right: 15px;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+    color: white;
+}
+
+.btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c82333;
+    color: white;
+}
+
+.button-group {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 30px;
+}
+
+.alert {
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+}
+
+.alert-danger {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+</style>
+
+<div class="showcase-container">
+    <div class="container">
+        <div class="header">
+            <a href="{{ U_BACK_TO_GT1 }}" class="back-link">← Back to {{ GT1_DATA.title|default(FILENAME) }}</a>
+            <h1 class="title">Delete GT1 Application</h1>
+            <p class="subtitle">Permanent deletion confirmation</p>
+        </div>
+
+        <div class="content">
+            {% if ERROR %}
+            <div class="alert alert-danger">
+                {{ ERROR }}
+            </div>
+            {% endif %}
+
+            <form action="{{ U_PROCESS_DELETE }}" method="post">
+                <!-- GT1 Information -->
+                <div class="gt1-info">
+                    <h3>GT1 Application Details</h3>
+                    <div class="info-row">
+                        <div class="info-label">Title:</div>
+                        <div class="info-value">{{ GT1_DATA.title|default('Unknown') }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Author:</div>
+                        <div class="info-value">{{ AUTHOR }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Category:</div>
+                        <div class="info-value">{{ CATEGORY|title }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Filename:</div>
+                        <div class="info-value">{{ FILENAME }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">File Size:</div>
+                        <div class="info-value">{{ GT1_SIZE }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Downloads:</div>
+                        <div class="info-value">{{ DOWNLOADS }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Screenshot:</div>
+                        <div class="info-value">
+                            {% if SCREENSHOT_SIZE %}
+                                Yes ({{ SCREENSHOT_SIZE }})
+                            {% else %}
+                                No
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if FOLDER %}
+                    <div class="info-row">
+                        <div class="info-label">Folder:</div>
+                        <div class="info-value">{{ FOLDER }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Warning Section -->
+                <div class="warning-section">
+                    <div class="warning-title">⚠️ WARNING: This action cannot be undone!</div>
+                    <div class="warning-text">This will permanently delete the following files and data:</div>
+                    <ul class="warning-list">
+                        <li><strong>GT1 file:</strong> {{ FILENAME }} ({{ GT1_SIZE }})</li>
+                        <li><strong>Metadata file:</strong> {{ FILENAME|replace({'.gt1': '.ini'}) }}</li>
+                        {% if SCREENSHOT_SIZE %}
+                        <li><strong>Screenshot:</strong> {{ FILENAME|replace({'.gt1': '.png'}) }} ({{ SCREENSHOT_SIZE }})</li>
+                        {% endif %}
+                        <li><strong>Download history:</strong> {{ DOWNLOADS }} downloads by various users</li>
+                    </ul>
+                    <div class="warning-text">Once deleted, this GT1 application cannot be recovered. Users who previously downloaded it will still have their copies, but it will no longer be available in the showcase.</div>
+                </div>
+
+                <!-- Confirmation Section -->
+                <div class="confirmation-section">
+                    <div class="confirmation-title">Type "DELETE" to confirm permanent deletion:</div>
+                    <input type="text" name="confirmation" class="form-control" placeholder="Type DELETE here" required />
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="button-group">
+                    <a href="{{ U_BACK_TO_GT1 }}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-danger">🗑️ Delete Permanently</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% include 'overall_footer.html' %}

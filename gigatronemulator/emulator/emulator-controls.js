@@ -470,15 +470,16 @@ function runLoop(currentTime)
     lastTime = currentTime;
 
     // Skip first few frames until timing settles
-    if(deltaTime > 20)
+    if(deltaTime > 18)
     {
+        resetAudio();
         console.log(`Skipping frame with large delta: ${deltaTime.toFixed(2)}ms`);
         intervalId = requestAnimationFrame(runLoop);
         return;
     }
-    accumulatedTime += deltaTime;
 
     // Run emulation for actual elapsed time
+    accumulatedTime += deltaTime;
     const cyclesToRun = Math.floor(accumulatedTime * CYCLES_PER_MS);
     Module.ccall('emulator_run', null, ['number', 'number'], [emulator, cyclesToRun]);
 

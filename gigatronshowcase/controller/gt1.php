@@ -39,7 +39,12 @@ class gt1
             'AUTHOR' => $author,
             'CATEGORY' => $category,
             'AUTHOR_GT1S' => $authorGt1s,
+            'CURRENT_USERNAME' => $this->user->data['username'],
+            'IS_ADMIN' => $this->checkAdminPermission(),
             'U_BACK_TO_SHOWCASE' => $this->helper->route('at67_gigatronshowcase_main'),
+            'U_UPLOAD_TO_CATEGORY' => $this->helper->route('at67_gigatronshowcase_upload_gt1_category', array(
+                'category' => $category
+            )),
         ));
 
         return $this->helper->render('gigatronshowcase_author.html', ucfirst($author) . ' - ' . ucfirst($category));
@@ -122,6 +127,26 @@ class gt1
             'SCREENSHOT_EXISTS' => $screenshotExists,
             'SCREENSHOT_URL' => $screenshotUrl,
             'GT1_DOWNLOAD_URL' => '/ext/at67/gigatronemulator/gt1/' . $selectedGt1['path'],
+            'CURRENT_USERNAME' => $this->user->data['username'], // Add current user
+            'IS_ADMIN' => $this->checkAdminPermission(), // Add admin check
+            'U_EDIT_GT1' => $this->helper->route(
+                $folder !== null ? 'at67_gigatronshowcase_edit_gt1_folder' : 'at67_gigatronshowcase_edit_gt1',
+                array(
+                    'category' => $category,
+                    'author' => $author,
+                    'filename' => $filename,
+                    'folder' => $folder
+                )
+            ),
+            'U_DELETE_GT1' => $this->helper->route(
+                $folder !== null ? 'at67_gigatronshowcase_delete_gt1_folder' : 'at67_gigatronshowcase_delete_gt1',
+                array(
+                    'category' => $category,
+                    'author' => $author,
+                    'filename' => $filename,
+                    'folder' => $folder
+                )
+            ),
             'U_BACK_TO_AUTHOR' => $this->helper->route('at67_gigatronshowcase_author', array(
                 'author' => $author,
                 'category' => $category
@@ -343,5 +368,12 @@ class gt1
         }
 
         return $gt1s;
+    }
+
+    private function checkAdminPermission()
+    {
+        global $phpbb_container;
+        $auth = $phpbb_container->get('auth');
+        return $auth->acl_get('a_');
     }
 }

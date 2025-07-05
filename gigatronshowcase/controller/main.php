@@ -28,6 +28,12 @@ class main
         if (!$auth->acl_get('a_')) {
             throw new \phpbb\exception\http_exception(403, 'NOT_AUTHORISED');
         }
+        // REGISTERED MEMBERS ONLY CHECK
+        //global $phpbb_container;
+        //$auth = $phpbb_container->get('auth');
+        //if (!$auth->acl_get('u_')) {
+        //    throw new \phpbb\exception\http_exception(403, 'NOT_AUTHORISED');
+        //}
 
         // Scan ROMs and GT1s using content service
         $roms = $this->content->scanRoms();

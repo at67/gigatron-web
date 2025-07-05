@@ -246,145 +246,168 @@
     color: white;
 }
 
+.btn-danger {
+    background: #dc3545;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: background 0.3s ease;
+}
+
+.btn-danger:hover {
+    background: #c82333;
+    color: white;
+}
+
 @media (max-width: 768px) {
     .screenshot-section-centered {
-	margin-bottom: 20px;
+        margin-bottom: 20px;
     }
 
     .screenshot {
-	width: 100%;
-	max-width: 320px;
-	height: 240px;
-	margin: 0 auto 20px auto;
+        width: 100%;
+        max-width: 320px;
+        height: 240px;
+        margin: 0 auto 20px auto;
     }
 }
 </style>
 
 <div class="showcase-container">
     <div class="container">
-	<div class="header">
-	    <a href="{{ U_BACK_TO_AUTHOR }}" class="back-link">← Back to {{ AUTHOR|title }} - {{ CATEGORY|title }}</a>
-	    <h1 class="title">{{ GT1.title }}</h1>
-	    <p class="subtitle">GT1 Application Details</p>
-	</div>
+        <div class="header">
+            <a href="{{ U_BACK_TO_AUTHOR }}" class="back-link">← Back to {{ AUTHOR|title }} - {{ CATEGORY|title }}</a>
+            <h1 class="title">{{ GT1.title }}</h1>
+            <p class="subtitle">GT1 Application Details</p>
+        </div>
 
-	<div class="content">
-	    <!-- Centered Screenshot Section -->
-	    <div class="screenshot-section-centered">
-		<div class="screenshot">
-		    {% if SCREENSHOT_EXISTS %}
-			<img src="{{ SCREENSHOT_URL }}" alt="{{ GT1.title }} Screenshot" class="screenshot-image" />
-		    {% else %}
-			<div class="screenshot-placeholder">
-			    Screenshot placeholder<br>
-			    (480×360 pixels)
-			</div>
-		    {% endif %}
-		</div>
-		<div class="button-group">
-		    <a href="/app.php/gigatronshowcase/download/gt1/{{ GT1.path }}" class="download-btn" onclick="setTimeout(() => window.location.reload(), 1000)">📥 {{ GT1.filename }}</a>
-		    <a href="{{ U_EMULATOR }}?autoload_rom={{ GT1.preferred_rom|default('ROMv6') }}.rom&autoload_gt1={{ GT1.path }}" class="emulator-btn">🎮 Emulator</a>
-		    <a href="{{ U_EMULATOR_SCREENSHOT }}" class="emulator-btn">📷 Screenshot</a>
-		</div>
-	    </div>
-	    <!-- Full Width Info Section -->
-	    <div class="info-section-full">
-		<div class="metadata">
-		    <h3>Application Details</h3>
-		    <div class="meta-row">
-			<div class="meta-label">Author:</div>
-			<div class="meta-value">{{ GT1.author }}</div>
-		    </div>
-		    <div class="meta-row">
-			<div class="meta-label">Version:</div>
-			<div class="meta-value">{{ GT1.version|default('Unknown') }}</div>
-		    </div>
-		    <div class="meta-row">
-			<div class="meta-label">Programming Language:</div>
-			<div class="meta-value">{{ GT1.language|default('Unknown') }}</div>
-		    </div>
-		    <div class="meta-row">
-			<div class="meta-label">Release Date:</div>
-			<div class="meta-value">{{ GT1.date|default('Unknown') }}</div>
-		    </div>
-		    <div class="meta-row">
-			<div class="meta-label">Compatible ROMs:</div>
-			<div class="meta-value">
-			    <div class="rom-list">
-				<span class="rom-item rom-preferred">{{ GT1.preferred_rom|default('ROMv6') }}</span>
-				{% if GT1.compatible_roms %}
-				    {% for rom in GT1.compatible_roms %}
-					<span class="rom-item rom-compatible">{{ rom }}</span>
-				    {% endfor %}
-				{% endif %}
-			    </div>
-			</div>
-		    </div>
-		    <div class="meta-row">
-			<div class="meta-label">Category:</div>
-			<div class="meta-value">{{ GT1.category|title }}</div>
-		    </div>
-		    <div class="meta-row">
-			<div class="meta-label">File Size:</div>
-			<div class="meta-value">{{ GT1.filesize|default('Unknown') }}</div>
-		    </div>
-		    <div class="meta-row">
-			<div class="meta-label">RAM Model:</div>
-			<div class="meta-value">{{ GT1.ram_model|default('32K RAM') }}</div>
-		    </div>
-		    <div class="meta-row">
-			<div class="meta-label">Downloads:</div>
-			<div class="meta-value">{{ GT1.downloads|default(0) }}</div>
-		    </div>
-		    <div class="meta-row">
-			<div class="meta-label">Rating:</div>
-			<div class="meta-value">
-			    <div class="rating-stars">
-				{% set rating = GT1.rating|default(0) %}
-				{% set filled_stars = (rating / 2)|round %}
+        <div class="content">
+            <!-- Centered Screenshot Section -->
+            <div class="screenshot-section-centered">
+                <div class="screenshot">
+                    {% if SCREENSHOT_EXISTS %}
+                        <img src="{{ SCREENSHOT_URL }}" alt="{{ GT1.title }} Screenshot" class="screenshot-image" />
+                    {% else %}
+                        <div class="screenshot-placeholder">
+                            Screenshot placeholder<br>
+                            (480×360 pixels)
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="button-group">
+                    <a href="/app.php/gigatronshowcase/download/gt1/{{ GT1.path }}" class="download-btn" onclick="setTimeout(() => window.location.reload(), 1000)">📥 {{ GT1.filename }}</a>
+                    <a href="{{ U_EMULATOR }}?autoload_rom={{ GT1.preferred_rom|default('ROMv6') }}.rom&autoload_gt1={{ GT1.path }}" class="emulator-btn">🎮 Emulator</a>
+                    {% if (CURRENT_USERNAME == AUTHOR) or IS_ADMIN %}
+                    <a href="{{ U_EMULATOR_SCREENSHOT }}" class="emulator-btn">📷 Screenshot</a>
+                    <a href="{{ U_EDIT_GT1 }}" class="emulator-btn">✏️ Edit</a>
+                    <a href="{{ U_DELETE_GT1 }}" class="btn-danger">🗑️ Delete</a>
+                    {% endif %}
+                </div>
+            </div>
+            <!-- Full Width Info Section -->
+            <div class="info-section-full">
+                <div class="metadata">
+                    <h3>Application Details</h3>
+                    <div class="meta-row">
+                        <div class="meta-label">Author:</div>
+                        <div class="meta-value">{{ GT1.author }}</div>
+                    </div>
+                    <div class="meta-row">
+                        <div class="meta-label">Version:</div>
+                        <div class="meta-value">{{ GT1.version|default('Unknown') }}</div>
+                    </div>
+                    <div class="meta-row">
+                        <div class="meta-label">Programming Language:</div>
+                        <div class="meta-value">{{ GT1.language|default('Unknown') }}</div>
+                    </div>
+                    <div class="meta-row">
+                        <div class="meta-label">Release Date:</div>
+                        <div class="meta-value">{{ GT1.date|default('Unknown') }}</div>
+                    </div>
+                    <div class="meta-row">
+                        <div class="meta-label">Compatible ROMs:</div>
+                        <div class="meta-value">
+                            <div class="rom-list">
+                                <span class="rom-item rom-preferred">{{ GT1.preferred_rom|default('ROMv6') }}</span>
+                                {% if GT1.compatible_roms %}
+                                    {% for rom in GT1.compatible_roms %}
+                                        <span class="rom-item rom-compatible">{{ rom }}</span>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="meta-row">
+                        <div class="meta-label">Category:</div>
+                        <div class="meta-value">{{ GT1.category|title }}</div>
+                    </div>
+                    <div class="meta-row">
+                        <div class="meta-label">File Size:</div>
+                        <div class="meta-value">{{ GT1.filesize|default('Unknown') }}</div>
+                    </div>
+                    <div class="meta-row">
+                        <div class="meta-label">RAM Model:</div>
+                        <div class="meta-value">{{ GT1.ram_model|default('32K RAM') }}</div>
+                    </div>
+                    <div class="meta-row">
+                        <div class="meta-label">Downloads:</div>
+                        <div class="meta-value">{{ GT1.downloads|default(0) }}</div>
+                    </div>
+                    <div class="meta-row">
+                        <div class="meta-label">Rating:</div>
+                        <div class="meta-value">
+                            <div class="rating-stars">
+                                {% set rating = GT1.rating|default(0) %}
+                                {% set filled_stars = (rating / 2)|round %}
 
-				{% if filled_stars > 5 %}{% set filled_stars = 5 %}{% endif %}
-				{% if filled_stars < 0 %}{% set filled_stars = 0 %}{% endif %}
+                                {% if filled_stars > 5 %}{% set filled_stars = 5 %}{% endif %}
+                                {% if filled_stars < 0 %}{% set filled_stars = 0 %}{% endif %}
 
-				{% if filled_stars > 0 %}
-				    {% for i in 1..filled_stars %}★{% endfor %}
-				{% endif %}
+                                {% if filled_stars > 0 %}
+                                    {% for i in 1..filled_stars %}★{% endfor %}
+                                {% endif %}
 
-				{% if filled_stars < 5 %}
-				    {% set empty_stars = 5 - filled_stars %}
-				    {% for i in 1..empty_stars %}☆{% endfor %}
-				{% endif %}
+                                {% if filled_stars < 5 %}
+                                    {% set empty_stars = 5 - filled_stars %}
+                                    {% for i in 1..empty_stars %}☆{% endfor %}
+                                {% endif %}
 
-				<span class="rating-text">({{ rating }}/10)</span>
-			    </div>
-			</div>
-		    </div>
-		    <div class="meta-row">
-			<div class="meta-label">Source Code:</div>
-			<div class="meta-value">
-			    {% if GT1.source_code %}
-				<a href="{{ GT1.source_code }}" target="_blank" style="color: #2a5298; text-decoration: none;">📁 View Source</a>
-			    {% else %}
-				<span style="color: #666; font-style: italic;">Not available</span>
-			    {% endif %}
-			</div>
-		    </div>
-		    <div class="meta-row">
-			<div class="meta-label">Description:</div>
-			<div class="meta-value description">{{ GT1.description|default('No description available.') }}</div>
-		    </div>
-		</div>
+                                <span class="rating-text">({{ rating }}/10)</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="meta-row">
+                        <div class="meta-label">Source Code:</div>
+                        <div class="meta-value">
+                            {% if GT1.source_code %}
+                                <a href="{{ GT1.source_code }}" target="_blank" style="color: #2a5298; text-decoration: none;">📁 View Source</a>
+                            {% else %}
+                                <span style="color: #666; font-style: italic;">Not available</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="meta-row">
+                        <div class="meta-label">Description:</div>
+                        <div class="meta-value description">{{ GT1.description|default('No description available.') }}</div>
+                    </div>
+                </div>
 
-		{% if GT1.details %}
-		<div class="details">
-		    <h3>Details</h3>
-		    <div class="details-text">
-			{{ GT1.details|nl2br }}
-		    </div>
-		</div>
-		{% endif %}
-	    </div>
-	</div>
+                {% if GT1.details %}
+                <div class="details">
+                    <h3>Details</h3>
+                    <div class="details-text">
+                        {{ GT1.details|nl2br }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
     </div>
 </div>
 

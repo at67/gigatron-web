@@ -36,6 +36,15 @@ services:
             - '%core.root_path%'
             - '@at67.gigatronshowcase.controller.content'
 
+    at67.gigatronshowcase.controller.user:
+        class: at67\gigatronshowcase\controller\user
+        arguments:
+            - '@controller.helper'
+            - '@template'
+            - '@user'
+            - '%core.root_path%'
+            - '@at67.gigatronshowcase.controller.content'
+
     at67.gigatronshowcase.main_listener:
         class: at67\gigatronshowcase\event\main_listener
         arguments:

@@ -1,4 +1,3 @@
-# GT1-related routes now point to gt1 controller
 at67_gigatronshowcase_download_gt1_file:
     path: /gigatronshowcase/download/gt1/{category}/{author}/{filename}
     defaults: { _controller: at67.gigatronshowcase.controller.gt1:downloadTrackerGt1File }
@@ -19,7 +18,6 @@ at67_gigatronshowcase_gt1_folder:
     path: /gigatronshowcase/gt1/{category}/{author}/{folder}/{filename}
     defaults: { _controller: at67.gigatronshowcase.controller.gt1:gt1 }
 
-# ROM-related routes now point to rom controller
 at67_gigatronshowcase_download_rom:
     path: /gigatronshowcase/download/rom/{filename}
     defaults: { _controller: at67.gigatronshowcase.controller.rom:downloadTrackerRom }
@@ -28,7 +26,50 @@ at67_gigatronshowcase_rom:
     path: /gigatronshowcase/rom/{filename}
     defaults: { _controller: at67.gigatronshowcase.controller.rom:rom }
 
-# Main showcase and screenshot routes stay with main controller
+at67_gigatronshowcase_process_upload:
+    path: /gigatronshowcase/submit/process
+    defaults: { _controller: at67.gigatronshowcase.controller.user:processUpload }
+
+at67_gigatronshowcase_upload_gt1:
+    path: /gigatronshowcase/submit
+    defaults: { _controller: at67.gigatronshowcase.controller.user:uploadForm }
+
+at67_gigatronshowcase_upload_gt1_category:
+    path: /gigatronshowcase/submit/{category}
+    defaults: { _controller: at67.gigatronshowcase.controller.user:uploadForm }
+
+at67_gigatronshowcase_process_edit_folder:
+    path: /gigatronshowcase/edit/{category}/{author}/{folder}/{filename}/process
+    defaults: { _controller: at67.gigatronshowcase.controller.user:processEdit }
+
+at67_gigatronshowcase_process_edit:
+    path: /gigatronshowcase/edit/{category}/{author}/{filename}/process
+    defaults: { _controller: at67.gigatronshowcase.controller.user:processEdit }
+
+at67_gigatronshowcase_edit_gt1_folder:
+    path: /gigatronshowcase/edit/{category}/{author}/{folder}/{filename}
+    defaults: { _controller: at67.gigatronshowcase.controller.user:editForm }
+
+at67_gigatronshowcase_edit_gt1:
+    path: /gigatronshowcase/edit/{category}/{author}/{filename}
+    defaults: { _controller: at67.gigatronshowcase.controller.user:editForm }
+
+at67_gigatronshowcase_process_delete_folder:
+    path: /gigatronshowcase/delete/{category}/{author}/{folder}/{filename}/process
+    defaults: { _controller: at67.gigatronshowcase.controller.user:processDelete }
+
+at67_gigatronshowcase_process_delete:
+    path: /gigatronshowcase/delete/{category}/{author}/{filename}/process
+    defaults: { _controller: at67.gigatronshowcase.controller.user:processDelete }
+
+at67_gigatronshowcase_delete_gt1_folder:
+    path: /gigatronshowcase/delete/{category}/{author}/{folder}/{filename}
+    defaults: { _controller: at67.gigatronshowcase.controller.user:deleteConfirm }
+
+at67_gigatronshowcase_delete_gt1:
+    path: /gigatronshowcase/delete/{category}/{author}/{filename}
+    defaults: { _controller: at67.gigatronshowcase.controller.user:deleteConfirm }
+
 at67_gigatronshowcase_main:
     path: /gigatronshowcase
     defaults: { _controller: at67.gigatronshowcase.controller.main:handle }

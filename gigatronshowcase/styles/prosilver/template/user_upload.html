@@ -1,0 +1,389 @@
+{% include 'overall_header.html' %}
+
+<style>
+.showcase-container {
+    max-width: 1152px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    background: white;
+    border: 1px solid #d4d4d4;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.header {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: white;
+    padding: 20px 30px;
+    border-radius: 8px 8px 0 0;
+}
+
+.back-link {
+    color: #b8d4f1;
+    text-decoration: none;
+    font-size: 14px;
+    margin-bottom: 10px;
+    display: inline-block;
+}
+
+.back-link:hover {
+    color: white;
+    text-decoration: underline;
+}
+
+.title {
+    font-size: 32px;
+    font-weight: bold;
+    margin: 0;
+}
+
+.subtitle {
+    font-size: 16px;
+    opacity: 0.9;
+    margin: 5px 0 0 0;
+}
+
+.content {
+    padding: 30px;
+}
+
+.form-section {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 25px;
+    margin-bottom: 20px;
+}
+
+.form-section h3 {
+    margin: 0 0 20px 0;
+    color: #2a5298;
+    font-size: 18px;
+    border-bottom: 2px solid #2a5298;
+    padding-bottom: 5px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: block;
+    font-weight: bold;
+    color: #555;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #2a5298;
+    box-shadow: 0 0 0 2px rgba(42, 82, 152, 0.2);
+}
+
+.form-text {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.file-upload {
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    padding: 30px;
+    text-align: center;
+    background: #fafafa;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+}
+
+.file-upload:hover {
+    border-color: #2a5298;
+}
+
+.upload-icon {
+    font-size: 48px;
+    color: #999;
+    margin-bottom: 15px;
+}
+
+.upload-text {
+    color: #666;
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+.upload-subtext {
+    color: #999;
+    font-size: 14px;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: background 0.3s ease;
+}
+
+.btn-primary {
+    background: #2a5298;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #1e3c72;
+    color: white;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+    color: white;
+}
+
+.btn-success {
+    background: #28a745;
+    color: white;
+}
+
+.btn-success:hover {
+    background: #218838;
+    color: white;
+}
+
+.alert {
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+}
+
+.alert-danger {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<div class="showcase-container">
+    <div class="container">
+        <div class="header">
+            <a href="{{ U_BACK_TO_SHOWCASE }}" class="back-link">← Back to Showcase</a>
+            <h1 class="title">Upload GT1{% if SELECTED_CATEGORY %} to {{ SELECTED_CATEGORY|title }}{% endif %}</h1>
+            <p class="subtitle">{% if SELECTED_CATEGORY %}Add a new GT1 application to {{ SELECTED_CATEGORY|title }}{% else %}Add a new GT1 application to the showcase{% endif %}</p>
+        </div>
+
+        <div class="content">
+            {% if ERROR %}
+            <div class="alert alert-danger">
+                {{ ERROR }}
+            </div>
+            {% endif %}
+
+            <form action="{{ U_PROCESS_UPLOAD }}" method="post" enctype="multipart/form-data">
+                <!-- File Upload Section -->
+                <div class="form-section">
+                    <h3>📁 Files</h3>
+
+                    <div class="form-group">
+                        <label class="form-label">GT1 File *</label>
+                        <div class="file-upload" onclick="document.getElementById('gt1-file').click()">
+                            <div class="upload-icon">📎</div>
+                            <div class="upload-text">Click to select your .gt1 file</div>
+                            <div class="upload-subtext">Drag and drop also supported</div>
+                            <input type="file" id="gt1-file" name="gt1_file" accept=".gt1" style="display: none;" required>
+                        </div>
+                        <div class="form-text">Required: Your compiled GT1 application file. Screenshots can be captured later using the emulator.</div>
+                    </div>
+                </div>
+
+                <!-- Basic Information -->
+                <div class="form-section">
+                    <h3>📝 Basic Information</h3>
+
+                    <div class="form-group">
+                        <label class="form-label">Title *</label>
+                        <input type="text" name="title" class="form-control" placeholder="Enter application title" required>
+                        <div class="form-text">Display name for your GT1 application</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Category *</label>
+                        <select name="category" class="form-control" required>
+                            <option value="">Select category...</option>
+                            {% for cat in CATEGORIES %}
+                            <option value="{{ cat }}" {% if cat == SELECTED_CATEGORY %}selected{% endif %}>{{ cat|title }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Choose the most appropriate category</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Description *</label>
+                        <textarea name="description" class="form-control" rows="3" placeholder="Describe your GT1 application..." required></textarea>
+                        <div class="form-text">Brief description that will appear on the main page</div>
+                    </div>
+                </div>
+
+                <!-- Technical Details -->
+                <div class="form-section">
+                    <h3>⚙️ Technical Details</h3>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Version</label>
+                            <input type="text" name="version" class="form-control" placeholder="e.g., 1.0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Programming Language</label>
+                            <select name="language" class="form-control">
+                                <option value="">Select language...</option>
+                                <option value="gtBASIC">gtBASIC</option>
+                                <option value="glcc">glcc</option>
+                                <option value="glc">glc</option>
+                                <option value="VCPU">VCPU</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Release Date</label>
+                            <input type="date" name="release_date" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">RAM Model</label>
+                            <select name="ram_model" class="form-control">
+                                <option value="32K RAM" selected>32K RAM</option>
+                                <option value="64K RAM">64K RAM</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Preferred ROM</label>
+                        <select name="preferred_rom" class="form-control">
+                            <option value="ROMv6" selected>ROMv6 (Default)</option>
+                            <option value="ROMv5a">ROMv5a</option>
+                            <option value="ROMv4">ROMv4</option>
+                            <option value="ROMv3">ROMv3</option>
+                        </select>
+                        <div class="form-text">ROM version that works best with your GT1</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Compatible ROMs</label>
+                        <input type="text" name="compatible_roms" class="form-control" placeholder="e.g., ROMv5a, ROMv4">
+                        <div class="form-text">Comma-separated list of other compatible ROM versions</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Source Code URL</label>
+                        <input type="url" name="source_code" class="form-control" placeholder="https://github.com/username/project">
+                        <div class="form-text">Link to source code repository (optional)</div>
+                    </div>
+                </div>
+
+                <!-- Additional Details -->
+                <div class="form-section">
+                    <h3>📋 Additional Details</h3>
+
+                    <div class="form-group">
+                        <label class="form-label">Detailed Description</label>
+                        <textarea name="details" class="form-control" rows="6" placeholder="Detailed information about your GT1 application, controls, features, etc."></textarea>
+                        <div class="form-text">Extended description with technical details, controls, and features</div>
+                    </div>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 30px;">
+                    <a href="{{ U_BACK_TO_SHOWCASE }}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-success">✅ Upload GT1</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// File upload styling
+document.addEventListener('DOMContentLoaded', function() {
+    const fileUploads = document.querySelectorAll('.file-upload');
+    fileUploads.forEach(upload => {
+        upload.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#2a5298';
+            this.style.backgroundColor = '#f0f4f8';
+        });
+
+        upload.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#ddd';
+            this.style.backgroundColor = '#fafafa';
+        });
+
+        upload.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#ddd';
+            this.style.backgroundColor = '#fafafa';
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const input = this.querySelector('input[type="file"]');
+                input.files = files;
+
+                // Update display text
+                const uploadText = this.querySelector('.upload-text');
+                uploadText.textContent = `Selected: ${files[0].name}`;
+            }
+        });
+    });
+
+    // Update display when files are selected
+    document.querySelectorAll('input[type="file"]').forEach(input => {
+        input.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                const uploadText = this.parentElement.querySelector('.upload-text');
+                uploadText.textContent = `Selected: ${this.files[0].name}`;
+            }
+        });
+    });
+});
+</script>
+
+{% include 'overall_footer.html' %}

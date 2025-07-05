@@ -7,6 +7,28 @@
     padding: 20px;
 }
 
+.btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: background 0.3s ease;
+}
+
+.btn-blue {
+    background: #2a5298;
+    color: white;
+}
+
+.btn-blue:hover {
+    background: #1e3c72;
+    color: white;
+}
+
 .breadcrumb-nav {
     margin-bottom: 20px;
     font-size: 12px;
@@ -103,42 +125,47 @@
 <div class="showcase-container">
     <!-- Breadcrumb Navigation -->
     <div class="breadcrumb-nav">
-	<a href="{{ U_BACK_TO_SHOWCASE }}">← Back to Showcase</a>
+        <a href="{{ U_BACK_TO_SHOWCASE }}">← Back to Showcase</a>
     </div>
 
     <!-- Author Header -->
     <div class="author-header">
-	<div class="author-title">{{ AUTHOR|title }} - {{ CATEGORY|title }}</div>
-	<div class="author-meta">{{ AUTHOR_GT1S|length }} files in this category</div>
+        <div class="author-title">
+            {{ AUTHOR|title }} - {{ CATEGORY|title }}
+            {% if (CURRENT_USERNAME == AUTHOR) or IS_ADMIN %}
+            <a href="{{ U_UPLOAD_TO_CATEGORY }}" class="btn btn-blue">📤 Upload GT1</a>
+            {% endif %}
+        </div>
+        <div class="author-meta">{{ AUTHOR_GT1S|length }} files in this category</div>
     </div>
 
     <!-- Author's Files Grid -->
     <div class="grid-large">
-	{% for gt1 in AUTHOR_GT1S %}
-	{% set has_subfolder = '/' in gt1.path and gt1.path != (gt1.category ~ '/' ~ gt1.author ~ '/' ~ gt1.filename) %}
-	{% if has_subfolder %}
-	    {% set folder_name = gt1.path|split('/')|slice(2, 1)|first %}
-	    <a href="/app.php/gigatronshowcase/gt1/{{ gt1.category }}/{{ gt1.author }}/{{ folder_name }}/{{ gt1.filename }}" style="text-decoration: none; color: inherit;">
-	{% else %}
-	    <a href="/app.php/gigatronshowcase/gt1/{{ gt1.category }}/{{ gt1.author }}/{{ gt1.filename }}" style="text-decoration: none; color: inherit;">
-	{% endif %}
-	    <div class="card">
-		<div class="card-screenshot">
-		    {% if gt1.screenshot_exists %}
-			<img src="{{ gt1.screenshot_url }}" alt="{{ gt1.title }} Screenshot" class="screenshot-image-main" />
-		    {% else %}
-			<div style="width: 160px; height: 120px; display: flex; align-items: center; justify-content: center;">
-			    No Screenshot<br>Available
-			</div>
-		    {% endif %}
-		</div>
-		<div class="card-content">
-		    <div class="card-title">{{ gt1.title }}</div>
-		    <div class="card-meta">{{ gt1.filename }}</div>
-		</div>
-	    </div>
-	</a>
-	{% endfor %}
+        {% for gt1 in AUTHOR_GT1S %}
+        {% set has_subfolder = '/' in gt1.path and gt1.path != (gt1.category ~ '/' ~ gt1.author ~ '/' ~ gt1.filename) %}
+        {% if has_subfolder %}
+            {% set folder_name = gt1.path|split('/')|slice(2, 1)|first %}
+            <a href="/app.php/gigatronshowcase/gt1/{{ gt1.category }}/{{ gt1.author }}/{{ folder_name }}/{{ gt1.filename }}" style="text-decoration: none; color: inherit;">
+        {% else %}
+            <a href="/app.php/gigatronshowcase/gt1/{{ gt1.category }}/{{ gt1.author }}/{{ gt1.filename }}" style="text-decoration: none; color: inherit;">
+        {% endif %}
+            <div class="card">
+                <div class="card-screenshot">
+                    {% if gt1.screenshot_exists %}
+                        <img src="{{ gt1.screenshot_url }}" alt="{{ gt1.title }} Screenshot" class="screenshot-image-main" />
+                    {% else %}
+                        <div style="width: 160px; height: 120px; display: flex; align-items: center; justify-content: center;">
+                            No Screenshot<br>Available
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-content">
+                    <div class="card-title">{{ gt1.title }}</div>
+                    <div class="card-meta">{{ gt1.filename }}</div>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
     </div>
 </div>
 
