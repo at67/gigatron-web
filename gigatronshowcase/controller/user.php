@@ -1,4 +1,5 @@
 <?php
+
 namespace at67\gigatronshowcase\controller;
 
 class user
@@ -79,13 +80,15 @@ class user
             return $this->uploadForm($category);
         }
 
-        // Get uploaded files
-        $gt1File = $request->file('gt1_file');
-        $screenshotFile = $request->file('screenshot_file');
-
         // Validate GT1 file
+        $gt1File = $request->file('gt1_file');
         if (!$gt1File || empty($gt1File['name'])) {
             $this->template->assign_var('ERROR', 'GT1 file is required');
+            return $this->uploadForm($category);
+        }
+
+        if ($gt1File['size'] > 524288) {
+            $this->template->assign_var('ERROR', 'GT1 file too large (maximum 512KB)');
             return $this->uploadForm($category);
         }
 
@@ -94,12 +97,12 @@ class user
             return $this->uploadForm($category);
         }
 
-        // Validate screenshot file if provided
-        if ($screenshotFile && !empty($screenshotFile['name'])) {
-            if (pathinfo($screenshotFile['name'], PATHINFO_EXTENSION) !== 'png') {
-                $this->template->assign_var('ERROR', 'Screenshot must be a .png file');
-                return $this->uploadForm($category);
-            }
+        // Validate GT1 file format
+        require_once __DIR__ . '/security.php';
+        $errorMessage = '';
+        if (!validateGT1File($gt1File['tmp_name'], $errorMessage)) {
+            $this->template->assign_var('ERROR', $errorMessage);
+            return $this->uploadForm($category);
         }
 
         // Create filename from title
@@ -142,15 +145,6 @@ class user
                 'details' => $details,
             ));
 
-            // Handle screenshot if provided
-            if ($screenshotFile && !empty($screenshotFile['name'])) {
-                $screenshotTarget = $targetDir . str_replace('.gt1', '.png', $filename);
-                if (!move_uploaded_file($screenshotFile['tmp_name'], $screenshotTarget)) {
-                    // Don't fail the upload if screenshot fails, just log it
-                    error_log('Failed to upload screenshot for ' . $filename);
-                }
-            }
-
             // Redirect to the new GT1 page
             $redirectUrl = $this->helper->route('at67_gigatronshowcase_gt1_file', array(
                 'category' => $category,
@@ -173,6 +167,8 @@ class user
 
     public function editForm($category, $author, $filename, $folder = null)
     {
+        require_once __DIR__ . '/security.php';
+
         // Check if user is logged in
         global $phpbb_container;
         $auth = $phpbb_container->get('auth');
@@ -187,28 +183,20 @@ class user
         $filename = $validated['filename'];
         $folder = $validated['folder'];
 
-        $username = $this->user->data['username'];
-
-        // Check if user owns this GT1
-        if ($author !== $username) {
-            throw new \phpbb\exception\http_exception(403, 'You can only edit your own GT1 applications');
+        // Verify user has access to this file
+        try {
+            $fileInfo = verifyUserFileAccess($category, $author, $filename, $folder, $this->root_path);
+        } catch (\phpbb\exception\http_exception $e) {
+            $redirectUrl = $this->helper->route('at67_gigatronshowcase_author', array(
+                'category' => $category,
+                'author' => $this->user->data['username']
+            ));
+            return new \Symfony\Component\HttpFoundation\RedirectResponse($redirectUrl);
         }
 
-        // Rest of method continues unchanged...
-        // Build the correct file path
-        if ($folder !== null) {
-            $filepath = $folder . '/' . $filename;
-        } else {
-            $filepath = $filename;
-        }
-
-        // Load existing GT1 data
-        $gt1Path = $this->root_path . 'ext/at67/gigatronemulator/gt1/' . $category . '/' . $author . '/' . $filepath;
+        // Use verified file path
+        $gt1Path = $fileInfo['file_path'];
         $iniPath = str_replace('.gt1', '.ini', $gt1Path);
-
-        if (!file_exists($gt1Path)) {
-            throw new \phpbb\exception\http_exception(404, 'GT1 file not found');
-        }
 
         // Load metadata
         $metadata = array();
@@ -254,7 +242,9 @@ class user
 
     public function processEdit($category, $author, $filename, $folder = null)
     {
-        // Check if user is logged in and owns this GT1
+        require_once __DIR__ . '/security.php';
+
+        // Check if user is logged in
         global $phpbb_container;
         $auth = $phpbb_container->get('auth');
         if (!$auth->acl_get('u_')) {
@@ -268,9 +258,15 @@ class user
         $filename = $validated['filename'];
         $folder = $validated['folder'];
 
-        $username = $this->user->data['username'];
-        if ($author !== $username) {
-            throw new \phpbb\exception\http_exception(403, 'You can only edit your own GT1 applications');
+        // Verify user has access to this file
+        try {
+            $fileInfo = verifyUserFileAccess($category, $author, $filename, $folder, $this->root_path);
+        } catch (\phpbb\exception\http_exception $e) {
+            $redirectUrl = $this->helper->route('at67_gigatronshowcase_author', array(
+                'category' => $category,
+                'author' => $this->user->data['username']
+            ));
+            return new \Symfony\Component\HttpFoundation\RedirectResponse($redirectUrl);
         }
 
         $request = $phpbb_container->get('request');
@@ -303,20 +299,18 @@ class user
         }
 
         try {
-            // Build the correct file path
-            if ($folder !== null) {
-                $filepath = $folder . '/' . $filename;
-            } else {
-                $filepath = $filename;
-            }
-
-            $currentDir = $this->root_path . 'ext/at67/gigatronemulator/gt1/' . $category . '/' . $author . '/';
-            $currentGt1Path = $currentDir . $filepath;
+            // Use verified file path
+            $currentGt1Path = $fileInfo['file_path'];
             $currentIniPath = str_replace('.gt1', '.ini', $currentGt1Path);
 
             // Handle GT1 file replacement
             $gt1File = $request->file('gt1_file');
             if ($gt1File && !empty($gt1File['name'])) {
+                // Check file size (512KB limit)
+                if ($gt1File['size'] > 524288) {
+                    throw new \Exception('GT1 file too large (maximum 512KB)');
+                }
+
                 if (pathinfo($gt1File['name'], PATHINFO_EXTENSION) !== 'gt1') {
                     throw new \Exception('GT1 file must be a .gt1 file');
                 }
@@ -330,7 +324,7 @@ class user
                 $iniDir = dirname($currentIniPath) . '/';
                 $iniFilename = basename($currentIniPath);
             } else {
-                $iniDir = $currentDir;
+                $iniDir = dirname($currentGt1Path) . '/';
                 $iniFilename = str_replace('.gt1', '.ini', $filename);
             }
 
@@ -349,14 +343,16 @@ class user
 
             // If category changed, move files
             if ($newCategory !== $category) {
-                $newDir = $this->root_path . 'ext/at67/gigatronemulator/gt1/' . $newCategory . '/' . $author . '/';
+                // Determine the actual author for new path
+                $actualAuthor = $fileInfo['actual_author'];
+                $newDir = $this->root_path . 'ext/at67/gigatronemulator/gt1/' . $newCategory . '/' . $actualAuthor . '/';
 
                 if (!is_dir($newDir)) {
                     mkdir($newDir, 0755, true);
                 }
 
                 if ($folder !== null) {
-                    // For folder-based files, we need to create the folder in the new location
+                    // For folder-based files, create the folder in the new location
                     $newFolderDir = $newDir . $folder . '/';
                     if (!is_dir($newFolderDir)) {
                         mkdir($newFolderDir, 0755, true);
@@ -381,12 +377,12 @@ class user
                 $category = $newCategory;
             }
 
-            // Redirect to updated GT1 page
+            // Redirect to updated GT1 page - use actual author
             $redirectUrl = $this->helper->route(
                 $folder !== null ? 'at67_gigatronshowcase_gt1_folder' : 'at67_gigatronshowcase_gt1_file',
                 array(
                     'category' => $category,
-                    'author' => $author,
+                    'author' => $fileInfo['actual_author'],
                     'filename' => $filename,
                     'folder' => $folder
                 )
@@ -402,7 +398,9 @@ class user
 
     public function deleteConfirm($category, $author, $filename, $folder = null)
     {
-        // Check if user is logged in and owns this GT1
+        require_once __DIR__ . '/security.php';
+
+        // Check if user is logged in
         global $phpbb_container;
         $auth = $phpbb_container->get('auth');
         if (!$auth->acl_get('u_')) {
@@ -416,25 +414,20 @@ class user
         $filename = $validated['filename'];
         $folder = $validated['folder'];
 
-        $username = $this->user->data['username'];
-        if ($author !== $username) {
-            throw new \phpbb\exception\http_exception(403, 'You can only delete your own GT1 applications');
+        // Verify user has access to this file
+        try {
+            $fileInfo = verifyUserFileAccess($category, $author, $filename, $folder, $this->root_path);
+        } catch (\phpbb\exception\http_exception $e) {
+            $redirectUrl = $this->helper->route('at67_gigatronshowcase_author', array(
+                'category' => $category,
+                'author' => $this->user->data['username']
+            ));
+            return new \Symfony\Component\HttpFoundation\RedirectResponse($redirectUrl);
         }
 
-        // Build the correct file path
-        if ($folder !== null) {
-            $filepath = $folder . '/' . $filename;
-        } else {
-            $filepath = $filename;
-        }
-
-        // Load GT1 data for confirmation display
-        $gt1Path = $this->root_path . 'ext/at67/gigatronemulator/gt1/' . $category . '/' . $author . '/' . $filepath;
+        // Use verified file path
+        $gt1Path = $fileInfo['file_path'];
         $iniPath = str_replace('.gt1', '.ini', $gt1Path);
-
-        if (!file_exists($gt1Path)) {
-            throw new \phpbb\exception\http_exception(404, 'GT1 file not found');
-        }
 
         // Load metadata
         $metadata = array();
@@ -482,7 +475,9 @@ class user
 
     public function processDelete($category, $author, $filename, $folder = null)
     {
-        // Check if user is logged in and owns this GT1
+        require_once __DIR__ . '/security.php';
+
+        // Check if user is logged in
         global $phpbb_container;
         $auth = $phpbb_container->get('auth');
         if (!$auth->acl_get('u_')) {
@@ -496,9 +491,15 @@ class user
         $filename = $validated['filename'];
         $folder = $validated['folder'];
 
-        $username = $this->user->data['username'];
-        if ($author !== $username) {
-            throw new \phpbb\exception\http_exception(403, 'You can only delete your own GT1 applications');
+        // Verify user has access to this file
+        try {
+            $fileInfo = verifyUserFileAccess($category, $author, $filename, $folder, $this->root_path);
+        } catch (\phpbb\exception\http_exception $e) {
+            $redirectUrl = $this->helper->route('at67_gigatronshowcase_author', array(
+                'category' => $category,
+                'author' => $this->user->data['username']
+            ));
+            return new \Symfony\Component\HttpFoundation\RedirectResponse($redirectUrl);
         }
 
         $request = $phpbb_container->get('request');
@@ -511,15 +512,8 @@ class user
         }
 
         try {
-            // Build the correct file path
-            if ($folder !== null) {
-                $filepath = $folder . '/' . $filename;
-            } else {
-                $filepath = $filename;
-            }
-
-            $targetDir = $this->root_path . 'ext/at67/gigatronemulator/gt1/' . $category . '/' . $author . '/';
-            $gt1Path = $targetDir . $filepath;
+            // Use verified file paths
+            $gt1Path = $fileInfo['file_path'];
             $iniPath = str_replace('.gt1', '.ini', $gt1Path);
             $screenshotPath = str_replace('.gt1', '.png', $gt1Path);
 
@@ -536,15 +530,15 @@ class user
 
             // If this was in a folder, remove the folder if it's empty
             if ($folder !== null) {
-                $folderPath = $targetDir . $folder;
+                $folderPath = dirname($gt1Path);
                 if (is_dir($folderPath) && count(scandir($folderPath)) === 2) { // only . and ..
                     rmdir($folderPath);
                 }
             }
 
-            // Redirect to author page
+            // Redirect to author page - use actual author
             $redirectUrl = $this->helper->route('at67_gigatronshowcase_author', array(
-                'author' => $author,
+                'author' => $fileInfo['actual_author'],
                 'category' => $category
             ));
 

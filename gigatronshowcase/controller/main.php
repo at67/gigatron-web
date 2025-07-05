@@ -1,4 +1,5 @@
 <?php
+
 namespace at67\gigatronshowcase\controller;
 
 class main
@@ -52,6 +53,8 @@ class main
 
     public function saveScreenshot()
     {
+        require_once __DIR__ . '/security.php';
+
         global $phpbb_container;
         $auth = $phpbb_container->get('auth');
         $user = $phpbb_container->get('user');
@@ -67,22 +70,28 @@ class main
 
         // Simple logic: GT1 takes priority if both exist, ROM only if GT1 doesn't exist
         if (!empty($gt1Path)) {
-            // GT1 mode - check if user owns the GT1 or is admin
+            // GT1 mode - use secure verification
             $isRomMode = false;
             $isGt1Mode = true;
 
-            // Parse GT1 path to get author: category/author/filename or category/author/folder/filename
+            // Parse GT1 path
             $pathParts = explode('/', $gt1Path);
             if (count($pathParts) < 3) {
                 return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'Invalid GT1 path'], 400);
             }
-            $gt1Author = $pathParts[1]; // Second part is always author
 
-            // Check permission: user owns GT1 OR admin
-            if ($gt1Author !== $user->data['username'] && !$auth->acl_get('a_')) {
-                return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'You can only screenshot your own GT1 applications'], 403);
+            $category = $pathParts[0];
+            $urlAuthor = $pathParts[1];
+            $filename = end($pathParts);
+            $folder = (count($pathParts) > 3) ? $pathParts[2] : null;
+
+            // Use shared security verification
+            try {
+                $fileInfo = verifyUserFileAccess($category, $urlAuthor, $filename, $folder, $this->root_path);
+                $fullGt1Path = $fileInfo['file_path'];
+            } catch (\phpbb\exception\http_exception $e) {
+                return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => $e->getMessage()], $e->getStatusCode());
             }
-
         } elseif (!empty($romFilename)) {
             // ROM mode - admin only
             $isRomMode = true;
