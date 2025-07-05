@@ -21,16 +21,27 @@ class UIManager
 
     waitForEmulator()
     {
-        // Check if Module is available (from emulator.js)
-        if(typeof Module !== 'undefined' && Module.onRuntimeInitialized)
+        if(typeof Module !== 'undefined')
         {
-            const originalCallback = Module.onRuntimeInitialized;
-            Module.onRuntimeInitialized = () =>
+            // Check if module is already initialized
+            if(Module.calledRun || (emulator && emulator !== null))
             {
-                if(originalCallback) originalCallback();
+                // Already initialized
                 this.emulatorReady = true;
                 this.onEmulatorReady();
-            };
+                return;
+            }
+
+            // Module exists but not initialized yet - safe to set callback
+            if(Module.onRuntimeInitialized)
+            {
+                const originalCallback = Module.onRuntimeInitialized;
+                Module.onRuntimeInitialized = () => {
+                    if(originalCallback) originalCallback();
+                    this.emulatorReady = true;
+                    this.onEmulatorReady();
+                };
+            }
         }
         else
         {

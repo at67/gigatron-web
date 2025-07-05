@@ -6,6 +6,35 @@ services:
             - '@template'
             - '@user'
             - '%core.root_path%'
+            - '@at67.gigatronshowcase.controller.content'
+            - '@at67.gigatronshowcase.controller.featured'
+
+    at67.gigatronshowcase.controller.gt1:
+        class: at67\gigatronshowcase\controller\gt1
+        arguments:
+            - '@controller.helper'
+            - '@template'
+            - '@user'
+            - '%core.root_path%'
+
+    at67.gigatronshowcase.controller.rom:
+        class: at67\gigatronshowcase\controller\rom
+        arguments:
+            - '@controller.helper'
+            - '@template'
+            - '@user'
+            - '%core.root_path%'
+
+    at67.gigatronshowcase.controller.content:
+        class: at67\gigatronshowcase\controller\content
+        arguments:
+            - '%core.root_path%'
+
+    at67.gigatronshowcase.controller.featured:
+        class: at67\gigatronshowcase\controller\featured
+        arguments:
+            - '%core.root_path%'
+            - '@at67.gigatronshowcase.controller.content'
 
     at67.gigatronshowcase.main_listener:
         class: at67\gigatronshowcase\event\main_listener

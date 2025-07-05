@@ -1,36 +1,38 @@
+# GT1-related routes now point to gt1 controller
 at67_gigatronshowcase_download_gt1_file:
     path: /gigatronshowcase/download/gt1/{category}/{author}/{filename}
-    defaults: { _controller: at67.gigatronshowcase.controller.main:downloadTrackerGt1File }
+    defaults: { _controller: at67.gigatronshowcase.controller.gt1:downloadTrackerGt1File }
 
 at67_gigatronshowcase_download_gt1_folder:
     path: /gigatronshowcase/download/gt1/{category}/{author}/{folder}/{filename}
-    defaults: { _controller: at67.gigatronshowcase.controller.main:downloadTrackerGt1Folder }
+    defaults: { _controller: at67.gigatronshowcase.controller.gt1:downloadTrackerGt1Folder }
 
+at67_gigatronshowcase_author:
+    path: /gigatronshowcase/author/{author}/{category}
+    defaults: { _controller: at67.gigatronshowcase.controller.gt1:author }
+
+at67_gigatronshowcase_gt1_file:
+    path: /gigatronshowcase/gt1/{category}/{author}/{filename}
+    defaults: { _controller: at67.gigatronshowcase.controller.gt1:gt1 }
+
+at67_gigatronshowcase_gt1_folder:
+    path: /gigatronshowcase/gt1/{category}/{author}/{folder}/{filename}
+    defaults: { _controller: at67.gigatronshowcase.controller.gt1:gt1 }
+
+# ROM-related routes now point to rom controller
 at67_gigatronshowcase_download_rom:
     path: /gigatronshowcase/download/rom/{filename}
-    defaults: { _controller: at67.gigatronshowcase.controller.main:downloadTrackerRom }
+    defaults: { _controller: at67.gigatronshowcase.controller.rom:downloadTrackerRom }
 
+at67_gigatronshowcase_rom:
+    path: /gigatronshowcase/rom/{filename}
+    defaults: { _controller: at67.gigatronshowcase.controller.rom:rom }
+
+# Main showcase and screenshot routes stay with main controller
 at67_gigatronshowcase_main:
     path: /gigatronshowcase
     defaults: { _controller: at67.gigatronshowcase.controller.main:handle }
 
-at67_gigatronshowcase_author:
-    path: /gigatronshowcase/author/{author}/{category}
-    defaults: { _controller: at67.gigatronshowcase.controller.main:author }
-
-at67_gigatronshowcase_rom:
-    path: /gigatronshowcase/rom/{filename}
-    defaults: { _controller: at67.gigatronshowcase.controller.main:rom }
-
-at67_gigatronshowcase_gt1_file:
-    path: /gigatronshowcase/gt1/{category}/{author}/{filename}
-    defaults: { _controller: at67.gigatronshowcase.controller.main:gt1 }
-
-at67_gigatronshowcase_gt1_folder:
-    path: /gigatronshowcase/gt1/{category}/{author}/{folder}/{filename}
-    defaults: { _controller: at67.gigatronshowcase.controller.main:gt1 }
-
 at67_gigatronshowcase_screenshot_save:
     path: /gigatronshowcase/screenshot/save
     defaults: { _controller: at67.gigatronshowcase.controller.main:saveScreenshot }
-

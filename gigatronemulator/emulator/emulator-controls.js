@@ -25,8 +25,7 @@ const keyMap =
     'KeyZ': 7         // bit 7 - A
 };
 
-Module.onRuntimeInitialized = function()
-{
+function initializeEmulator() {
     console.log("WASM module loaded!");
     emulator = Module.ccall('emulator_create', 'number', [], []);
     console.log("Emulator created:", emulator);
@@ -44,7 +43,31 @@ Module.onRuntimeInitialized = function()
         window.uiManager.emulatorReady = true;
         window.uiManager.onEmulatorReady();
     }
-};
+}
+
+// Safe initialization check
+if (typeof Module !== 'undefined') {
+    // Check if module is already initialized
+    if (Module.calledRun || (emulator && emulator !== null)) {
+        // Already initialized
+        initializeEmulator();
+    } else {
+        // Module exists but not initialized yet - safe to set callback
+        Module.onRuntimeInitialized = initializeEmulator;
+    }
+} else {
+    // Module not loaded yet - this shouldn't happen in emulator-controls.js
+    // but we'll handle it gracefully
+    setTimeout(() => {
+        if (typeof Module !== 'undefined') {
+            if (Module.calledRun || (emulator && emulator !== null)) {
+                initializeEmulator();
+            } else {
+                Module.onRuntimeInitialized = initializeEmulator;
+            }
+        }
+    }, 100);
+}
 
 function handleKeyDown(event)
 {
