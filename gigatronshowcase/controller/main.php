@@ -117,7 +117,6 @@ class main
 	'SCREENSHOT_URL' => $screenshotUrl,
 	'U_BACK_TO_SHOWCASE' => $this->helper->route('at67_gigatronshowcase_main'),
 	'U_EMULATOR' => $this->helper->route('at67_gigatronemulator_main'),
-	'ROM_DOWNLOAD_URL' => '/ext/at67/gigatronemulator/roms/' . $selectedRom['filename'],
 	'U_EMULATOR_SCREENSHOT' => $this->helper->route('at67_gigatronemulator_main') . '?autoload_rom=' . urlencode($selectedRom['filename']) . '&screenshot_mode=1',
 	));
 
@@ -750,5 +749,200 @@ class main
 	}
 
 	return $gt1s;
+    }
+
+    public function downloadTrackerRom($filename)
+    {
+	global $phpbb_container;
+	$auth = $phpbb_container->get('auth');
+
+	// Check if user is logged in
+	if (!$auth->acl_get('u_')) {
+	    throw new \phpbb\exception\http_exception(403, 'NOT_AUTHORISED');
+	}
+
+	// Get username
+	$user = $phpbb_container->get('user');
+	$username = $user->data['username'];
+
+	// Validate filename - prevent directory traversal
+	if (strpos($filename, '..') !== false || strpos($filename, '/') !== false || strpos($filename, '\\') !== false) {
+	    throw new \phpbb\exception\http_exception(400, 'Invalid filename');
+	}
+
+	// Check if ROM file exists
+	$romsPath = $this->root_path . 'ext/at67/gigatronemulator/roms/';
+	$romFilePath = $romsPath . $filename;
+
+	if (!file_exists($romFilePath)) {
+	    throw new \phpbb\exception\http_exception(404, 'ROM file not found');
+	}
+
+	// Check/update download tracking in .ini file
+	$iniFilename = str_replace('.rom', '.ini', $filename);
+	$iniFilePath = $romsPath . $iniFilename;
+
+	$downloadCount = 0;
+	$downloadedBy = array();
+
+	// Read existing .ini file if it exists
+	if (file_exists($iniFilePath)) {
+	    $iniData = $this->parseIniMetadata($iniFilePath);
+	    $downloadCount = isset($iniData['downloads']) ? (int)$iniData['downloads'] : 0;
+
+	    if (isset($iniData['downloaded_by'])) {
+		$downloadedBy = array_map('trim', explode(',', $iniData['downloaded_by']));
+	    }
+	}
+
+	// Check if this user has already downloaded this file
+	if (!in_array($username, $downloadedBy)) {
+	    // New user download - increment counter and add to list
+	    $downloadCount++;
+	    $downloadedBy[] = $username;
+
+	    // Update .ini file
+	    $this->updateRomDownloadIni($iniFilePath, $downloadCount, $downloadedBy);
+	}
+
+	// Serve the file
+	$response = new \Symfony\Component\HttpFoundation\BinaryFileResponse($romFilePath);
+	$response->setContentDisposition(
+	    \Symfony\Component\HttpFoundation\ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+	    $filename
+	);
+
+	return $response;
+    }
+
+    private function updateRomDownloadIni($iniFilePath, $downloadCount, $downloadedBy)
+    {
+	// Read existing .ini content
+	$iniContent = '';
+	if (file_exists($iniFilePath)) {
+	    $iniContent = file_get_contents($iniFilePath);
+	}
+
+	// Remove existing downloads and downloaded_by lines
+	$lines = explode("\n", $iniContent);
+	$newLines = array();
+
+	foreach ($lines as $line) {
+	    $line = trim($line);
+	    if ($line && !str_starts_with($line, 'downloads=') && !str_starts_with($line, 'downloaded_by=')) {
+		$newLines[] = $line;
+	    }
+	}
+
+	// Add updated download tracking
+	$newLines[] = 'downloads=' . $downloadCount;
+	$newLines[] = 'downloaded_by=' . implode(',', $downloadedBy);
+
+	// Write back to file with file locking
+	$newContent = implode("\n", $newLines) . "\n";
+	file_put_contents($iniFilePath, $newContent, LOCK_EX);
+    }
+
+    public function downloadTrackerGt1File($category, $author, $filename)
+    {
+	$gt1Path = $category . '/' . $author . '/' . $filename;
+	return $this->handleGt1Download($gt1Path, $filename);
+    }
+
+    public function downloadTrackerGt1Folder($category, $author, $folder, $filename)
+    {
+	$gt1Path = $category . '/' . $author . '/' . $folder . '/' . $filename;
+	return $this->handleGt1Download($gt1Path, $filename);
+    }
+
+    private function handleGt1Download($gt1Path, $filename)
+    {
+	global $phpbb_container;
+	$auth = $phpbb_container->get('auth');
+
+	// Check if user is logged in
+	if (!$auth->acl_get('u_')) {
+	    throw new \phpbb\exception\http_exception(403, 'NOT_AUTHORISED');
+	}
+
+	// Get username
+	$user = $phpbb_container->get('user');
+	$username = $user->data['username'];
+
+	// Validate path - prevent directory traversal
+	if (strpos($gt1Path, '..') !== false || strpos($gt1Path, '\\') !== false) {
+	    throw new \phpbb\exception\http_exception(400, 'Invalid path');
+	}
+
+	// Check if GT1 file exists
+	$gt1FullPath = $this->root_path . 'ext/at67/gigatronemulator/gt1/' . $gt1Path;
+
+	if (!file_exists($gt1FullPath)) {
+	    throw new \phpbb\exception\http_exception(404, 'GT1 file not found');
+	}
+
+	// Check/update download tracking in .ini file
+	$iniFilename = str_replace('.gt1', '.ini', $filename);
+	$iniFilePath = dirname($gt1FullPath) . '/' . $iniFilename;
+
+	$downloadCount = 0;
+	$downloadedBy = array();
+
+	// Read existing .ini file if it exists
+	if (file_exists($iniFilePath)) {
+	    $iniData = $this->parseIniMetadata($iniFilePath);
+	    $downloadCount = isset($iniData['downloads']) ? (int)$iniData['downloads'] : 0;
+
+	    if (isset($iniData['downloaded_by'])) {
+		$downloadedBy = array_map('trim', explode(',', $iniData['downloaded_by']));
+	    }
+	}
+
+	// Check if this user has already downloaded this file
+	if (!in_array($username, $downloadedBy)) {
+	    // New user download - increment counter and add to list
+	    $downloadCount++;
+	    $downloadedBy[] = $username;
+
+	    // Update .ini file
+	    $this->updateGt1DownloadIni($iniFilePath, $downloadCount, $downloadedBy);
+	}
+
+	// Serve the file
+	$response = new \Symfony\Component\HttpFoundation\BinaryFileResponse($gt1FullPath);
+	$response->setContentDisposition(
+	    \Symfony\Component\HttpFoundation\ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+	    $filename
+	);
+
+	return $response;
+    }
+
+    private function updateGt1DownloadIni($iniFilePath, $downloadCount, $downloadedBy)
+    {
+	// Read existing .ini content
+	$iniContent = '';
+	if (file_exists($iniFilePath)) {
+	    $iniContent = file_get_contents($iniFilePath);
+	}
+
+	// Remove existing downloads and downloaded_by lines
+	$lines = explode("\n", $iniContent);
+	$newLines = array();
+
+	foreach ($lines as $line) {
+	    $line = trim($line);
+	    if ($line && !str_starts_with($line, 'downloads=') && !str_starts_with($line, 'downloaded_by=')) {
+		$newLines[] = $line;
+	    }
+	}
+
+	// Add updated download tracking
+	$newLines[] = 'downloads=' . $downloadCount;
+	$newLines[] = 'downloaded_by=' . implode(',', $downloadedBy);
+
+	// Write back to file with file locking
+	$newContent = implode("\n", $newLines) . "\n";
+	file_put_contents($iniFilePath, $newContent, LOCK_EX);
     }
 }

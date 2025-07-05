@@ -377,12 +377,6 @@ function startEmulator()
 
     initAudio();
 
-    if(emulator)
-    {
-        let writeIndex = Module.ccall('emulator_get_audio_write_index', 'number', ['number'], [emulator]);
-        audioReadIndex = writeIndex;
-    }
-
     if(audioContext.state === 'suspended')
     {
         audioContext.resume();
@@ -453,7 +447,7 @@ function runLoop(currentTime)
     lastTime = currentTime;
 
     // Skip first few frames until timing settles
-    if(deltaTime > 100)
+    if(deltaTime > 20)
     {
         console.log(`Skipping frame with large delta: ${deltaTime.toFixed(2)}ms`);
         intervalId = requestAnimationFrame(runLoop);

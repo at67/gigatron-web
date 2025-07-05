@@ -282,7 +282,7 @@
 		    {% endif %}
 		</div>
 		<div class="button-group">
-		    <a href="{{ GT1_DOWNLOAD_URL }}" class="download-btn">📥 {{ GT1.filename }}</a>
+		    <a href="/app.php/gigatronshowcase/download/gt1/{{ GT1.path }}" class="download-btn" onclick="setTimeout(() => window.location.reload(), 1000)">📥 {{ GT1.filename }}</a>
 		    <a href="{{ U_EMULATOR }}?autoload_rom={{ GT1.preferred_rom|default('ROMv6') }}.rom&autoload_gt1={{ GT1.path }}" class="emulator-btn">🎮 Emulator</a>
 		    <a href="{{ U_EMULATOR_SCREENSHOT }}" class="emulator-btn">📷 Screenshot</a>
 		</div>

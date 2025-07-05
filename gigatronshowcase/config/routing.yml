@@ -1,3 +1,15 @@
+at67_gigatronshowcase_download_gt1_file:
+    path: /gigatronshowcase/download/gt1/{category}/{author}/{filename}
+    defaults: { _controller: at67.gigatronshowcase.controller.main:downloadTrackerGt1File }
+
+at67_gigatronshowcase_download_gt1_folder:
+    path: /gigatronshowcase/download/gt1/{category}/{author}/{folder}/{filename}
+    defaults: { _controller: at67.gigatronshowcase.controller.main:downloadTrackerGt1Folder }
+
+at67_gigatronshowcase_download_rom:
+    path: /gigatronshowcase/download/rom/{filename}
+    defaults: { _controller: at67.gigatronshowcase.controller.main:downloadTrackerRom }
+
 at67_gigatronshowcase_main:
     path: /gigatronshowcase
     defaults: { _controller: at67.gigatronshowcase.controller.main:handle }
@@ -21,3 +33,4 @@ at67_gigatronshowcase_gt1_folder:
 at67_gigatronshowcase_screenshot_save:
     path: /gigatronshowcase/screenshot/save
     defaults: { _controller: at67.gigatronshowcase.controller.main:saveScreenshot }
+

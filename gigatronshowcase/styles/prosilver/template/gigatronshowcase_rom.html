@@ -237,7 +237,7 @@
 		    {% endif %}
 		</div>
 		<div class="button-group">
-		    <a href="{{ ROM_DOWNLOAD_URL }}" class="download-btn">📥 {{ ROM.filename }}</a>
+		    <a href="/app.php/gigatronshowcase/download/rom/{{ ROM.filename }}" class="download-btn" onclick="setTimeout(() => window.location.reload(), 1000)">📥 {{ ROM.filename }}</a>
 		    <a href="{{ U_EMULATOR_SCREENSHOT }}" class="emulator-btn">📷 Screenshot</a>
 		</div>
 	    </div>

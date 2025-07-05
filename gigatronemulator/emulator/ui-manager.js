@@ -71,16 +71,16 @@ class UIManager
             // Update ROM status
             document.getElementById('status-rom-name').textContent = file.filename;
             document.getElementById('download-rom').style.display = 'flex';
-            document.getElementById('download-rom').href = `/ext/at67/gigatronemulator/roms/${file.filename}`;
-            document.getElementById('download-rom').download = file.filename;
+            document.getElementById('download-rom').href = `/app.php/gigatronshowcase/download/rom/${file.filename}`;
+            //document.getElementById('download-rom').download = file.filename;
         }
         else if(fileType === 'gt1')
         {
             // Update GT1 status
             document.getElementById('status-gt1-name').textContent = file.filename;
             document.getElementById('download-gt1').style.display = 'flex';
-            document.getElementById('download-gt1').href = `/ext/at67/gigatronemulator/gt1/${file.path}`;
-            document.getElementById('download-gt1').download = file.filename;
+            document.getElementById('download-gt1').href = `/app.php/gigatronshowcase/download/gt1/${file.path}`;
+            //document.getElementById('download-gt1').download = file.filename;
         }
     }
 

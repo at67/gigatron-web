@@ -320,7 +320,7 @@
 		<div class="featured-buttons">
 		    <a href="{{ U_EMULATOR }}?autoload_rom={{ FEATURED_GT1.preferred_rom|default('ROMv6') }}.rom&autoload_gt1={{ FEATURED_GT1.path }}" class="btn btn-primary">▶ Run Now</a>
 		    <a href="/app.php/gigatronshowcase/gt1/{{ FEATURED_GT1.category }}/{{ FEATURED_GT1.author }}/{{ FEATURED_GT1.filename }}" class="btn btn-secondary">ℹ More Info</a>
-		    <a href="/ext/at67/gigatronemulator/gt1/{{ FEATURED_GT1.path }}" class="btn btn-tertiary" download>💾 Download</a>
+		    <a href="/app.php/gigatronshowcase/download/gt1/{{ FEATURED_GT1.path }}" class="btn btn-tertiary" onclick="setTimeout(() => window.location.reload(), 1000)">💾 Download</a>
 		</div>
 	    </div>
 	</div>

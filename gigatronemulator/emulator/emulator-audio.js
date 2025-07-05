@@ -129,13 +129,15 @@ function updateAudio()
 
     //console.log(`Audio: ${numAudioSamples} : ${currentTime.toFixed(2)} : ${tailTime.toFixed(2)}`);
 
-    // If muted or readindex is behind, then reset read pointer and return
-    if(isMuted  ||  numAudioSamples <= 0)
+    // If muted then reset audio and return
+    if(isMuted)
     {
-        audioReadIndex = audioWriteIndex;
-        tailTime = currentTime;
+        resetAudio();
         return;
     }
+
+    // If readindex is behind, then return
+    if(numAudioSamples <= 0) return;
 
     // Get raw audio buffer from C++
     let bufferPtr = Module.ccall('emulator_get_audio_buffer', 'number', ['number'], [emulator]);
@@ -174,8 +176,6 @@ function resetAudio()
 {
     if(!audioContext || !emulator) return;
 
-    let writeIndex = Module.ccall('emulator_get_audio_write_index', 'number', ['number'], [emulator]);
-
     tailTime = audioContext.currentTime;
-    audioReadIndex = writeIndex;
+    audioReadIndex = Module.ccall('emulator_get_audio_write_index', 'number', ['number'], [emulator]);
 }
