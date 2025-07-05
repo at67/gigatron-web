@@ -62,6 +62,7 @@ class rom
         'ROM' => $selectedRom,
         'SCREENSHOT_EXISTS' => $screenshotExists,
         'SCREENSHOT_URL' => $screenshotUrl,
+        'IS_ADMIN' => $this->checkAdminPermission(),
         'U_BACK_TO_SHOWCASE' => $this->helper->route('at67_gigatronshowcase_main'),
         'U_EMULATOR' => $this->helper->route('at67_gigatronemulator_main'),
         'U_EMULATOR_SCREENSHOT' => $this->helper->route('at67_gigatronemulator_main') . '?autoload_rom=' . urlencode($selectedRom['filename']) . '&screenshot_mode=1',
@@ -283,5 +284,12 @@ class rom
         }
 
         return $roms;
+    }
+
+    private function checkAdminPermission()
+    {
+        global $phpbb_container;
+        $auth = $phpbb_container->get('auth');
+        return $auth->acl_get('a_');
     }
 }

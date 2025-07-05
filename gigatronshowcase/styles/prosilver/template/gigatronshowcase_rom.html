@@ -199,97 +199,99 @@
 
 @media (max-width: 768px) {
     .screenshot-section-centered {
-	margin-bottom: 20px;
+        margin-bottom: 20px;
     }
 
     .screenshot {
-	width: 100%;
-	max-width: 320px;
-	height: 240px;
-	margin: 0 auto 20px auto;
+        width: 100%;
+        max-width: 320px;
+        height: 240px;
+        margin: 0 auto 20px auto;
     }
 }
 </style>
 
 <div class="showcase-container">
     <div class="container">
-	<div class="header">
-	    <a href="{{ U_BACK_TO_SHOWCASE }}" class="back-link">← Back to Showcase</a>
-	    <h1 class="title">{{ ROM.title }}</h1>
-	    <p class="subtitle">ROM Firmware Details</p>
-	</div>
+        <div class="header">
+            <a href="{{ U_BACK_TO_SHOWCASE }}" class="back-link">← Back to Showcase</a>
+            <h1 class="title">{{ ROM.title }}</h1>
+            <p class="subtitle">ROM Firmware Details</p>
+        </div>
 
-	<div class="content">
-	    <!-- Centered Screenshot Section -->
-	    <div class="screenshot-section-centered">
-		<div class="screenshot">
-		    {% if SCREENSHOT_EXISTS %}
-			<img src="{{ SCREENSHOT_URL }}" alt="{{ ROM.title }} Screenshot" class="screenshot-image" />
-		    {% else %}
-			<div class="screenshot-placeholder">
-			    *** Gigatron 32K ***<br>
-			    TTL microcomputer<br>
-			    {{ ROM.title }}<br><br>
-			    by {{ ROM.author }}<br>
-			    {{ ROM.version }}<br><br>
-			    ────────────────────
-			</div>
-		    {% endif %}
-		</div>
-		<div class="button-group">
-		    <a href="/app.php/gigatronshowcase/download/rom/{{ ROM.filename }}" class="download-btn" onclick="setTimeout(() => window.location.reload(), 1000)">📥 {{ ROM.filename }}</a>
-		    <a href="{{ U_EMULATOR_SCREENSHOT }}" class="emulator-btn">📷 Screenshot</a>
-		</div>
-	    </div>
+        <div class="content">
+            <!-- Centered Screenshot Section -->
+            <div class="screenshot-section-centered">
+                <div class="screenshot">
+                    {% if SCREENSHOT_EXISTS %}
+                        <img src="{{ SCREENSHOT_URL }}" alt="{{ ROM.title }} Screenshot" class="screenshot-image" />
+                    {% else %}
+                        <div class="screenshot-placeholder">
+                            *** Gigatron 32K ***<br>
+                            TTL microcomputer<br>
+                            {{ ROM.title }}<br><br>
+                            by {{ ROM.author }}<br>
+                            {{ ROM.version }}<br><br>
+                            ────────────────────
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="button-group">
+                    <a href="/app.php/gigatronshowcase/download/rom/{{ ROM.filename }}" class="download-btn" onclick="setTimeout(() => window.location.reload(), 1000)">📥 {{ ROM.filename }}</a>
+                    {% if IS_ADMIN %}
+                    <a href="{{ U_EMULATOR_SCREENSHOT }}" class="emulator-btn">📷 Screenshot</a>
+                    {% endif %}
+                </div>
+            </div>
 
-	    <!-- Full Width Info Section -->
-	    <div class="info-section-full">
-		<div class="metadata">
-		    <h3>Firmware Details</h3>
-		    <div class="meta-row">
-			<div class="meta-label">Author:</div>
-			<div class="meta-value">{{ ROM.author|default('Unknown') }}</div>
-		    </div>
-		    <div class="meta-row">
-			<div class="meta-label">Version:</div>
-			<div class="meta-value">{{ ROM.version|default('Unknown') }}</div>
-		    </div>
-		    <div class="meta-row">
-			<div class="meta-label">Release Date:</div>
-			<div class="meta-value">{{ ROM.date|default('Unknown') }}</div>
-		    </div>
-		    <div class="meta-row">
-			<div class="meta-label">File Size:</div>
-			<div class="meta-value">{{ ROM.filesize|default('Unknown') }}</div>
-		    </div>
-		    <div class="meta-row">
-			<div class="meta-label">Downloads:</div>
-			<div class="meta-value">{{ ROM.downloads|default('0') }}</div>
-		    </div>
-		    {% if ROM.source_code %}
-		    <div class="meta-row">
-			<div class="meta-label">Source Code:</div>
-			<div class="meta-value">
-			    <a href="{{ ROM.source_code }}" target="_blank" style="color: #2a5298; text-decoration: none;">📁 View Source</a>
-			</div>
-		    </div>
-		    {% endif %}
-		    <div class="meta-row">
-			<div class="meta-label">Description:</div>
-			<div class="meta-value description">{{ ROM.description|default('No description available.') }}</div>
-		    </div>
-		</div>
+            <!-- Full Width Info Section -->
+            <div class="info-section-full">
+                <div class="metadata">
+                    <h3>Firmware Details</h3>
+                    <div class="meta-row">
+                        <div class="meta-label">Author:</div>
+                        <div class="meta-value">{{ ROM.author|default('Unknown') }}</div>
+                    </div>
+                    <div class="meta-row">
+                        <div class="meta-label">Version:</div>
+                        <div class="meta-value">{{ ROM.version|default('Unknown') }}</div>
+                    </div>
+                    <div class="meta-row">
+                        <div class="meta-label">Release Date:</div>
+                        <div class="meta-value">{{ ROM.date|default('Unknown') }}</div>
+                    </div>
+                    <div class="meta-row">
+                        <div class="meta-label">File Size:</div>
+                        <div class="meta-value">{{ ROM.filesize|default('Unknown') }}</div>
+                    </div>
+                    <div class="meta-row">
+                        <div class="meta-label">Downloads:</div>
+                        <div class="meta-value">{{ ROM.downloads|default('0') }}</div>
+                    </div>
+                    {% if ROM.source_code %}
+                    <div class="meta-row">
+                        <div class="meta-label">Source Code:</div>
+                        <div class="meta-value">
+                            <a href="{{ ROM.source_code }}" target="_blank" style="color: #2a5298; text-decoration: none;">📁 View Source</a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="meta-row">
+                        <div class="meta-label">Description:</div>
+                        <div class="meta-value description">{{ ROM.description|default('No description available.') }}</div>
+                    </div>
+                </div>
 
-		{% if ROM.details %}
-		<div class="details">
-		    <h3>Details</h3>
-		    <div class="details-text">
-			{{ ROM.details|nl2br }}
-		    </div>
-		</div>
-		{% endif %}
-	    </div>
-	</div>
+                {% if ROM.details %}
+                <div class="details">
+                    <h3>Details</h3>
+                    <div class="details-text">
+                        {{ ROM.details|nl2br }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
     </div>
 </div>
 

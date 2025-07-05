@@ -23,17 +23,17 @@ class main
     public function handle()
     {
         // ADMIN ONLY CHECK
-        global $phpbb_container;
-        $auth = $phpbb_container->get('auth');
-        if (!$auth->acl_get('a_')) {
-            throw new \phpbb\exception\http_exception(403, 'NOT_AUTHORISED');
-        }
-        // REGISTERED MEMBERS ONLY CHECK
         //global $phpbb_container;
         //$auth = $phpbb_container->get('auth');
-        //if (!$auth->acl_get('u_')) {
+        //if (!$auth->acl_get('a_')) {
         //    throw new \phpbb\exception\http_exception(403, 'NOT_AUTHORISED');
         //}
+        // REGISTERED MEMBERS ONLY CHECK
+        global $phpbb_container;
+        $auth = $phpbb_container->get('auth');
+        if (!$auth->acl_get('u_')) {
+            throw new \phpbb\exception\http_exception(403, 'NOT_AUTHORISED');
+        }
 
         // Scan ROMs and GT1s using content service
         $roms = $this->content->scanRoms();
@@ -54,7 +54,10 @@ class main
     {
         global $phpbb_container;
         $auth = $phpbb_container->get('auth');
-        if (!$auth->acl_get('a_')) {
+        $user = $phpbb_container->get('user');
+
+        // Check if user is logged in
+        if (!$auth->acl_get('u_')) {
             return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'NOT_AUTHORISED'], 403);
         }
 
@@ -64,13 +67,31 @@ class main
 
         // Simple logic: GT1 takes priority if both exist, ROM only if GT1 doesn't exist
         if (!empty($gt1Path)) {
-            // GT1 mode (existing behavior) - takes priority
+            // GT1 mode - check if user owns the GT1 or is admin
             $isRomMode = false;
             $isGt1Mode = true;
+
+            // Parse GT1 path to get author: category/author/filename or category/author/folder/filename
+            $pathParts = explode('/', $gt1Path);
+            if (count($pathParts) < 3) {
+                return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'Invalid GT1 path'], 400);
+            }
+            $gt1Author = $pathParts[1]; // Second part is always author
+
+            // Check permission: user owns GT1 OR admin
+            if ($gt1Author !== $user->data['username'] && !$auth->acl_get('a_')) {
+                return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'You can only screenshot your own GT1 applications'], 403);
+            }
+
         } elseif (!empty($romFilename)) {
-            // ROM mode (new behavior) - only if no GT1
+            // ROM mode - admin only
             $isRomMode = true;
             $isGt1Mode = false;
+
+            if (!$auth->acl_get('a_')) {
+                return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'ROM screenshots require admin privileges'], 403);
+            }
+
         } else {
             // Neither parameter provided
             return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'Missing required parameters (gt1_path or rom_filename)'], 400);
@@ -160,23 +181,23 @@ class main
                 $resizedImage = imagecreatetruecolor(480, 360);
                 if ($resizedImage === false) {
                     imagedestroy($sourceImage);
-                    throw new Exception('Failed to create resized image');
+                    throw new \Exception('Failed to create resized image');
                 }
 
                 if (!imagecopyresampled($resizedImage, $sourceImage, 0, 0, 0, 0, 480, 360, $width, $height)) {
                     imagedestroy($sourceImage);
                     imagedestroy($resizedImage);
-                    throw new Exception('Failed to resize image');
+                    throw new \Exception('Failed to resize image');
                 }
 
                 if (!imagepng($resizedImage, $screenshotPath)) {
-                    throw new Exception('Failed to save resized image');
+                    throw new \Exception('Failed to save resized image');
                 }
 
                 imagedestroy($sourceImage);
                 imagedestroy($resizedImage);
 
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 // Clean up on error
                 if (file_exists($screenshotPath)) {
                     unlink($screenshotPath);
