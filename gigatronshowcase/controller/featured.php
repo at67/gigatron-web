@@ -1,6 +1,8 @@
 <?php
 namespace at67\gigatronshowcase\controller;
 
+require_once __DIR__ . '/utils.php';
+
 class featured
 {
     protected $root_path;
@@ -89,7 +91,7 @@ class featured
         $featuredAuthor = $this->getFeaturedAuthors();
 
         // Get all GT1s for this author
-        $allGt1s = $this->content->scanGT1s();
+        $allGt1s = scanGT1s($this->root_path);
         $authorGt1s = array();
 
         foreach ($allGt1s as $gt1) {
@@ -111,7 +113,7 @@ class featured
         $iniFile = str_replace('.gt1', '.ini', $fullFilePath);
 
         if (file_exists($iniFile)) {
-            $metadata = $this->content->parseIniMetadata($iniFile);
+            $metadata = parseIniMetadata($iniFile);
             $selectedGt1 = array_merge($selectedGt1, $metadata);
         }
 

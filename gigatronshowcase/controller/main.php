@@ -2,6 +2,8 @@
 
 namespace at67\gigatronshowcase\controller;
 
+require_once __DIR__ . '/utils.php';
+
 class main
 {
     protected $helper;
@@ -38,7 +40,7 @@ class main
 
         // Scan ROMs and GT1s using content service
         $roms = $this->content->scanRoms();
-        $gt1s = $this->content->scanGT1s();
+        $gt1s = scanGT1s($this->root_path);
         $featuredGT1s = $this->featured->getFeaturedGT1s($gt1s);
 
         $this->template->assign_vars(array(
@@ -218,9 +220,9 @@ class main
             require_once __DIR__ . '/security.php';
             $username = $user->data['username'];
             if ($isGt1Mode) {
-                logUserAction('SCREENSHOT', $category, $folder, basename($gt1Path), $screenshotFilename, $uploadedFile['size'], $username);
+                logUserAction('SCREENSHOT', $category, $folder, basename($gt1Path), $screenshotFilename, $uploadedFile['size'], $username, $username);
             } else {
-                logUserAction('SCREENSHOT', 'roms', null, $romFilename, $screenshotFilename, $uploadedFile['size'], $username);
+                logUserAction('SCREENSHOT', 'roms', null, $romFilename, $screenshotFilename, $uploadedFile['size'], $username, $username);
             }
 
             return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => true, 'message' => 'Screenshot saved successfully', 'filename' => $screenshotFilename]);

@@ -2,6 +2,8 @@
 
 namespace at67\gigatronshowcase\controller;
 
+require_once __DIR__ . '/utils.php';
+
 class user
 {
     protected $helper;
@@ -145,7 +147,7 @@ class user
                 'details' => $details,
             ));
 
-            logUserAction('CREATE', $category, null, $filename, null, filesize($targetFile), $username);
+            logUserAction('CREATE', $category, null, $filename, null, filesize($targetFile), $username, $username);
 
             // Redirect to the new GT1 page
             $redirectUrl = $this->helper->route('at67_gigatronshowcase_gt1_file', array(
@@ -203,7 +205,7 @@ class user
         // Load metadata
         $metadata = array();
         if (file_exists($iniPath)) {
-            $metadata = $this->content->parseIniMetadata($iniPath);
+            $metadata = parseIniMetadata($iniPath);
         }
 
         // Get file info
@@ -216,7 +218,7 @@ class user
             'AUTHOR' => $author,
             'FILENAME' => $filename,
             'FOLDER' => $folder,
-            'FILE_SIZE' => $this->content->formatFileSize($fileSize),
+            'FILE_SIZE' => formatFileSize($fileSize),
             'SCREENSHOT_EXISTS' => $screenshotExists,
             'CATEGORIES' => $this->getAvailableCategories(),
             'U_BACK_TO_GT1' => $this->helper->route(
@@ -344,7 +346,7 @@ class user
             ));
 
             $fileSize = file_exists($currentGt1Path) ? filesize($currentGt1Path) : 0;
-            logUserAction('EDIT', $category, $folder, $filename, null, $fileSize, $fileInfo['actual_author']);
+            logUserAction('EDIT', $category, $folder, $filename, null, $fileSize, $fileInfo['actual_author'], $fileInfo['trusted_username']);
 
             // If category changed, move files
             if ($newCategory !== $category) {
@@ -438,7 +440,7 @@ class user
         // Load metadata
         $metadata = array();
         if (file_exists($iniPath)) {
-            $metadata = $this->content->parseIniMetadata($iniPath);
+            $metadata = parseIniMetadata($iniPath);
         }
 
         // Get file info
@@ -453,8 +455,8 @@ class user
             'AUTHOR' => $author,
             'FILENAME' => $filename,
             'FOLDER' => $folder,
-            'GT1_SIZE' => $this->content->formatFileSize($gt1Size),
-            'SCREENSHOT_SIZE' => $screenshotSize > 0 ? $this->content->formatFileSize($screenshotSize) : null,
+            'GT1_SIZE' => formatFileSize($gt1Size),
+            'SCREENSHOT_SIZE' => $screenshotSize > 0 ? formatFileSize($screenshotSize) : null,
             'DOWNLOADS' => $downloads,
             'U_BACK_TO_GT1' => $this->helper->route(
                 $folder !== null ? 'at67_gigatronshowcase_gt1_folder' : 'at67_gigatronshowcase_gt1_file',
@@ -524,7 +526,7 @@ class user
             $screenshotPath = str_replace('.gt1', '.png', $gt1Path);
 
             $fileSize = file_exists($gt1Path) ? filesize($gt1Path) : 0;
-            logUserAction('DELETE', $category, $folder, $filename, null, $fileSize, $fileInfo['actual_author']);
+            logUserAction('DELETE', $category, $folder, $filename, null, $fileSize, $fileInfo['actual_author'], $fileInfo['trusted_username']);
 
             // Delete files
             if (file_exists($gt1Path)) {

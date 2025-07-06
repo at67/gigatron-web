@@ -1,6 +1,8 @@
 <?php
 namespace at67\gigatronshowcase\controller;
 
+require_once __DIR__ . '/utils.php';
+
 class gt1
 {
     protected $helper;
@@ -19,7 +21,7 @@ class gt1
     public function author($author, $category)
     {
         // Scan all GT1s and filter by author and category
-        $allGt1s = $this->scanGT1s();
+        $allGt1s = scanGT1s($this->root_path);
         $authorGt1s = array();
 
         foreach ($allGt1s as $gt1) {
@@ -62,7 +64,7 @@ class gt1
         }
 
         // Find the specific GT1 file
-        $allGt1s = $this->scanGT1s();
+        $allGt1s = scanGT1s($this->root_path);
         $selectedGt1 = null;
 
         // Build the full path we're looking for
@@ -86,7 +88,7 @@ class gt1
 
         // Load metadata if .ini file exists
         if (file_exists($iniFile)) {
-            $metadata = $this->parseIniMetadata($iniFile);
+            $metadata = parseIniMetadata($iniFile);
             $selectedGt1 = array_merge($selectedGt1, $metadata);
         }
 
@@ -110,7 +112,7 @@ class gt1
         // Calculate file size
         if (file_exists($fullFilePath)) {
             $fileSize = filesize($fullFilePath);
-            $selectedGt1['filesize'] = $this->formatFileSize($fileSize);
+            $selectedGt1['filesize'] = formatFileSize($fileSize);
         }
 
         // Parse compatible ROMs if specified
@@ -206,7 +208,7 @@ class gt1
 
         // Read existing .ini file if it exists
         if (file_exists($iniFilePath)) {
-            $iniData = $this->parseIniMetadata($iniFilePath);
+            $iniData = parseIniMetadata($iniFilePath);
             $downloadCount = isset($iniData['downloads']) ? (int)$iniData['downloads'] : 0;
 
             if (isset($iniData['downloaded_by'])) {
@@ -221,7 +223,7 @@ class gt1
             $downloadedBy[] = $username;
 
             // Update .ini file
-            $this->updateGt1DownloadIni($iniFilePath, $downloadCount, $downloadedBy);
+            updateDownloadIni($iniFilePath, $downloadCount, $downloadedBy);
         }
 
         // Serve the file
@@ -232,42 +234,6 @@ class gt1
         );
 
         return $response;
-    }
-
-    private function updateGt1DownloadIni($iniFilePath, $downloadCount, $downloadedBy)
-    {
-        // Read existing .ini content
-        $iniContent = '';
-        if (file_exists($iniFilePath)) {
-            $iniContent = file_get_contents($iniFilePath);
-        }
-
-        // Remove existing downloads and downloaded_by lines
-        $lines = explode("\n", $iniContent);
-        $newLines = array();
-
-        foreach ($lines as $line) {
-            $line = trim($line);
-            if ($line && !str_starts_with($line, 'downloads=') && !str_starts_with($line, 'downloaded_by=')) {
-                $newLines[] = $line;
-            }
-        }
-
-        // Add updated download tracking
-        $newLines[] = 'downloads=' . $downloadCount;
-        $newLines[] = 'downloaded_by=' . implode(',', $downloadedBy);
-
-        // Write back to file with file locking
-        $newContent = implode("\n", $newLines) . "\n";
-        file_put_contents($iniFilePath, $newContent, LOCK_EX);
-    }
-
-    private function formatFileSize($bytes)
-    {
-        if ($bytes >= 1024) {
-            return round($bytes / 1024, 1) . ' KB';
-        }
-        return $bytes . ' bytes';
     }
 
     private function addScreenshotInfo($gt1)
@@ -282,92 +248,6 @@ class gt1
         $gt1['screenshot_url'] = $screenshotExists ? '/ext/at67/gigatronemulator/gt1/' . dirname($gt1['path']) . '/' . $screenshotFilename . '?' . filemtime($screenshotPath) : null;
 
         return $gt1;
-    }
-
-    private function parseIniMetadata($iniFile)
-    {
-        $metadata = array();
-        $content = file_get_contents($iniFile);
-
-        if ($content !== false) {
-            $lines = explode("\n", $content);
-            foreach ($lines as $line) {
-                $line = trim($line);
-
-                // Skip empty lines, comments, and section headers
-                if (empty($line) || $line[0] === '#' || $line[0] === '[') {
-                    continue;
-                }
-
-                // Parse key=value pairs
-                $parts = explode('=', $line, 2);
-                if (count($parts) === 2) {
-                    $key = trim($parts[0]);
-                    $value = trim($parts[1]);
-                    $metadata[$key] = $value;
-                }
-            }
-        }
-
-        return $metadata;
-    }
-
-    private function scanGT1s()
-    {
-        $gt1s = array();
-        $gt1Path = $this->root_path . 'ext/at67/gigatronemulator/gt1/';
-
-        if (is_dir($gt1Path)) {
-            $categories = scandir($gt1Path);
-            foreach ($categories as $category) {
-                if ($category === '.' || $category === '..') continue;
-
-                $categoryPath = $gt1Path . $category . '/';
-                if (is_dir($categoryPath)) {
-                    $authors = scandir($categoryPath);
-                    foreach ($authors as $author) {
-                        if ($author === '.' || $author === '..') continue;
-
-                        $authorPath = $categoryPath . $author . '/';
-                        if (is_dir($authorPath)) {
-                            $files = scandir($authorPath);
-                            foreach ($files as $file) {
-                                if ($file === '.' || $file === '..') continue;
-
-                                $filePath = $authorPath . $file;
-
-                                if (is_dir($filePath)) {
-                                    // Check subdirectory for gt1 files (like at67/Invader/)
-                                    $subFiles = scandir($filePath . '/');
-                                    foreach ($subFiles as $subFile) {
-                                        if (pathinfo($subFile, PATHINFO_EXTENSION) === 'gt1') {
-                                            $gt1s[] = array(
-                                                'filename' => $subFile,
-                                                'author' => $author,
-                                                'category' => $category,
-                                                'path' => $category . '/' . $author . '/' . $file . '/' . $subFile,
-                                                'title' => pathinfo($subFile, PATHINFO_FILENAME),
-                                            );
-                                        }
-                                    }
-                                } elseif (pathinfo($file, PATHINFO_EXTENSION) === 'gt1') {
-                                    // Direct gt1 file in author folder (like delpozzo/)
-                                    $gt1s[] = array(
-                                        'filename' => $file,
-                                        'author' => $author,
-                                        'category' => $category,
-                                        'path' => $category . '/' . $author . '/' . $file,
-                                        'title' => pathinfo($file, PATHINFO_FILENAME),
-                                    );
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        return $gt1s;
     }
 
     private function checkAdminPermission()

@@ -1,6 +1,8 @@
 <?php
 namespace at67\gigatronshowcase\controller;
 
+require_once __DIR__ . '/utils.php';
+
 class rom
 {
     protected $helper;
@@ -44,7 +46,7 @@ class rom
         $romFilePath = $romsPath . $selectedRom['filename'];
         if (file_exists($romFilePath)) {
             $fileSize = filesize($romFilePath);
-            $selectedRom['filesize'] = $this->formatFileSize($fileSize);
+            $selectedRom['filesize'] = formatFileSize($fileSize);
         }
 
         // Ensure required metadata fields are set with defaults
@@ -107,7 +109,7 @@ class rom
 
         // Read existing .ini file if it exists
         if (file_exists($iniFilePath)) {
-            $iniData = $this->parseIniMetadata($iniFilePath);
+            $iniData = parseIniMetadata($iniFilePath);
             $downloadCount = isset($iniData['downloads']) ? (int)$iniData['downloads'] : 0;
 
             if (isset($iniData['downloaded_by'])) {
@@ -122,7 +124,7 @@ class rom
             $downloadedBy[] = $username;
 
             // Update .ini file
-            $this->updateRomDownloadIni($iniFilePath, $downloadCount, $downloadedBy);
+            updateDownloadIni($iniFilePath, $downloadCount, $downloadedBy);
         }
 
         // Serve the file
@@ -133,70 +135,6 @@ class rom
         );
 
         return $response;
-    }
-
-    private function updateRomDownloadIni($iniFilePath, $downloadCount, $downloadedBy)
-    {
-        // Read existing .ini content
-        $iniContent = '';
-        if (file_exists($iniFilePath)) {
-            $iniContent = file_get_contents($iniFilePath);
-        }
-
-        // Remove existing downloads and downloaded_by lines
-        $lines = explode("\n", $iniContent);
-        $newLines = array();
-
-        foreach ($lines as $line) {
-            $line = trim($line);
-            if ($line && !str_starts_with($line, 'downloads=') && !str_starts_with($line, 'downloaded_by=')) {
-                $newLines[] = $line;
-            }
-        }
-
-        // Add updated download tracking
-        $newLines[] = 'downloads=' . $downloadCount;
-        $newLines[] = 'downloaded_by=' . implode(',', $downloadedBy);
-
-        // Write back to file with file locking
-        $newContent = implode("\n", $newLines) . "\n";
-        file_put_contents($iniFilePath, $newContent, LOCK_EX);
-    }
-
-    private function formatFileSize($bytes)
-    {
-        if ($bytes >= 1024) {
-            return round($bytes / 1024, 1) . ' KB';
-        }
-        return $bytes . ' bytes';
-    }
-
-    private function parseIniMetadata($iniFile)
-    {
-        $metadata = array();
-        $content = file_get_contents($iniFile);
-
-        if ($content !== false) {
-            $lines = explode("\n", $content);
-            foreach ($lines as $line) {
-                $line = trim($line);
-
-                // Skip empty lines, comments, and section headers
-                if (empty($line) || $line[0] === '#' || $line[0] === '[') {
-                    continue;
-                }
-
-                // Parse key=value pairs
-                $parts = explode('=', $line, 2);
-                if (count($parts) === 2) {
-                    $key = trim($parts[0]);
-                    $value = trim($parts[1]);
-                    $metadata[$key] = $value;
-                }
-            }
-        }
-
-        return $metadata;
     }
 
     private function getRomOrder()
@@ -240,8 +178,9 @@ class rom
 
                     // Check for .ini metadata file
                     $iniFile = $romsPath . pathinfo($file, PATHINFO_FILENAME) . '.ini';
+                    // Load metadata if .ini file exists
                     if (file_exists($iniFile)) {
-                        $metadata = $this->parseIniMetadata($iniFile);
+                        $metadata = parseIniMetadata($iniFile);
                         $romData = array_merge($romData, $metadata);
                     }
 

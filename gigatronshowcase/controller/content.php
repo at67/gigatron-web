@@ -1,6 +1,8 @@
 <?php
 namespace at67\gigatronshowcase\controller;
 
+require_once __DIR__ . '/utils.php';
+
 class content
 {
     protected $root_path;
@@ -34,7 +36,7 @@ class content
                     // Check for .ini metadata file
                     $iniFile = $romsPath . pathinfo($file, PATHINFO_FILENAME) . '.ini';
                     if (file_exists($iniFile)) {
-                        $metadata = $this->parseIniMetadata($iniFile);
+                        $metadata = parseIniMetadata($iniFile);
                         $romData = array_merge($romData, $metadata);
                     }
 
@@ -77,92 +79,6 @@ class content
         }
 
         return $roms;
-    }
-
-    public function scanGT1s()
-    {
-        $gt1s = array();
-        $gt1Path = $this->root_path . 'ext/at67/gigatronemulator/gt1/';
-
-        if (is_dir($gt1Path)) {
-            $categories = scandir($gt1Path);
-            foreach ($categories as $category) {
-                if ($category === '.' || $category === '..') continue;
-
-                $categoryPath = $gt1Path . $category . '/';
-                if (is_dir($categoryPath)) {
-                    $authors = scandir($categoryPath);
-                    foreach ($authors as $author) {
-                        if ($author === '.' || $author === '..') continue;
-
-                        $authorPath = $categoryPath . $author . '/';
-                        if (is_dir($authorPath)) {
-                            $files = scandir($authorPath);
-                            foreach ($files as $file) {
-                                if ($file === '.' || $file === '..') continue;
-
-                                $filePath = $authorPath . $file;
-
-                                if (is_dir($filePath)) {
-                                    // Check subdirectory for gt1 files (like at67/Invader/)
-                                    $subFiles = scandir($filePath . '/');
-                                    foreach ($subFiles as $subFile) {
-                                        if (pathinfo($subFile, PATHINFO_EXTENSION) === 'gt1') {
-                                            $gt1s[] = array(
-                                                'filename' => $subFile,
-                                                'author' => $author,
-                                                'category' => $category,
-                                                'path' => $category . '/' . $author . '/' . $file . '/' . $subFile,
-                                                'title' => pathinfo($subFile, PATHINFO_FILENAME),
-                                            );
-                                        }
-                                    }
-                                } elseif (pathinfo($file, PATHINFO_EXTENSION) === 'gt1') {
-                                    // Direct gt1 file in author folder (like delpozzo/)
-                                    $gt1s[] = array(
-                                        'filename' => $file,
-                                        'author' => $author,
-                                        'category' => $category,
-                                        'path' => $category . '/' . $author . '/' . $file,
-                                        'title' => pathinfo($file, PATHINFO_FILENAME),
-                                    );
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        return $gt1s;
-    }
-
-    public function parseIniMetadata($iniFile)
-    {
-        $metadata = array();
-        $content = file_get_contents($iniFile);
-
-        if ($content !== false) {
-            $lines = explode("\n", $content);
-            foreach ($lines as $line) {
-                $line = trim($line);
-
-                // Skip empty lines, comments, and section headers
-                if (empty($line) || $line[0] === '#' || $line[0] === '[') {
-                    continue;
-                }
-
-                // Parse key=value pairs
-                $parts = explode('=', $line, 2);
-                if (count($parts) === 2) {
-                    $key = trim($parts[0]);
-                    $value = trim($parts[1]);
-                    $metadata[$key] = $value;
-                }
-            }
-        }
-
-        return $metadata;
     }
 
     public function addScreenshotInfo($gt1)
@@ -211,13 +127,5 @@ class content
         }
 
         return $romOrder;
-    }
-
-    public function formatFileSize($bytes)
-    {
-        if ($bytes >= 1024) {
-            return round($bytes / 1024, 1) . ' KB';
-        }
-        return $bytes . ' bytes';
     }
 }

@@ -66,22 +66,17 @@ function validateGT1File($filePath, &$errorMessage = null)
         return false;
     }
 
+    // Check file size
+    $fileSize = filesize($filePath);
+    if ($fileSize < 3  ||  $fileSize > 131072) {
+        $errorMessage = 'Invalid GT1 file format';
+        return false;
+    }
+
+    // Load into memory
     $data = file_get_contents($filePath);
     if ($data === false) {
-        $errorMessage = 'Could not read GT1 file';
-        return false;
-    }
-
-    $size = strlen($data);
-
-    if ($size < 3) {
-        $errorMessage = 'GT1 file too small (minimum 3 bytes required)';
-        return false;
-    }
-
-    // Maximum reasonable file size (prevent memory exhaustion)
-    if ($size > 131072) { // 128KB limit
-        $errorMessage = 'GT1 file too large (maximum 128KB)';
+        $errorMessage = 'Invalid GT1 file format';
         return false;
     }
 
@@ -90,14 +85,14 @@ function validateGT1File($filePath, &$errorMessage = null)
     $foundTerminator = false;
 
     // Parse segments following the C++ emulator logic
-    while ($pos + 2 < $size) {
+    while ($pos + 2 < $fileSize) {
         // Need at least 3 bytes for header
         $hiAddr = ord($data[$pos]);
         $loAddr = ord($data[$pos + 1]);
         $segSize = ord($data[$pos + 2]);
 
         // Check for terminator: first byte is 0 AND we're at the last 3 bytes
-        if ($hiAddr == 0x00 && $pos + 2 == $size - 1) {
+        if ($hiAddr == 0x00 && $pos + 2 == $fileSize - 1) {
             // This is the terminator segment
             $foundTerminator = true;
 
@@ -108,7 +103,7 @@ function validateGT1File($filePath, &$errorMessage = null)
 
             // Execution address should be reasonable (not 0x0000)
             if ($execAddr == 0x0000) {
-                $errorMessage = 'Invalid GT1: execution address cannot be 0x0000';
+                $errorMessage = 'Invalid GT1 file format';
                 return false;
             }
 
@@ -122,18 +117,15 @@ function validateGT1File($filePath, &$errorMessage = null)
         $actualSize = ($segSize == 0) ? 256 : $segSize;
 
         // Check if segment extends beyond file
-        if ($pos + $actualSize > $size) {
-            $errorMessage = 'Invalid GT1: segment at address 0x' .
-                           sprintf('%02X%02X', $hiAddr, $loAddr) .
-                           ' extends beyond file (need ' . ($pos + $actualSize) .
-                           ' bytes, have ' . $size . ')';
+        if ($pos + $actualSize > $fileSize) {
+            $errorMessage = 'Invalid GT1 file format';
             return false;
         }
 
         // Validate segment address is reasonable
         $segmentAddr = ($hiAddr << 8) | $loAddr;
         if ($segmentAddr + $actualSize > 0x10000) {
-            $errorMessage = 'Invalid GT1: segment would exceed 64K address space';
+            $errorMessage = 'Invalid GT1 file format';
             return false;
         }
 
@@ -143,27 +135,27 @@ function validateGT1File($filePath, &$errorMessage = null)
 
         // Sanity check - prevent infinite loops and excessive segments
         if ($segmentCount > 1000) {
-            $errorMessage = 'Invalid GT1: too many segments (maximum 1000)';
+            $errorMessage = 'Invalid GT1 file format';
             return false;
         }
     }
 
     if (!$foundTerminator) {
-        $errorMessage = 'Invalid GT1: missing terminator segment';
+        $errorMessage = 'Invalid GT1 file format';
         return false;
     }
 
     if ($segmentCount == 0) {
-        $errorMessage = 'Invalid GT1: no data segments found';
+        $errorMessage = 'Invalid GT1 file format';
         return false;
     }
 
     return true;
 }
 
-function logUserAction($action, $category, $folder, $inName, $outName, $fileSize, $userName)
+function logUserAction($action, $category, $folder, $inName, $outName, $fileSize, $authorName, $userName)
 {
     $logFile = __DIR__ . '/users.log';
-    $logEntry = date('Y-m-d H:i:s') . " $action $category $folder $inName $outName $fileSize $userName\n";
+    $logEntry = date('Y-m-d H:i:s') . " $action $category $folder $inName $outName $fileSize $authorName $userName\n";
     file_put_contents($logFile, $logEntry, FILE_APPEND | LOCK_EX);
 }
