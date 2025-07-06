@@ -33,10 +33,14 @@ class user
         // Get available categories
         $categories = $this->getAvailableCategories();
 
+        // Get allowed source code domains
+        $allowedDomains = $this->getAllowedDomains();
+
         $this->template->assign_vars(array(
             'CATEGORIES' => $categories,
             'SELECTED_CATEGORY' => $category,
             'USERNAME' => $this->user->data['username'],
+            'ALLOWED_DOMAINS' => $allowedDomains,
             'U_BACK_TO_SHOWCASE' => $this->helper->route('at67_gigatronshowcase_main'),
             'U_PROCESS_UPLOAD' => $this->helper->route('at67_gigatronshowcase_process_upload'),
         ));
@@ -114,9 +118,15 @@ class user
         // Check if file already exists
         $targetDir = $this->root_path . 'ext/at67/gigatronemulator/gt1/' . $category . '/' . $username . '/';
         $targetFile = $targetDir . $filename;
-
         if (file_exists($targetFile)) {
             $this->template->assign_var('ERROR', 'A GT1 with this title already exists. Please choose a different title.');
+            return $this->uploadForm($category);
+        }
+
+        // Validate source code links against whitelist
+        if (!$this->validateSourceCodeUrl($sourceCode)) {
+            $allowedDomains = $this->getAllowedDomains();
+            $this->template->assign_var('ERROR', 'Source code URL must be from an allowed domain: ' . implode(', ', $allowedDomains));
             return $this->uploadForm($category);
         }
 
@@ -212,6 +222,9 @@ class user
         $fileSize = filesize($gt1Path);
         $screenshotExists = file_exists(str_replace('.gt1', '.png', $gt1Path));
 
+        // Get source code whitelist
+        $allowedDomains = $this->getAllowedDomains();
+
         $this->template->assign_vars(array(
             'GT1_DATA' => $metadata,
             'CATEGORY' => $category,
@@ -221,6 +234,7 @@ class user
             'FILE_SIZE' => formatFileSize($fileSize),
             'SCREENSHOT_EXISTS' => $screenshotExists,
             'CATEGORIES' => $this->getAvailableCategories(),
+            'ALLOWED_DOMAINS' => $allowedDomains,
             'U_BACK_TO_GT1' => $this->helper->route(
                 $folder !== null ? 'at67_gigatronshowcase_gt1_folder' : 'at67_gigatronshowcase_gt1_file',
                 array(
@@ -299,6 +313,13 @@ class user
         // Validate required fields
         if (empty($title) || empty($newCategory) || empty($description)) {
             $this->template->assign_var('ERROR', 'Please fill in all required fields');
+            return $this->editForm($category, $author, $filename, $folder);
+        }
+
+        // Validate source code URL
+        if (!$this->validateSourceCodeUrl($sourceCode)) {
+            $allowedDomains = $this->getAllowedDomains();
+            $this->template->assign_var('ERROR', 'Source code URL must be from an allowed domain: ' . implode(', ', $allowedDomains));
             return $this->editForm($category, $author, $filename, $folder);
         }
 
@@ -676,5 +697,49 @@ class user
             'filename' => $filename,
             'folder' => $folder
         ];
+    }
+
+    private function getAllowedDomains()
+    {
+        $whitelistFile = $this->root_path . 'ext/at67/gigatronshowcase/whitelist.ini';
+        $allowedDomains = array();
+
+        if (file_exists($whitelistFile)) {
+            $domains = parse_ini_file($whitelistFile);
+            if ($domains !== false) {
+                $allowedDomains = array_values($domains);
+            }
+        }
+
+        // Fallback domains if file doesn't exist or is empty
+        if (empty($allowedDomains)) {
+            $allowedDomains = array('github.com', 'gitlab.com', 'forum.gigatron.io');
+        }
+
+        return $allowedDomains;
+    }
+
+    private function validateSourceCodeUrl($url)
+    {
+        if (empty($url)) {
+            return true; // Empty URL is allowed (optional field)
+        }
+
+        // Parse the URL to get the domain
+        $parsedUrl = parse_url($url);
+        if ($parsedUrl === false || !isset($parsedUrl['host'])) {
+            return false; // Invalid URL format
+        }
+
+        $domain = strtolower($parsedUrl['host']);
+
+        // Remove www. prefix if present
+        if (strpos($domain, 'www.') === 0) {
+            $domain = substr($domain, 4);
+        }
+
+        $allowedDomains = $this->getAllowedDomains();
+
+        return in_array($domain, $allowedDomains);
     }
 }

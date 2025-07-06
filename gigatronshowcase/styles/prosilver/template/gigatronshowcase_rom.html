@@ -284,7 +284,7 @@
                     {% endif %}
                     <div class="meta-row">
                         <div class="meta-label">Description:</div>
-                        <div class="meta-value description">{{ ROM.description|default('No description available.') }}</div>
+                        <div class="meta-value description">{{ ROM.description|default('No description available.')|raw }}</div>
                     </div>
                 </div>
 
@@ -292,7 +292,7 @@
                 <div class="details">
                     <h3>Details</h3>
                     <div class="details-text">
-                        {{ ROM.details|nl2br }}
+                        {{ ROM.details|raw }}
                     </div>
                 </div>
                 {% endif %}

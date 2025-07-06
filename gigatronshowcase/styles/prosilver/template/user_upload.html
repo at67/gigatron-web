@@ -317,7 +317,9 @@
                     <div class="form-group">
                         <label class="form-label">Source Code URL</label>
                         <input type="url" name="source_code" class="form-control" placeholder="https://github.com/username/project">
-                        <div class="form-text">Link to source code repository (optional)</div>
+                        <div class="form-text">Link to source code repository (optional)<br>
+                            <strong>Allowed:</strong> {{ ALLOWED_DOMAINS|join(', ') }}
+                        </div>
                     </div>
                 </div>
 
