@@ -131,7 +131,7 @@
     <!-- Author Header -->
     <div class="author-header">
         <div class="author-title">
-            <a href="/app.php/gigatronshowcase/author/{{ AUTHOR }}" style="color: #105289; text-decoration: none;">{{ AUTHOR|title }}</a> - {{ CATEGORY|title }}
+            <a href="/app.php/gigatronshowcase/author/{{ AUTHOR }}" style="color: #105289; text-decoration: none;">{{ AUTHOR }}</a> - {{ CATEGORY|title }}
             {% if (CURRENT_USERNAME == AUTHOR) or IS_ADMIN %}
             <a href="{{ U_UPLOAD_TO_CATEGORY }}" class="btn btn-blue">📤 Upload GT1</a>
             {% endif %}
