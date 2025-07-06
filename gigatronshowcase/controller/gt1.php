@@ -52,6 +52,36 @@ class gt1
         return $this->helper->render('gigatronshowcase_author.html', ucfirst($author) . ' - ' . ucfirst($category));
     }
 
+    public function authorOverview($author)
+    {
+        // Get all GT1s by this author across all categories
+        $allGt1s = scanGT1s($this->root_path);
+        $authorGt1s = array();
+
+        foreach ($allGt1s as $gt1) {
+            if ($gt1['author'] === $author) {
+                // Add screenshot info to each GT1
+                $gt1 = $this->addScreenshotInfo($gt1);
+                $authorGt1s[] = $gt1;
+            }
+        }
+
+        // Sort alphabetically by title
+        usort($authorGt1s, function($a, $b) {
+            return strcmp($a['title'], $b['title']);
+        });
+
+        $this->template->assign_vars(array(
+            'AUTHOR' => $author,
+            'AUTHOR_GT1S' => $authorGt1s,
+            'CURRENT_USERNAME' => $this->user->data['username'],
+            'IS_ADMIN' => $this->checkAdminPermission(),
+            'U_BACK_TO_SHOWCASE' => $this->helper->route('at67_gigatronshowcase_main'),
+        ));
+
+        return $this->helper->render('author_overview.html', ucfirst($author) . ' - All GT1s');
+    }
+
     public function gt1($category, $author, $filename, $folder = null)
     {
         // Build filepath based on whether we have a folder or not

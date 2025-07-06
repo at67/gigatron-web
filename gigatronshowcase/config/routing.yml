@@ -6,6 +6,10 @@ at67_gigatronshowcase_download_gt1_folder:
     path: /gigatronshowcase/download/gt1/{category}/{author}/{folder}/{filename}
     defaults: { _controller: at67.gigatronshowcase.controller.gt1:downloadTrackerGt1Folder }
 
+at67_gigatronshowcase_author_overview:
+    path: /gigatronshowcase/author/{author}
+    defaults: { _controller: at67.gigatronshowcase.controller.gt1:authorOverview }
+
 at67_gigatronshowcase_author:
     path: /gigatronshowcase/author/{author}/{category}
     defaults: { _controller: at67.gigatronshowcase.controller.gt1:author }

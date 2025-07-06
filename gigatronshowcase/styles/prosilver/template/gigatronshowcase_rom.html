@@ -230,7 +230,7 @@
                             *** Gigatron 32K ***<br>
                             TTL microcomputer<br>
                             {{ ROM.title }}<br><br>
-                            by {{ ROM.author }}<br>
+                            {{ ROM.author }}<br>
                             {{ ROM.version }}<br><br>
                             ────────────────────
                         </div>
@@ -250,7 +250,13 @@
                     <h3>Firmware Details</h3>
                     <div class="meta-row">
                         <div class="meta-label">Author:</div>
-                        <div class="meta-value">{{ ROM.author|default('Unknown') }}</div>
+                        <div class="meta-value">
+                            {% if ROM.author != 'Unknown' %}
+                                <a href="/app.php/gigatronshowcase/author/{{ ROM.author }}" style="color: #2a5298; text-decoration: none;">{{ ROM.author }}</a>
+                            {% else %}
+                                Unknown
+                            {% endif %}
+                        </div>
                     </div>
                     <div class="meta-row">
                         <div class="meta-label">Version:</div>

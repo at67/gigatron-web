@@ -131,12 +131,12 @@
     <!-- Author Header -->
     <div class="author-header">
         <div class="author-title">
-            <a href="/app.php/gigatronshowcase/author/{{ AUTHOR }}" style="color: #105289; text-decoration: none;">{{ AUTHOR|title }}</a> - {{ CATEGORY|title }}
+            {{ AUTHOR|title }} - All GT1s
             {% if (CURRENT_USERNAME == AUTHOR) or IS_ADMIN %}
-            <a href="{{ U_UPLOAD_TO_CATEGORY }}" class="btn btn-blue">📤 Upload GT1</a>
+            <a href="/app.php/gigatronshowcase/submit" class="btn btn-blue">📤 Upload GT1</a>
             {% endif %}
         </div>
-        <div class="author-meta">{{ AUTHOR_GT1S|length }} files in this category</div>
+        <div class="author-meta">{{ AUTHOR_GT1S|length }} files across all categories</div>
     </div>
 
     <!-- Author's Files Grid -->
