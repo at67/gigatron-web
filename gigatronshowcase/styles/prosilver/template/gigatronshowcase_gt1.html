@@ -206,21 +206,6 @@
     font-size: 16px;
 }
 
-.rating-stars {
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-    color: #ff8c00;
-    font-size: 16px;
-    letter-spacing: 1px;
-}
-
-.rating-text {
-    margin-left: 8px;
-    color: #666;
-    font-size: 12px;
-}
-
 .button-group {
     display: flex;
     gap: 15px;
@@ -358,29 +343,6 @@
                     <div class="meta-row">
                         <div class="meta-label">Downloads:</div>
                         <div class="meta-value">{{ GT1.downloads|default(0) }}</div>
-                    </div>
-                    <div class="meta-row">
-                        <div class="meta-label">Rating:</div>
-                        <div class="meta-value">
-                            <div class="rating-stars">
-                                {% set rating = GT1.rating|default(0) %}
-                                {% set filled_stars = (rating / 2)|round %}
-
-                                {% if filled_stars > 5 %}{% set filled_stars = 5 %}{% endif %}
-                                {% if filled_stars < 0 %}{% set filled_stars = 0 %}{% endif %}
-
-                                {% if filled_stars > 0 %}
-                                    {% for i in 1..filled_stars %}★{% endfor %}
-                                {% endif %}
-
-                                {% if filled_stars < 5 %}
-                                    {% set empty_stars = 5 - filled_stars %}
-                                    {% for i in 1..empty_stars %}☆{% endfor %}
-                                {% endif %}
-
-                                <span class="rating-text">({{ rating }}/10)</span>
-                            </div>
-                        </div>
                     </div>
                     <div class="meta-row">
                         <div class="meta-label">Source Code:</div>
