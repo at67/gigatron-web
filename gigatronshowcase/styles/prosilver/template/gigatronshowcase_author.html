@@ -61,6 +61,17 @@
     color: #666;
 }
 
+/* Featured Selection Info */
+.featured-info {
+    background: #e8f4fd;
+    border: 1px solid #b8d4f1;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 20px;
+    color: #2a5298;
+    font-size: 14px;
+}
+
 /* Cards */
 .card {
     background: white;
@@ -70,11 +81,30 @@
     transition: transform 0.2s, box-shadow 0.2s;
     cursor: pointer;
     min-width: 200px;
+    position: relative;
 }
 
 .card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+.card.featured {
+    border: 3px solid #28a745;
+    box-shadow: 0 4px 16px rgba(40, 167, 69, 0.3);
+}
+
+.card.featured::after {
+    content: "★ FEATURED";
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: #28a745;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: bold;
 }
 
 .card-screenshot {
@@ -90,6 +120,7 @@
     text-align: center;
     padding: 8px;
     box-sizing: border-box;
+    position: relative;
 }
 
 .card-content {
@@ -120,6 +151,21 @@
     object-fit: cover;
     display: block;
 }
+
+/* Success message */
+.success-message {
+    position: fixed;
+    top: 242px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #28a745;
+    color: white;
+    padding: 15px 20px;
+    border-radius: 6px;
+    font-weight: bold;
+    z-index: 1000;
+    display: none;
+}
 </style>
 
 <div class="showcase-container">
@@ -139,6 +185,13 @@
         <div class="author-meta">{{ AUTHOR_GT1S|length }} files in this category</div>
     </div>
 
+    <!-- Featured Selection Info (only show to owner/admin) -->
+    {% if (CURRENT_USERNAME == AUTHOR) or IS_ADMIN %}
+    <div class="featured-info">
+        Left-click on any screenshot to enter details page : Right-click to make it your featured GT1.
+    </div>
+    {% endif %}
+
     <!-- Author's Files Grid -->
     <div class="grid-large">
         {% for gt1 in AUTHOR_GT1S %}
@@ -149,7 +202,11 @@
         {% else %}
             <a href="/app.php/gigatronshowcase/gt1/{{ gt1.category }}/{{ gt1.author }}/{{ gt1.filename }}" style="text-decoration: none; color: inherit;">
         {% endif %}
-            <div class="card">
+            <div class="card"
+                 data-gt1-path="{{ gt1.path }}"
+                 {% if (CURRENT_USERNAME == AUTHOR) or IS_ADMIN %}
+                 oncontextmenu="selectFeatured(event, '{{ gt1.path }}'); return false;"
+                 {% endif %}>
                 <div class="card-screenshot">
                     {% if gt1.screenshot_exists %}
                         <img src="{{ gt1.screenshot_url }}" alt="{{ gt1.title }} Screenshot" class="screenshot-image-main" />
@@ -167,6 +224,90 @@
         </a>
         {% endfor %}
     </div>
+
+    <!-- Success message -->
+    <div id="success-message" class="success-message">
+        Featured screenshot updated successfully!
+    </div>
 </div>
+
+<script>
+// Only add featured selection for owner/admin
+{% if (CURRENT_USERNAME == AUTHOR) or IS_ADMIN %}
+
+// Set initial featured GT1 based on current selection
+document.addEventListener('DOMContentLoaded', function() {
+    {% if CURRENT_FEATURED %}
+    // Find the GT1 that matches the current featured screenshot
+    const currentFeatured = '{{ CURRENT_FEATURED }}';
+
+    document.querySelectorAll('.card').forEach(card => {
+        const gt1Path = card.getAttribute('data-gt1-path');
+        if (gt1Path) {
+            // Convert GT1 path to screenshot path for comparison
+            const pathParts = gt1Path.split('/');
+            const gt1Filename = pathParts[pathParts.length - 1];
+            const screenshotFilename = gt1Filename.replace('.gt1', '.png');
+
+            let screenshotPath;
+            if (pathParts.length > 3) {
+                // Subfolder case: folder/screenshot.png
+                const subfolder = pathParts[2];
+                screenshotPath = subfolder + '/' + screenshotFilename;
+            } else {
+                // Direct case: screenshot.png
+                screenshotPath = screenshotFilename;
+            }
+
+            if (screenshotPath === currentFeatured) {
+                card.classList.add('featured');
+            }
+        }
+    });
+    {% endif %}
+});
+
+function selectFeatured(event, gt1Path) {
+    // Prevent browser context menu
+    event.preventDefault();
+
+    // Remove featured class from all cards
+    document.querySelectorAll('.card').forEach(card => {
+        card.classList.remove('featured');
+    });
+
+    // Add featured class to clicked card
+    event.currentTarget.classList.add('featured');
+
+    // Send AJAX request to update featured screenshot
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/app.php/gigatronshowcase/set_featured_screenshot', true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+            if (xhr.status === 200) {
+                showSuccessMessage();
+            } else {
+                // On error, remove the featured class
+                event.currentTarget.classList.remove('featured');
+                alert('Failed to update featured screenshot');
+            }
+        }
+    };
+
+    xhr.send('gt1_path=' + encodeURIComponent(gt1Path) + '&category=' + encodeURIComponent('{{ CATEGORY }}') + '&author=' + encodeURIComponent('{{ AUTHOR }}'));
+}
+
+function showSuccessMessage() {
+    const message = document.getElementById('success-message');
+    message.style.display = 'block';
+    setTimeout(() => {
+        message.style.display = 'none';
+    }, 3000);
+}
+
+{% endif %}
+</script>
 
 {% include 'overall_footer.html' %}

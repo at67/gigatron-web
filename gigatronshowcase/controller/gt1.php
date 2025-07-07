@@ -37,10 +37,22 @@ class gt1
             return strcmp($a['filename'], $b['filename']);
         });
 
+        // Read current featured selection
+        $currentFeatured = null;
+        $featuredIniPath = $this->root_path . 'ext/at67/gigatronemulator/gt1/' . $category . '/' . $author . '/featured.ini';
+
+        if (file_exists($featuredIniPath)) {
+            $featuredData = parse_ini_file($featuredIniPath);
+            if ($featuredData !== false && isset($featuredData['featured_screenshot']) && !empty($featuredData['featured_screenshot'])) {
+                $currentFeatured = $featuredData['featured_screenshot'];
+            }
+        }
+
         $this->template->assign_vars(array(
             'AUTHOR' => $author,
             'CATEGORY' => $category,
             'AUTHOR_GT1S' => $authorGt1s,
+            'CURRENT_FEATURED' => $currentFeatured,
             'CURRENT_USERNAME' => $this->user->data['username'],
             'IS_ADMIN' => $this->checkAdminPermission(),
             'U_BACK_TO_SHOWCASE' => $this->helper->route('at67_gigatronshowcase_main'),
@@ -80,6 +92,63 @@ class gt1
         ));
 
         return $this->helper->render('author_overview.html', ucfirst($author) . ' - All GT1s');
+    }
+
+    public function setFeaturedScreenshot()
+    {
+        global $phpbb_container;
+        $auth = $phpbb_container->get('auth');
+        $user = $phpbb_container->get('user');
+        $request = $phpbb_container->get('request');
+
+        // Check if user is logged in
+        if (!$auth->acl_get('u_')) {
+            return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'Not authorized'], 403);
+        }
+
+        $gt1Path = trim($request->variable('gt1_path', ''));
+        $category = trim($request->variable('category', ''));
+        $author = trim($request->variable('author', ''));
+
+        if (empty($gt1Path) || empty($category) || empty($author)) {
+            return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'Missing parameters'], 400);
+        }
+
+        // Check if user owns this GT1 or is admin
+        $isAdmin = $auth->acl_get('a_');
+        $currentUsername = $user->data['username'];
+
+        if (!$isAdmin && $currentUsername !== $author) {
+            return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'Not authorized'], 403);
+        }
+
+        try {
+            // Convert GT1 path to screenshot path
+            $gt1Filename = basename($gt1Path);
+            $screenshotFilename = str_replace('.gt1', '.png', $gt1Filename);
+
+            // Handle subfolder case
+            $pathParts = explode('/', $gt1Path);
+            if (count($pathParts) > 3) {
+                $subfolder = $pathParts[2];
+                $screenshotPath = $subfolder . '/' . $screenshotFilename;
+            } else {
+                $screenshotPath = $screenshotFilename;
+            }
+
+            // Update featured.ini file
+            $featuredIniPath = $this->root_path . 'ext/at67/gigatronemulator/gt1/' . $category . '/' . $author . '/featured.ini';
+            $featuredContent = "featured_screenshot=" . $screenshotPath . "\n";
+
+            if (!file_put_contents($featuredIniPath, $featuredContent, LOCK_EX)) {
+                throw new \Exception('Failed to write featured.ini file');
+            }
+
+            return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => true, 'message' => 'Featured screenshot updated']);
+
+        } catch (\Exception $e) {
+            return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'Failed to update: ' . $e->getMessage()], 500);
+        }
     }
 
     public function gt1($category, $author, $filename, $folder = null)

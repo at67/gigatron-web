@@ -81,3 +81,7 @@ at67_gigatronshowcase_main:
 at67_gigatronshowcase_screenshot_save:
     path: /gigatronshowcase/screenshot/save
     defaults: { _controller: at67.gigatronshowcase.controller.main:saveScreenshot }
+
+at67_gigatronshowcase_set_featured_screenshot:
+    path: /gigatronshowcase/set_featured_screenshot
+    defaults: { _controller: at67.gigatronshowcase.controller.gt1:setFeaturedScreenshot }

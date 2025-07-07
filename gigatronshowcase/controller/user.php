@@ -36,11 +36,18 @@ class user
         // Get allowed source code domains
         $allowedDomains = $this->getAllowedDomains();
 
+        // Get author screenshots for featured selection (if category is selected)
+        $authorScreenshots = array();
+        if ($category !== null) {
+            $authorScreenshots = $this->getAuthorScreenshots($category, $this->user->data['username']);
+        }
+
         $this->template->assign_vars(array(
             'CATEGORIES' => $categories,
             'SELECTED_CATEGORY' => $category,
             'USERNAME' => $this->user->data['username'],
             'ALLOWED_DOMAINS' => $allowedDomains,
+            'AUTHOR_SCREENSHOTS' => $authorScreenshots,
             'U_BACK_TO_SHOWCASE' => $this->helper->route('at67_gigatronshowcase_main'),
             'U_PROCESS_UPLOAD' => $this->helper->route('at67_gigatronshowcase_process_upload'),
         ));
@@ -157,6 +164,12 @@ class user
                 'details' => $details,
             ));
 
+            // Initialize featured.ini file
+            $featuredIniPath = $targetDir . 'featured.ini';
+            if (!file_exists($featuredIniPath)) {
+                file_put_contents($featuredIniPath, "featured_screenshot=\n", LOCK_EX);
+            }
+
             logUserAction('CREATE', $category, null, $filename, null, filesize($targetFile), $username, $username);
 
             // Redirect to the new GT1 page
@@ -225,6 +238,9 @@ class user
         // Get source code whitelist
         $allowedDomains = $this->getAllowedDomains();
 
+        // Get author screenshots for featured selection
+        $authorScreenshots = $this->getAuthorScreenshots($category, $fileInfo['actual_author']);
+
         $this->template->assign_vars(array(
             'GT1_DATA' => $metadata,
             'CATEGORY' => $category,
@@ -235,6 +251,7 @@ class user
             'SCREENSHOT_EXISTS' => $screenshotExists,
             'CATEGORIES' => $this->getAvailableCategories(),
             'ALLOWED_DOMAINS' => $allowedDomains,
+            'AUTHOR_SCREENSHOTS' => $authorScreenshots,
             'U_BACK_TO_GT1' => $this->helper->route(
                 $folder !== null ? 'at67_gigatronshowcase_gt1_folder' : 'at67_gigatronshowcase_gt1_file',
                 array(
@@ -302,6 +319,8 @@ class user
         $sourceCode = trim($request->variable('source_code', ''));
         $details = trim($request->variable('details', ''));
 
+        $featuredScreenshot = trim($request->variable('featured_screenshot', ''));
+
         // Validate new category
         $this->validatePathComponent($newCategory, 'category');
         $allowedCategories = $this->getAvailableCategories();
@@ -365,6 +384,11 @@ class user
                 'source_code' => $sourceCode,
                 'details' => $details,
             ));
+
+            // Update featured.ini file
+            $featuredIniPath = dirname($currentGt1Path) . '/featured.ini';
+            $featuredContent = "featured_screenshot=" . $featuredScreenshot . "\n";
+            file_put_contents($featuredIniPath, $featuredContent, LOCK_EX);
 
             $fileSize = file_exists($currentGt1Path) ? filesize($currentGt1Path) : 0;
             logUserAction('EDIT', $category, $folder, $filename, null, $fileSize, $fileInfo['actual_author'], $fileInfo['trusted_username']);
@@ -741,5 +765,40 @@ class user
         $allowedDomains = $this->getAllowedDomains();
 
         return in_array($domain, $allowedDomains);
+    }
+
+    private function getAuthorScreenshots($category, $author)
+    {
+        $screenshots = array();
+        $authorPath = $this->root_path . 'ext/at67/gigatronemulator/gt1/' . $category . '/' . $author . '/';
+
+        if (!is_dir($authorPath)) {
+            return $screenshots;
+        }
+
+        $files = scandir($authorPath);
+        foreach ($files as $file) {
+            if ($file === '.' || $file === '..') continue;
+
+            $filePath = $authorPath . $file;
+
+            if (is_dir($filePath)) {
+                // Check subfolder for screenshots
+                $subFiles = scandir($filePath . '/');
+                foreach ($subFiles as $subFile) {
+                    if (pathinfo($subFile, PATHINFO_EXTENSION) === 'png') {
+                        $screenshots[] = $file . '/' . $subFile;
+                    }
+                }
+            } elseif (pathinfo($file, PATHINFO_EXTENSION) === 'png') {
+                // Direct screenshot file in author folder
+                $screenshots[] = $file;
+            }
+        }
+
+        // Sort screenshots alphabetically
+        sort($screenshots);
+
+        return $screenshots;
     }
 }

@@ -36,18 +36,17 @@ class featured
                     $featured[$categoryName] = array();
 
                     foreach ($grouped[$categoryName] as $author => $files) {
-                        // Sort files alphabetically and take first one
-                        usort($files, function($a, $b) {
-                            return strcmp($a['filename'], $b['filename']);
-                        });
+                        // Check for featured screenshot selection
+                        $featuredFile = $this->selectFeaturedGT1($files, $categoryName, $author);
 
-                        $featuredFile = $files[0];
-                        $featuredFile['total_count'] = count($files);
+                        if ($featuredFile) {
+                            $featuredFile['total_count'] = count($files);
 
-                        // Add screenshot info using content service
-                        $featuredFile = $this->content->addScreenshotInfo($featuredFile);
+                            // Add screenshot info using content service
+                            $featuredFile = $this->content->addScreenshotInfo($featuredFile);
 
-                        $featured[$categoryName][] = $featuredFile;
+                            $featured[$categoryName][] = $featuredFile;
+                        }
                     }
 
                     // Shuffle the authors within this category
@@ -64,25 +63,62 @@ class featured
             $featured[$category] = array();
 
             foreach ($authors as $author => $files) {
-                // Sort files alphabetically and take first one
-                usort($files, function($a, $b) {
-                    return strcmp($a['filename'], $b['filename']);
-                });
+                // Check for featured screenshot selection
+                $featuredFile = $this->selectFeaturedGT1($files, $category, $author);
 
-                $featuredFile = $files[0];
-                $featuredFile['total_count'] = count($files);
+                if ($featuredFile) {
+                    $featuredFile['total_count'] = count($files);
 
-                // Add screenshot info using content service
-                $featuredFile = $this->content->addScreenshotInfo($featuredFile);
+                    // Add screenshot info using content service
+                    $featuredFile = $this->content->addScreenshotInfo($featuredFile);
 
-                $featured[$categoryName][] = $featuredFile;
+                    $featured[$category][] = $featuredFile;
+                }
             }
 
             // Shuffle the authors within this category
-            shuffle($featured[$categoryName]);
+            shuffle($featured[$category]);
         }
 
         return $featured;
+    }
+
+    private function selectFeaturedGT1($files, $category, $author)
+    {
+        // Check for featured.ini file
+        $featuredIniPath = $this->root_path . 'ext/at67/gigatronemulator/gt1/' . $category . '/' . $author . '/featured.ini';
+
+        if (file_exists($featuredIniPath)) {
+            $featuredData = parse_ini_file($featuredIniPath);
+            if ($featuredData !== false && isset($featuredData['featured_screenshot']) && !empty($featuredData['featured_screenshot'])) {
+                $featuredScreenshot = $featuredData['featured_screenshot'];
+
+                // Find the GT1 file that corresponds to this screenshot
+                foreach ($files as $file) {
+                    $expectedScreenshot = str_replace('.gt1', '.png', basename($file['path']));
+                    $fileFolder = '';
+
+                    // Handle subfolder case
+                    $pathParts = explode('/', $file['path']);
+                    if (count($pathParts) > 3) {
+                        $fileFolder = $pathParts[2] . '/';
+                    }
+
+                    $fullExpectedPath = $fileFolder . $expectedScreenshot;
+
+                    if ($fullExpectedPath === $featuredScreenshot) {
+                        return $file;
+                    }
+                }
+            }
+        }
+
+        // Fallback: sort alphabetically and take first one (current behavior)
+        usort($files, function($a, $b) {
+            return strcmp($a['filename'], $b['filename']);
+        });
+
+        return $files[0];
     }
 
     public function getFeaturedGT1()
