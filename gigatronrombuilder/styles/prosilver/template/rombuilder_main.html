@@ -1,47 +1,194 @@
 {% include 'overall_header.html' %}
 
-<div class="panel">
-    <div class="inner">
-        <h2>{{ TITLE }}</h2>
-        <p>Welcome to the Gigatron ROM Builder! This tool allows you to create custom firmware ROMs for the Gigatron TTL computer.</p>
+<div class="main-container">
+    <!-- Left Panel: ROM Builder Controls & File Browser -->
+    <div class="browser-panel">
+        <div class="browser-filters">
+            <div style="margin-bottom: 15px;">
+                <label for="base-rom-select" style="color: #e0e0e0; font-weight: normal; font-size: 13px; display: block; margin-bottom: 8px; text-shadow: 2px 2px 0px #000000;">Base ROM:</label>
+                <select id="base-rom-select" class="search-input">
+                    <option value="v6" selected>ROMv6</option>
+                    <option value="v5a">ROMv5a</option>
+                    <option value="vX0">ROMvX0</option>
+                </select>
+            </div>
 
-        <div style="background: #ffffcc; padding: 10px; border: 1px solid #ffcc00; margin: 10px 0;">
-            <strong>Development Mode:</strong> This extension is currently under development and only accessible to administrators.
+            <div class="search-container">
+                <input type="text" id="search-input" class="search-input" placeholder="Search files...">
+                <button class="search-btn">🔍</button>
+            </div>
         </div>
 
-        <h3>Coming Soon:</h3>
-        <ul>
-            <li>Select base ROM (v5a, v6, vX0)</li>
-            <li>Choose applications from library</li>
-            <li>Create custom main menus</li>
-            <li>Download custom ROM files</li>
-        </ul>
+        <div id="file-tree" class="file-tree"></div>
+        <div id="loading-status" class="loading-status">Loading...</div>
     </div>
-</div>
 
-<!-- ROM Builder File Browser -->
-<div id="file-browser-container" style="display: none;">
-    <div class="browser-panel">
-        <div class="browser-header">
-            <div class="browser-filters">
-                <div class="search-container">
-                    <input type="text" id="search-input" class="search-input" placeholder="Search...">
-                    <button class="search-btn">🔍</button>
+    <!-- Right Panel: Status Display -->
+    <div class="emulator-panel">
+        <div class="emulator-container">
+            <!-- Combined Status Display -->
+            <div id="status-display" style="background: #2d2d2d; border: 2px solid #444; border-radius: 8px; color: #e0e0e0; width: 320px; height: 400px; display: flex; flex-direction: column;">
+                <!-- ROM Status (Top 1/5) -->
+                <div style="padding: 10px; border-bottom: 1px solid #444; height: 20%; box-sizing: border-box;">
+                    <div style="font-weight: normal; margin-bottom: 8px; font-size: 13px;">Selected ROM:</div>
+                    <div id="selected-rom-display" style="font-size: 16px;">ROMv6</div>
+                </div>
+
+                <!-- Selected Files (Bottom 4/5) -->
+                <div style="padding: 10px; height: 80%; box-sizing: border-box; display: flex; flex-direction: column;">
+                    <div style="font-weight: normal; margin-bottom: 10px; font-size: 13px;">Selected Files:</div>
+                    <div id="selected-files-list" style="flex: 1; overflow-y: auto; font-family: monospace; font-size: 14px;">
+                        <div style="color: #888;">No files selected</div>
+                    </div>
+                </div>
+
+                <!-- Build Button -->
+                <div style="padding: 10px; border-top: 1px solid #444; box-sizing: border-box;">
+                    <button id="build-rom-btn" style="width: 100%; background: #28a745; color: white; padding: 12px; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer;" onclick="buildROM()">
+                        Build ROM
+                    </button>
                 </div>
             </div>
         </div>
-        <div id="file-tree" class="file-tree"></div>
-        <div id="loading-status" class="loading-status">Loading...</div>
     </div>
 </div>
 
 <link rel="stylesheet" href="/ext/at67/gigatronemulator/emulator/styles.css">
 <script src="/ext/at67/gigatronemulator/emulator/file-browser.js"></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     window.fileBrowser = new FileBrowser('rombuilder');
-    document.getElementById('file-browser-container').style.display = 'block';
+
+    // Update status display when files are selected
+    function updateStatusDisplay() {
+        const romSelect = document.getElementById('base-rom-select');
+        const romDisplay = document.getElementById('selected-rom-display');
+        const filesList = document.getElementById('selected-files-list');
+
+        // Update ROM display - preserve ROM prefix
+        romDisplay.textContent = 'ROM' + romSelect.value;
+
+        // Update files list
+        if (window.fileBrowser.selectedFiles.length > 0) {
+            var html = '';
+            for (var i = 0; i < window.fileBrowser.selectedFiles.length; i++) {
+                var file = window.fileBrowser.selectedFiles[i];
+                html += '<div style="margin-bottom: 4px;">' + file.filename + '</div>';
+            }
+            filesList.innerHTML = html;
+        } else {
+            filesList.innerHTML = '<div style="color: #888;">No files selected</div>';
+        }
+    }
+
+    // Listen for ROM changes, clear selections when ROM changes
+    document.getElementById('base-rom-select').addEventListener('change', function() {
+        // Clear all selected files when ROM version changes
+        window.fileBrowser.selectedFiles = [];
+        window.fileBrowser.renderFileTree();
+        updateStatusDisplay();
+    });
+
+    // Override FileBrowser's updateLoadingStatus to also update our status display
+    const originalUpdate = window.fileBrowser.updateLoadingStatus;
+    window.fileBrowser.updateLoadingStatus = function() {
+        originalUpdate.call(this);
+        updateStatusDisplay();
+    };
 });
+
+// Build ROM function
+function buildROM()
+{
+    const romVersion = document.getElementById('base-rom-select').value;
+    const selectedFiles = window.fileBrowser.selectedFiles;
+    if(selectedFiles.length === 0)
+    {
+        alert('Please select at least one file to build ROM');
+        return;
+    }
+    // Generate manifest
+    const manifest = generateManifest(romVersion, selectedFiles);
+    console.log('Generated manifest:');
+    console.log(manifest);
+
+    // Actually send the build request instead of just showing an alert
+    sendBuildRequest(romVersion, selectedFiles, manifest);
+}
+
+// Generate manifest from selected files
+function generateManifest(romVersion, selectedFiles)
+{
+    var manifest = '[ROM' + romVersion + ']\n';
+    manifest += 'apps="';
+
+    var entries = [];
+    for (var i = 0; i < selectedFiles.length; i++)
+    {
+        var file = selectedFiles[i];
+
+        // Extract symbol name from filename
+        var symbolName = file.filename.replace(/\.(gt1|gcl)$/i, '');
+        symbolName = symbolName.replace(/_v[\w\d]+$/i, '');
+        symbolName = symbolName.replace(/_ROM.*$/i, '');
+
+        // Special case Boot
+        if (symbolName.startsWith('CardBoot')) {
+            symbolName = 'Boot';
+        } else if (symbolName.startsWith('MainMenu')) {
+            symbolName = 'Main';
+        }
+
+        // Build entry: SymbolName=Apps/Path/File
+        var entry = symbolName + '=' + file.fullPath;
+        entries.push(entry);
+    }
+
+    manifest += entries.join(',\n      ') + '"';
+
+    return manifest;
+}
+
+// Send ROM build request to server
+function sendBuildRequest(romVersion, selectedFiles, manifest)
+{
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/app.php/gigatronrombuilder/build', true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+
+    xhr.onreadystatechange = function()
+    {
+        if (xhr.readyState === 4)
+        {
+            if (xhr.status === 200)
+            {
+                var response = JSON.parse(xhr.responseText);
+                if (response.success)
+                {
+                    alert('ROM built successfully!');
+                }
+                else
+                {
+                    alert('ROM build failed: ' + response.error);
+                }
+            }
+            else
+            {
+                alert('Server error: ' + xhr.status);
+            }
+        }
+    };
+
+    var data =
+    {
+        rom_version: romVersion,
+        manifest: manifest,
+        selected_files: selectedFiles.map(f => f.path)
+    };
+
+    xhr.send(JSON.stringify(data));
+}
 </script>
 
 {% include 'overall_footer.html' %}

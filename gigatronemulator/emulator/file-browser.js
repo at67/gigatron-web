@@ -107,20 +107,22 @@ class FileBrowser
     {
         try
         {
-            if (this.mode === 'rombuilder') {
-                // Load both internal and curated apps for ROM Builder
-                const internalResponse = await fetch('/ext/at67/gigatronemulator/emulator/scan_files.php?type=internal&base_path=/var/www/html/phpbb/ext/at67/gigatronrombuilder');
+            if(this.mode === 'rombuilder')
+            {
+                // Load Apps, Core, and curated files for ROM Builder
+                const romdepsResponse = await fetch('/ext/at67/gigatronemulator/emulator/scan_files.php?type=romdeps&base_path=/var/www/html/phpbb/ext/at67/gigatronrombuilder');
                 const curatedResponse = await fetch('/ext/at67/gigatronemulator/emulator/scan_files.php?type=gt1');
 
-                const internalFiles = await internalResponse.json();
+                const romdepsFiles = await romdepsResponse.json();
                 const curatedFiles = await curatedResponse.json();
 
-                // Mark files with source type for filtering
-                internalFiles.forEach(file => file.source = 'internal');
+                romdepsFiles.forEach(file => file.source = 'romdeps');
                 curatedFiles.forEach(file => file.source = 'curated');
 
-                this.files.internal = [...internalFiles, ...curatedFiles];
-            } else {
+                this.files.internal = [...romdepsFiles, ...curatedFiles];
+            }
+            else
+            {
                 // Load ROM and GT1 files for emulator
                 const romResponse = await fetch('/ext/at67/gigatronemulator/emulator/scan_files.php?type=rom');
                 this.files.rom = await romResponse.json();
@@ -419,7 +421,7 @@ class FileBrowser
 
         fileDiv.addEventListener('click', () =>
         {
-            this.selectFile(file);
+            this.selectFile(file, path);
         });
 
         container.appendChild(fileDiv);
@@ -450,11 +452,16 @@ class FileBrowser
             window.uiManager.onFileSelected(file);
         }
     }
-    selectFile(file)
+    selectFile(file, path = null)
     {
         if(this.mode === 'rombuilder')
         {
-            // Multiple selection for ROM Builder
+            // Store the path with the file
+            if(path)
+            {
+                file.fullPath = path;
+            }
+
             const index = this.selectedFiles.indexOf(file);
             if(index === -1)
             {

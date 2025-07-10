@@ -8,7 +8,7 @@ $base_path = $_GET['base_path'] ?? '..';
 $type_config = [
     'rom' => ['dir' => '/roms/', 'ext' => ['rom']],
     'gt1' => ['dir' => '/gt1/', 'ext' => ['gt1']],
-    'internal' => ['dir' => '/romdeps/internal/', 'ext' => ['gt1', 'gcl']]
+    'romdeps' => ['dir' => '/romdeps/', 'ext' => ['gt1', 'gcl']]
 ];
 
 if (!isset($type_config[$type])) {

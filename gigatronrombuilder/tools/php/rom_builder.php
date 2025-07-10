@@ -18,7 +18,7 @@ class RomBuilder {
         }
     }
 
-    public function buildRom($rom_version, $app_overrides = []) {
+    public function buildRom($rom_version, $app_overrides = [], $custom_manifest = null) {
         $script_name = "ROM{$rom_version}.asm.py";
         $script_path = $this->romsrc_dir . '/' . $script_name;
 
@@ -39,8 +39,25 @@ class RomBuilder {
             // Build the command
             $command = "python3 $script_name";
 
-            // Add app files as arguments (using default ROMv1 apps for now)
-            $apps = $this->getRomApps($rom_version, $app_overrides);
+            // Add app files as arguments
+            if ($custom_manifest !== null) {
+                try {
+                    $parsed = parse_ini_string($custom_manifest, true);
+                    $section = "ROM$rom_version";
+                    $apps_string = $parsed[$section]['apps'];
+                    $apps = $this->parseCustomApps($apps_string);
+                    $apps = array_merge($apps, $app_overrides);
+                } catch (\Throwable $e) {
+                    return [
+                        'success' => false,
+                        'error' => 'Custom manifest parsing failed: ' . $e->getMessage(),
+                        'manifest_received' => $custom_manifest,
+                        'rom_version' => $rom_version
+                    ];
+                }
+            } else {
+                $apps = $this->getRomApps($rom_version, $app_overrides);
+            }
             foreach ($apps as $app) {
                 $command .= ' ' . escapeshellarg($app);
             }
@@ -48,12 +65,13 @@ class RomBuilder {
             // Execute the build
             $output = [];
             $exit_code = 0;
+
             // Set PYTHONPATH to include our dependencies
             $python_path = implode(':', [
                 $this->romdeps_dir . '/pyasm',
-                $this->romdeps_dir . '/system/font',
-                $this->romdeps_dir . '/internal/Loader',
-                $this->romdeps_dir . '/internal/Racer',
+                $this->romdeps_dir . '/Core/font',
+                $this->romdeps_dir . '/Apps/Loader',
+                $this->romdeps_dir . '/Apps/Racer',
                 $this->romsrc_dir
             ]);
 
@@ -95,6 +113,22 @@ class RomBuilder {
             $this->cleanupTempSymlinks();
             chdir($old_cwd);
         }
+    }
+
+    private function parseCustomApps($apps_string) {
+        // Split by comma and clean up entries
+        $entries = explode(',', $apps_string);
+        $apps = [];
+
+        foreach ($entries as $entry) {
+            // Remove newlines, extra spaces, and trim
+            $entry = trim(str_replace(["\n", "\r"], '', $entry));
+            if (!empty($entry)) {
+                $apps[] = $entry;
+            }
+        }
+
+        return $apps;
     }
 
     private function getRomApps($rom_version, $overrides = []) {
@@ -142,12 +176,12 @@ class RomBuilder {
     private function createTempSymlinks() {
         $apps_link = $this->romsrc_dir . '/Apps';
         if (!file_exists($apps_link)) {
-            symlink('../romdeps/internal', $apps_link);
+            symlink('../romdeps/Apps', $apps_link);
         }
 
         $core_link = $this->romsrc_dir . '/Core';
         if (!file_exists($core_link)) {
-            symlink('../romdeps/system', $core_link);
+            symlink('../romdeps/Core', $core_link);
         }
     }
 
