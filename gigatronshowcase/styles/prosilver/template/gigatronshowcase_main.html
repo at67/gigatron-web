@@ -328,7 +328,7 @@
             </div>
             <div class="featured-content">
                 <div class="featured-title">{{ FEATURED_GT1.title }}</div>
-                <div class="featured-meta">🎮 {{ FEATURED_GT1.category }} • 🏷️ <a href="/app.php/gigatronshowcase/author/{{ FEATURED_GT1.author }}" style="color: rgba(255,255,255,0.9); text-decoration: none;">{{ FEATURED_GT1.author }}</a> • {{ FEATURED_GT1.preferred_rom|default('ROMv6') }} • 📅 {{ FEATURED_GT1.year }} • ⭐ {{ FEATURED_GT1.rating }}</div>
+                <div class="featured-meta">🎮 {{ FEATURED_GT1.category }} • 🏷️ <a href="/app.php/gigatronshowcase/author/{{ FEATURED_GT1.author }}" style="color: rgba(255,255,255,0.9); text-decoration: none;">{{ FEATURED_GT1.author }}</a> • {{ FEATURED_GT1.preferred_rom|default('ROMv6') }} • 📅 {{ FEATURED_GT1.year }}</div>
                 <div class="featured-description">{{ FEATURED_GT1.description }}</div>
                 <div class="featured-buttons">
                     <a href="{{ U_EMULATOR }}?autoload_rom={{ FEATURED_GT1.preferred_rom|default('ROMv6') }}.rom&autoload_gt1={{ FEATURED_GT1.path }}" class="btn btn-primary">▶ Run Now</a>

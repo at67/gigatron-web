@@ -7,146 +7,146 @@
 <div class="main-container">
     <!-- File Browser Panel -->
     <div class="browser-panel">
-	<div class="browser-header">
-	    <div class="file-type-tabs">
-		<button class="tab-btn active" data-type="rom">ROM</button>
-		<button class="tab-btn" data-type="gt1">GT1</button>
-	    </div>
-	</div>
+        <div class="browser-header">
+            <div class="file-type-tabs">
+                <button class="tab-btn active" data-type="rom">ROM</button>
+                <button class="tab-btn" data-type="gt1">GT1</button>
+            </div>
+        </div>
 
-	<div class="browser-filters">
-	    <div class="search-container">
-		<input type="text" id="search-input" class="search-input" placeholder="Search everything...">
-		<button class="search-btn" id="search-btn">
-		    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-			<circle cx="11" cy="11" r="8"></circle>
-			<path d="m21 21-4.35-4.35"></path>
-		    </svg>
-		</button>
-	    </div>
-	</div>
+        <div class="browser-filters">
+            <div class="search-container">
+                <input type="text" id="search-input" class="search-input" placeholder="Search everything...">
+                <button class="search-btn" id="search-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
 
-	<div class="file-tree" id="file-tree">
-	    <!-- File tree will be populated by JavaScript -->
-	</div>
+        <div class="file-tree" id="file-tree">
+            <!-- File tree will be populated by JavaScript -->
+        </div>
 
-	<div class="loading-status" id="loading-status">
-	    No file selected
-	</div>
+        <div class="loading-status" id="loading-status">
+            No file selected
+        </div>
     </div>
 
     <!-- Emulator Panel -->
     <div class="emulator-panel">
-	<div class="emulator-container">
-	    <div class="title-container" style="display: inline-block; position: relative; margin-bottom: 20px;">
-		<div style="font-family: 'Lucida Console', 'Monaco', monospace; font-size: 72px; font-weight: bold; color: #dddddd; margin: 0; letter-spacing: 2px; text-shadow: 4px 4px 0px #000000;">gigatron</div>
-		<div style="position: absolute; top: 60px; left: 50%; right: 0; font-size: 18px; white-space: nowrap; color: #dddddd; text-shadow: 2px 2px 0px #000000; font-family: 'Lucida Console', 'Monaco', monospace;">
-		    TTL microcomputer
-		    <span style="color: #666; cursor: pointer; margin-left: 50px; position: relative; font-size: 10px;"
-			  onmouseover="this.querySelector('.about-tooltip').style.display='block'"
-			  onmouseout="this.querySelector('.about-tooltip').style.display='none'">
-			about
-			<div class="about-tooltip" style="display: none; position: absolute; top: 15px; right: 0; background: #333; color: #ccc; padding: 6px 8px; border-radius: 4px; font-size: 10px; white-space: nowrap; z-index: 1000; border: 1px solid #555; box-shadow: 2px 2px 4px rgba(0,0,0,0.5);">
-			    Gigatron Emulator coded by at67, based on work by Marcel van Kervinck and Walter Belgers
-			</div>
-		    </span>
-		</div>
-	    </div>
+        <div class="emulator-container">
+            <div class="title-container" style="display: inline-block; position: relative; margin-bottom: 20px;">
+                <div style="font-family: 'Lucida Console', 'Monaco', monospace; font-size: 72px; font-weight: bold; color: #dddddd; margin: 0; letter-spacing: 2px; text-shadow: 4px 4px 0px #000000;">gigatron</div>
+                <div style="position: absolute; top: 60px; left: 50%; right: 0; font-size: 18px; white-space: nowrap; color: #dddddd; text-shadow: 2px 2px 0px #000000; font-family: 'Lucida Console', 'Monaco', monospace;">
+                    TTL microcomputer
+                    <span style="color: #666; cursor: pointer; margin-left: 50px; position: relative; font-size: 10px;"
+                          onmouseover="this.querySelector('.about-tooltip').style.display='block'"
+                          onmouseout="this.querySelector('.about-tooltip').style.display='none'">
+                        about
+                        <div class="about-tooltip" style="display: none; position: absolute; top: 15px; right: 0; background: #333; color: #ccc; padding: 6px 8px; border-radius: 4px; font-size: 10px; white-space: nowrap; z-index: 1000; border: 1px solid #555; box-shadow: 2px 2px 4px rgba(0,0,0,0.5);">
+                            Gigatron Emulator coded by at67, based on work by Marcel van Kervinck and Walter Belgers
+                        </div>
+                    </span>
+                </div>
+            </div>
 
-	    <div class="led-panel">
-		<div class="led" id="led-0"></div>
-		<div class="led" id="led-1"></div>
-		<div class="led" id="led-2"></div>
-		<div class="led" id="led-3"></div>
-	    </div>
+            <div class="led-panel">
+                <div class="led" id="led-0"></div>
+                <div class="led" id="led-1"></div>
+                <div class="led" id="led-2"></div>
+                <div class="led" id="led-3"></div>
+            </div>
 
-	    <div class="display-container">
-		<canvas id="display" width="640" height="480" tabindex="0"></canvas>
-	    </div>
+            <div class="display-container">
+                <canvas id="display" width="640" height="480" tabindex="0"></canvas>
+            </div>
 
-	    <div class="controls-wrapper">
-		<!-- System controls row with RAM status in center -->
-		<div class="controls-row">
-		    <div class="control-group">
-			<button class="control-btn-small" onclick="resetEmulator()">RESET</button>
-			<button class="control-btn-small icon-btn" id="input-mode-toggle" onclick="toggleInputMode()">🎮</button>
-		    </div>
+            <div class="controls-wrapper">
+                <!-- System controls row with RAM status in center -->
+                <div class="controls-row">
+                    <div class="control-group">
+                        <button class="control-btn-small" onclick="resetEmulator()">RESET</button>
+                        <button class="control-btn-small icon-btn" id="input-mode-toggle" onclick="toggleInputMode()">🎮</button>
+                    </div>
 
-		    <div class="ram-status" id="ram-status">64K RAM</div>
+                    <div class="ram-status" id="ram-status">64K RAM</div>
 
-		    <div class="control-group">
-			<button class="control-btn-small icon-btn" id="mute-btn" onclick="toggleMute()">🔊</button>
-			<button class="control-btn-small icon-btn" onclick="decreaseVolume()">-</button>
-			<div class="volume-indicator" id="volume-indicator">
-			    <div class="volume-dot active"></div>
-			    <div class="volume-dot active"></div>
-			    <div class="volume-dot active"></div>
-			    <div class="volume-dot active"></div>
-			    <div class="volume-dot active"></div>
-			    <div class="volume-dot"></div>
-			    <div class="volume-dot"></div>
-			    <div class="volume-dot"></div>
-			    <div class="volume-dot"></div>
-			    <div class="volume-dot"></div>
-			</div>
-			<button class="control-btn-small icon-btn" onclick="increaseVolume()">+</button>
-			<button class="control-btn-small icon-btn" id="filter-btn" onclick="toggleFilter()" style="font-size: 12px; font-weight: bold; display: none;">4</button>
-		    </div>
-		</div>
+                    <div class="control-group">
+                        <button class="control-btn-small icon-btn" id="mute-btn" onclick="toggleMute()">🔊</button>
+                        <button class="control-btn-small icon-btn" onclick="decreaseVolume()">-</button>
+                        <div class="volume-indicator" id="volume-indicator">
+                            <div class="volume-dot active"></div>
+                            <div class="volume-dot active"></div>
+                            <div class="volume-dot active"></div>
+                            <div class="volume-dot active"></div>
+                            <div class="volume-dot active"></div>
+                            <div class="volume-dot"></div>
+                            <div class="volume-dot"></div>
+                            <div class="volume-dot"></div>
+                            <div class="volume-dot"></div>
+                            <div class="volume-dot"></div>
+                        </div>
+                        <button class="control-btn-small icon-btn" onclick="increaseVolume()">+</button>
+                        <button class="control-btn-small icon-btn" id="filter-btn" onclick="toggleFilter()" style="font-size: 12px; font-weight: bold; display: none;">4</button>
+                    </div>
+                </div>
 
-		<!-- File status panel with downloads -->
-		<div class="status-panel">
-		    <div class="status-item">
-			<div>
-			    <div class="status-file" id="status-rom-name">No ROM</div>
-			    <div class="status-meta">ROM Firmware</div>
-			</div>
-			<a href="#" class="download-btn" id="download-rom" style="display: none;">⬇ DL</a>
-		    </div>
+                <!-- File status panel with downloads -->
+                <div class="status-panel">
+                    <div class="status-item">
+                        <div>
+                            <div class="status-file" id="status-rom-name">No ROM</div>
+                            <div class="status-meta">ROM Firmware</div>
+                        </div>
+                        <a href="#" class="download-btn" id="download-rom" style="display: none;">⬇ DL</a>
+                    </div>
 
-		    <div class="status-separator"></div>
+                    <div class="status-separator"></div>
 
-		    <div class="status-item">
-			<div>
-			    <div class="status-file" id="status-gt1-name">No GT1</div>
-			    <div class="status-meta">GT1 Program</div>
-			</div>
-			<a href="#" class="download-btn" id="download-gt1" style="display: none;">⬇ DL</a>
-		    </div>
-		</div>
+                    <div class="status-item">
+                        <div>
+                            <div class="status-file" id="status-gt1-name">No GT1</div>
+                            <div class="status-meta">GT1 Program</div>
+                        </div>
+                        <a href="#" class="download-btn" id="download-gt1" style="display: none;">⬇ DL</a>
+                    </div>
+                </div>
 
-		<div class="keyboard-info">
-		    <strong>Keyboard Controls:</strong><br>
-		    Arrows = D-Pad | Z = A Button | X = B Button<br>
-		    Space = Select | Enter = Start
-		</div>
+                <div class="keyboard-info">
+                    <strong>Keyboard Controls:</strong><br>
+                    Arrows = D-Pad | Z = A Button | X = B Button<br>
+                    Space = Select | Enter = Start
+                </div>
 
-		<div class="controls">
-		    <div class="dpad">
-			<button class="control-btn invisible"></button>
-			<button class="control-btn up" onmousedown="buttonDown(3)" onmouseup="buttonUp(3)" ontouchstart="buttonDown(3)" ontouchend="buttonUp(3)">UP</button>
-			<button class="control-btn invisible"></button>
-			<button class="control-btn left" onmousedown="buttonDown(1)" onmouseup="buttonUp(1)" ontouchstart="buttonDown(1)" ontouchend="buttonUp(1)">LEFT</button>
-			<button class="control-btn invisible"></button>
-			<button class="control-btn right" onmousedown="buttonDown(0)" onmouseup="buttonUp(0)" ontouchstart="buttonDown(0)" ontouchend="buttonUp(0)">RIGHT</button>
-			<button class="control-btn invisible"></button>
-			<button class="control-btn down" onmousedown="buttonDown(2)" onmouseup="buttonUp(2)" ontouchstart="buttonDown(2)" ontouchend="buttonUp(2)">DOWN</button>
-			<button class="control-btn invisible"></button>
-		    </div>
+                <div class="controls">
+                    <div class="dpad">
+                        <button class="control-btn invisible"></button>
+                        <button class="control-btn up" onmousedown="buttonDown(3)" onmouseup="buttonUp(3)" ontouchstart="buttonDown(3)" ontouchend="buttonUp(3)">UP</button>
+                        <button class="control-btn invisible"></button>
+                        <button class="control-btn left" onmousedown="buttonDown(1)" onmouseup="buttonUp(1)" ontouchstart="buttonDown(1)" ontouchend="buttonUp(1)">LEFT</button>
+                        <button class="control-btn invisible"></button>
+                        <button class="control-btn right" onmousedown="buttonDown(0)" onmouseup="buttonUp(0)" ontouchstart="buttonDown(0)" ontouchend="buttonUp(0)">RIGHT</button>
+                        <button class="control-btn invisible"></button>
+                        <button class="control-btn down" onmousedown="buttonDown(2)" onmouseup="buttonUp(2)" ontouchstart="buttonDown(2)" ontouchend="buttonUp(2)">DOWN</button>
+                        <button class="control-btn invisible"></button>
+                    </div>
 
-		    <div class="action-buttons">
-			<div class="system-buttons">
-			    <button class="action-btn" onmousedown="buttonDown(5)" onmouseup="buttonUp(5)" ontouchstart="buttonDown(5)" ontouchend="buttonUp(5)">SELECT</button>
-			    <button class="action-btn" onmousedown="buttonDown(4)" onmouseup="buttonUp(4)" ontouchstart="buttonDown(4)" ontouchend="buttonUp(4)">START</button>
-			</div>
-			<div class="game-buttons">
-			    <button class="game-btn" onmousedown="buttonDown(7)" onmouseup="buttonUp(7)" ontouchstart="buttonDown(7)" ontouchend="buttonUp(7)">A</button>
-			    <button class="game-btn" onmousedown="buttonDown(6)" onmouseup="buttonUp(6)" ontouchstart="buttonDown(6)" ontouchend="buttonUp(6)">B</button>
-			</div>
-		    </div>
-		</div>
-	    </div>
-	</div>
+                    <div class="action-buttons">
+                        <div class="system-buttons">
+                            <button class="action-btn" onmousedown="buttonDown(5)" onmouseup="buttonUp(5)" ontouchstart="buttonDown(5)" ontouchend="buttonUp(5)">SELECT</button>
+                            <button class="action-btn" onmousedown="buttonDown(4)" onmouseup="buttonUp(4)" ontouchstart="buttonDown(4)" ontouchend="buttonUp(4)">START</button>
+                        </div>
+                        <div class="game-buttons">
+                            <button class="game-btn" onmousedown="buttonDown(7)" onmouseup="buttonUp(7)" ontouchstart="buttonDown(7)" ontouchend="buttonUp(7)">A</button>
+                            <button class="game-btn" onmousedown="buttonDown(6)" onmouseup="buttonUp(6)" ontouchstart="buttonDown(6)" ontouchend="buttonUp(6)">B</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -155,6 +155,7 @@
 <script src="{{ EMULATOR_BASE_PATH }}emulator-audio.js"></script>
 <script src="{{ EMULATOR_BASE_PATH }}emulator-controls.js"></script>
 <script src="{{ EMULATOR_BASE_PATH }}file-browser.js"></script>
+<script> document.addEventListener('DOMContentLoaded', () => {window.fileBrowser = new FileBrowser('emulator');});</script>
 <script src="{{ EMULATOR_BASE_PATH }}ui-manager.js"></script>
 <script src="{{ EMULATOR_BASE_PATH }}virtual-keyboard.js"></script>
 <script src="{{ EMULATOR_BASE_PATH }}autoload.js"></script>

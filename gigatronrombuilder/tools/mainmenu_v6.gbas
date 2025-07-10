@@ -1,0 +1,282 @@
+_runtimePath_ "runtime"
+_runtimeStart_ &h7FFE
+_codeRomType_ ROMv6
+_enableRomCheck_ Off
+'_enableInitialise_ off
+
+_stringWorkArea_ &h77A0
+
+module "../build/SymbolTable_v6.m"
+
+def byte(&h75a0) = &h90, &h3c, &h91, &h40, &h92, &h43, &h93, &h48, &h0c, &h80, &h81, &h82, &h83, &h01, &h90, &h3c,
+def byte         = &h91, &h40, &h92, &h43, &h93, &h48, &h24, &h80, &h81, &h82, &h83, &hd0, &h00, &h00
+
+const NUM_APPS = 10
+const DIV_X    =  0
+const DIV_Y0   = 24
+const DIV_Y1   = 72
+const LIST_X0  = 18
+const LIST_X1  = 92
+const LIST_Y   = 34
+const LIST_DY  =  9
+const CURS_DX  =  8
+const CURS_X   = LIST_X0 - CURS_DX
+const CURS_Y   = LIST_Y
+
+const dim apps$(NUM_APPS-1) = {"Loader", "Snake", "Racer", "Mandelbrot", "Pictures",
+                               "GtMine", "Bricks", "TinyBasic", "MSBASIC", "Apple1"}
+
+dim execs(NUM_APPS-1) = {Loader, Snake, Racer, Mandelbrot, Pictures,
+                         GtMine, Bricks, TinyBASIC, MSBASIC, Apple1}
+
+tscroll off
+set BG_COLOUR, 0 : mode 2 : cls
+
+set FG_COLOUR, &h20 : rectf 0, 0, 159, 27
+set FG_COLOUR, &h10 : rectf 2, 2, 157, 25
+
+set FG_COLOUR, &h20 : rectf 0, 91, 159, 119
+set FG_COLOUR, &h10 : rectf 2, 93, 157, 117
+
+set FG_COLOUR, &h20 : rectf 0, 28, 1, 90
+set FG_COLOUR, &h20 : rectf 158, 28, 159, 90
+
+gosub drawGiga
+
+set FGBG_COLOUR, &h0C00
+y = LIST_Y
+for i=0 to 4
+    at LIST_X0, y : print apps$(i)
+    at LIST_X1, y : print apps$(i + 5)
+    y = y + LIST_DY
+next i
+
+const help0$ = " [ARROWS] "
+const help1$ = " [A] "
+const help2$ = " [START] "
+
+set FGBG_COLOUR, &h2A10
+at 14, 94  : print "USE";   : call help, @help0$, &h3F : print "TO SELECT";
+at 20, 102 : print "PRESS"; : call help, @help1$, &h3F : print "TO EXECUTE";
+at 14, 110 : print "HOLD";  : call help, @help2$, &h3F : print "FOR RESET"
+
+set FGBG_COLOUR, &h1500
+at 3, 83 : print "ROMv5a" : at 140, 83
+gosub printRAM
+
+x = CURS_X : y = CURS_Y
+index = 0
+
+play music, &h75a0, 3
+gosub resetAudio
+call initStars
+
+
+repeat
+    gosub get("BUTTON_STATE")
+
+    set FG_COLOUR, peek(entropy0)
+    at x, y : put 62 '>
+
+    call drawStars
+forever
+
+
+proc help, text, colour
+    set FG_COLOUR, colour : print string$(text);
+    set FG_COLOUR, &h2A
+endproc
+
+
+const NUM_STARS = 24
+const STARS_ORG_X = 80
+const STARS_ORG_Y = 60
+
+dim star%(NUM_STARS-1) = 0
+dim xPos(NUM_STARS-1) = 0
+dim yPos(NUM_STARS-1) = 0
+dim xVel(NUM_STARS-1) = 0
+dim yVel(NUM_STARS-1) = 0
+
+proc drawStars
+    local i, xr, yr, xp, yp, ss, pxy
+
+    for i=0 to NUM_STARS-1
+        xp = xPos(i) : xr = xp : xv = xVel(i)
+        yp = yPos(i) : yr = yp : yv = yVel(i)
+
+        xp = xp + xv : xPos(i) = xp
+        yp = yp + yv : yPos(i) = yp
+
+        if abs(yp) > 31*256
+            call newStar, i
+            goto skipAbsX
+        endif
+        if abs(xp) > 79*256 then call newStar, i
+
+skipAbsX:
+        pxy.lo = xr.hi + STARS_ORG_X
+        pxy.hi = yr.hi + STARS_ORG_Y + 8
+        if peek(pxy) AND &h80
+            poke pxy, 0
+        endif
+
+        ss = star(i)
+        pxy.lo = xp.hi + STARS_ORG_X
+        pxy.hi = yp.hi + STARS_ORG_Y + 8
+        if peek(pxy) = 0
+            if ss > 20
+                poke pxy, &h3F OR &h80 'white
+            elseif ss > 10
+                poke pxy, &h2A OR &h80 'white*2/3
+            elseif ss > 4
+                poke pxy, &h15 OR &h80 'white*1/3
+            endif
+            star(i) = ss + 1
+        endif
+    next i
+endproc
+
+proc newStar, i
+    star(i) = 0
+    xPos(i) = 0
+    yPos(i) = 0
+    repeat
+        xVel(i) = (rnd(0) AND 2047) - 1024
+        yVel(i) = (rnd(0) AND 2047) - 1024
+    until abs(xVel(i)) > 200  OR  abs(yVel(i)) > 200
+endproc
+
+proc initStars
+    local i
+
+    for i=0 to NUM_STARS-1
+        call newStar, i
+    next i
+endproc
+
+
+dim GIGA_G(10)  = 15,0, 0,-12, -15,0, 0,8, 14,0, 255
+dim GIGA_I(2)   = 0,-8, 255
+dim GIGA_DOT(2) = 0,0, 255
+dim GIGA_A(10)  = 15,0, 0,8, -15,0, 0,-4, 14,0, 255
+dim GIGA_T(12)  = 0,0, 0,4, 15,0, -15,0, 0,8, 15,0, 255
+dim GIGA_R(4)   = 0,-8, 15,0, 255
+dim GIGA_O(8)   = 0,-8, 15,0, 0,8, -15,0, 255
+dim GIGA_N(6)   = 0,-8, 15,0, 0,8, 255
+
+const GIGA_ORGX = 12
+const GIGA_ORGY = 19
+const GIGA_NUM  = 8
+
+dim GIGA_XPOS(GIGA_NUM) = 0, 19,  19, 23,  42,  61, 80, 99, 118
+dim GIGA_YPOS(GIGA_NUM) = 0, -4, -16,  0, -12, -16, -4, -4,  -4
+dim GIGA_ADDR(GIGA_NUM) = @GIGA_G, @GIGA_I, @GIGA_DOT, @GIGA_G, @GIGA_A, @GIGA_T, @GIGA_R, @GIGA_O, @GIGA_N
+
+drawGiga: ' do NOT make this a proc, there are a MAX of 8 slots for params and locals and drawLetter uses them all!
+    for i=0 to GIGA_NUM
+        call drawLetter, GIGA_ADDR(i), &h00, 2, 2, GIGA_XPOS(i), GIGA_YPOS(i)
+        call drawLetter, GIGA_ADDR(i), &h3F, 0, 0, GIGA_XPOS(i), GIGA_YPOS(i)
+    next i
+
+    set FGBG_COLOUR, &h3F10
+    at 56, 18 : print "TTL microcomputer";
+return
+
+proc drawLetter, letter, colour, ofsx, ofsy, x, y
+    local i, j
+
+    set FG_COLOUR, colour
+    for j = ofsy to ofsy + 1
+        for i = ofsx to ofsx + 1
+            at GIGA_ORGX + x + i, GIGA_ORGY + y + j
+            polyR letter
+        next i
+    next j
+endproc
+
+
+execApp:
+    cls
+    exec execs(index), &h0200
+return
+
+
+printRAM:
+    poke &h7FFF, &hFF
+    poke &hFFFF, &h00
+    if peek(&h7FFF) = &hFF
+        print "64K";
+    else
+        print "32K";
+    endif
+return
+
+
+resetAudio:
+    asm
+        LDI     2
+        ST      waveType + 1
+        CALLI   resetAudio
+    endasm
+return
+
+
+beep:
+    sound on, 1, 8200
+    set SOUND_TIMER, 2
+    set BUTTON_STATE, &hEF
+return
+
+
+'button A
+127:    gosub beep
+        gosub execApp
+        return
+
+'enter
+10:     gosub beep
+        set BUTTON_STATE, &hEF
+        return
+
+'right
+254:    at x, y : put 32
+        if x = (LIST_X1 - CURS_DX) then return
+        x = (LIST_X1 - CURS_DX)
+        gosub beep
+        index = index + 5
+        return
+
+'left
+253:    at x, y : put 32
+        if x = (LIST_X0 - CURS_DX) then return
+        x = (LIST_X0 - CURS_DX)
+        gosub beep
+        index = index - 5
+        return
+
+'down
+251:    at x, y : put 32
+        y = y + LIST_DY
+        if y > (LIST_Y + 4*LIST_DY)
+            y = (LIST_Y + 4*LIST_DY)
+            return
+        endif
+        gosub beep
+        index = index + 1
+        if (x = LIST_X0 - CURS_DX) AND index > 4 then index = 4
+        if (x = LIST_X1 - CURS_DX) AND index > 9 then index = 9
+        return
+
+'up
+247:    at x, y : put 32
+        y = y - LIST_DY
+        if y < LIST_Y
+            y = LIST_Y
+            return
+        endif
+        gosub beep
+        index = index - 1
+        if (x = LIST_X0 - CURS_DX) AND index < 0 then index = 0
+        if (x = LIST_X1 - CURS_DX) AND index < 5 then index = 5
+        return

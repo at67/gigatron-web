@@ -1,0 +1,47 @@
+{% include 'overall_header.html' %}
+
+<div class="panel">
+    <div class="inner">
+        <h2>{{ TITLE }}</h2>
+        <p>Welcome to the Gigatron ROM Builder! This tool allows you to create custom firmware ROMs for the Gigatron TTL computer.</p>
+
+        <div style="background: #ffffcc; padding: 10px; border: 1px solid #ffcc00; margin: 10px 0;">
+            <strong>Development Mode:</strong> This extension is currently under development and only accessible to administrators.
+        </div>
+
+        <h3>Coming Soon:</h3>
+        <ul>
+            <li>Select base ROM (v5a, v6, vX0)</li>
+            <li>Choose applications from library</li>
+            <li>Create custom main menus</li>
+            <li>Download custom ROM files</li>
+        </ul>
+    </div>
+</div>
+
+<!-- ROM Builder File Browser -->
+<div id="file-browser-container" style="display: none;">
+    <div class="browser-panel">
+        <div class="browser-header">
+            <div class="browser-filters">
+                <div class="search-container">
+                    <input type="text" id="search-input" class="search-input" placeholder="Search...">
+                    <button class="search-btn">🔍</button>
+                </div>
+            </div>
+        </div>
+        <div id="file-tree" class="file-tree"></div>
+        <div id="loading-status" class="loading-status">Loading...</div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="/ext/at67/gigatronemulator/emulator/styles.css">
+<script src="/ext/at67/gigatronemulator/emulator/file-browser.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    window.fileBrowser = new FileBrowser('rombuilder');
+    document.getElementById('file-browser-container').style.display = 'block';
+});
+</script>
+
+{% include 'overall_footer.html' %}

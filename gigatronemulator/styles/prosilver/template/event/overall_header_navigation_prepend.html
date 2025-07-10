@@ -24,7 +24,7 @@
 </style>
 
 <li class="small-icon icon-gigatron no-popup">
-    <a href="{{ U_GIGATRON_EMULATOR }}">Gigatron Emulator</a>
+    <a href="{{ U_GIGATRON_EMULATOR }}">Emulator</a>
 </li>
 
 <script>
@@ -34,9 +34,9 @@ document.addEventListener('DOMContentLoaded', function() {
     var gigatronLinks = document.querySelectorAll('.icon-gigatron');
 
     if (navbar && gigatronLinks.length > 0) {
-	gigatronLinks.forEach(function(link) {
-	    navbar.insertBefore(link, navbar.firstChild);
-	});
+        gigatronLinks.forEach(function(link) {
+            navbar.insertBefore(link, navbar.firstChild);
+        });
     }
 });
 </script>

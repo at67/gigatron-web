@@ -1,0 +1,148 @@
+
+{-----------------------------------------------------------------------+
+|                                                                       |
+|       Command.gcl                                                     |
+|                                                                       |
+|       !!! Work in progress !!!                                        |
+|                                                                       |
+|       - Prompt with command line input                                |
+|       - Load GT1 command file into RAM                                |
+|       - Run command                                                   |
+|       - Error reporting                                               |
+|                                                                       |
++-----------------------------------------------------------------------}
+gcl0x
+
+{-----------------------------------------------------------------------+
+|                                                                       |
+|       Variables                                                       |
+|                                                                       |
++-----------------------------------------------------------------------}
+
+zpReset=$48                     {Start GCL vars from $48 instead of $30}
+
+_StdOut=$300
+
+{-----------------------------------------------------------------------+
+|                                                                       |
+|       Transient Program Area                                          |
+|                                                                       |
++-----------------------------------------------------------------------}
+
+{-----------------------------------------------------------------------+
+|                       RAM page $08                                    |
++-----------------------------------------------------------------------}
+*=$8a0
+
+execute=$8a0                    {Overrule GCL's default execution address}
+
+{
+  Entry point only used when started from a regular loader (outside GTOS)
+}
+[
+  \screenMemory _r0=            {Top left pixel in screen memory}
+  [do _r0. 1+ loop]             {Blink forever}
+]
+
+{
+  Entry point when started from System.gt1
+}
+_Start=*
+[
+  [def `By`Your`Command #10 #0] _dev1!
+  _CommandLoop!                 {Doesn't return}
+]
+
+{-----------------------------------------------------------------------+
+|                                                                       |
+|       File reading section                                            |
+|                                                                       |
++-----------------------------------------------------------------------}
+
+{-----------------------------------------------------------------------+
+|                       RAM page $7f                                    |
++-----------------------------------------------------------------------}
+*=$7fa0
+
+{-----------------------------------------------------------------------+
+|                                                                       |
+|       Main program                                                    |
+|                                                                       |
++-----------------------------------------------------------------------}
+
+_CommandLoop=*
+[do
+  { XXX: Restore stdout/stdin }
+  _StdOut _dev1=
+
+  { XXX: Print newline if needed }
+
+  { Print error message if needed }
+{
+  [if<>0
+    { XXX Conditional newline }
+    [def `?Execution`error #10 #0] _dev1!
+  ]
+}
+
+  { XXX: Clear error state }
+
+  [def `> #0] _dev1!            {Prompt}
+
+  { XXX: Read line from stdin in $500, edit with DEL }
+
+  _ReadLine!
+
+  { XXX: Find file.GT1 on A: }
+
+  { XXX: Load first sector }
+
+  { XXX: If first segment is $503 }
+
+  { XXX: then load with own loader }
+
+  { XXX: else load with another loader }
+
+  { XXX: and execute }
+
+  loop]
+
+{-----------------------------------------------------------------------+
+|                       RAM page $7e                                    |
++-----------------------------------------------------------------------}
+*=$7ea0
+
+_ReadLine=*
+[
+  [do loop]
+  ret
+]
+
+{-----------------------------------------------------------------------+
+|                       RAM page $7d                                    |
++-----------------------------------------------------------------------}
+*=$7da0
+
+_WaitKey=*
+[
+  ret
+]
+
+{-----------------------------------------------------------------------+
+|                       RAM page $7c                                    |
++-----------------------------------------------------------------------}
+*=$7ca0
+
+_Execute=*
+[
+  120 [do _r0=                  {Restore video table}
+    _r0+ $fe+ _r1=
+    _r0 7+ _r1. 8- if>0loop]
+
+  Address [do if=0loop]         {Stop if not executable}
+  call                          {Run...}
+]
+
+{-----------------------------------------------------------------------+
+|                                                                       |
++-----------------------------------------------------------------------}

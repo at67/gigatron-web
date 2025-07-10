@@ -444,6 +444,7 @@ function resetEmulator()
     if(filterBtn) filterBtn.textContent = '4';
 
     Module.ccall('emulator_reset', null, ['number'], [emulator]);
+    resetAudio();
 
     // Update RAM status in new status panel
     const is64k = Module.ccall('emulator_get_64k_mode', 'number', ['number'], [emulator]);

@@ -1,0 +1,3 @@
+/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/gtASM/build/CMakeFiles/gtasm.dir
+/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/gtASM/build/CMakeFiles/edit_cache.dir
+/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/gtASM/build/CMakeFiles/rebuild_cache.dir

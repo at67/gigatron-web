@@ -1,0 +1,3 @@
+at67_gigatronrombuilder_main:
+    path: /gigatronrombuilder
+    defaults: { _controller: at67.gigatronrombuilder.controller.main:handle }

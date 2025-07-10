@@ -1,0 +1,23 @@
+{
+    "name": "at67/gigatronrombuilder",
+    "type": "phpbb-extension",
+    "description": "Gigatron ROM Builder for phpBB",
+    "version": "1.0.0",
+    "license": "BSD3",
+    "authors": [
+        {
+            "name": "at67",
+            "homepage": "https://forum.gigatron.io"
+        }
+    ],
+    "require": {
+        "php": ">=7.4.0",
+        "phpbb/phpbb": ">=3.3.0,<4.0.0@dev"
+    },
+    "extra": {
+        "display-name": "Gigatron ROM Builder",
+        "soft-require": {
+            "phpbb/phpbb": ">=3.3.0,<4.0.0@dev"
+        }
+    }
+}

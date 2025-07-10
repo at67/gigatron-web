@@ -1,8 +1,9 @@
 class FileBrowser
 {
-    constructor()
+    constructor(mode = 'emulator')
     {
-        this.currentFileType = 'rom';
+        this.mode = mode;
+        this.currentFileType = mode === 'rombuilder' ? 'internal' : 'rom';
         this.files =
         {
             rom: [],
@@ -11,6 +12,11 @@ class FileBrowser
         this.selectedFile = null;
         this.expandedFolders = new Set();
         this.searchQuery = '';
+
+        // ROM Builder specific properties
+        if (this.mode === 'rombuilder') {
+            this.selectedFiles = []; // Array for multiple selection
+        }
 
         this.initializeEventListeners();
         this.loadFiles();
@@ -101,13 +107,27 @@ class FileBrowser
     {
         try
         {
-            // Load ROM files
-            const romResponse = await fetch('/ext/at67/gigatronemulator/emulator/scan_files.php?type=rom');
-            this.files.rom = await romResponse.json();
+            if (this.mode === 'rombuilder') {
+                // Load both internal and curated apps for ROM Builder
+                const internalResponse = await fetch('/ext/at67/gigatronemulator/emulator/scan_files.php?type=internal&base_path=/var/www/html/phpbb/ext/at67/gigatronrombuilder');
+                const curatedResponse = await fetch('/ext/at67/gigatronemulator/emulator/scan_files.php?type=gt1');
 
-            // Load GT1 files
-            const gt1Response = await fetch('/ext/at67/gigatronemulator/emulator/scan_files.php?type=gt1');
-            this.files.gt1 = await gt1Response.json();
+                const internalFiles = await internalResponse.json();
+                const curatedFiles = await curatedResponse.json();
+
+                // Mark files with source type for filtering
+                internalFiles.forEach(file => file.source = 'internal');
+                curatedFiles.forEach(file => file.source = 'curated');
+
+                this.files.internal = [...internalFiles, ...curatedFiles];
+            } else {
+                // Load ROM and GT1 files for emulator
+                const romResponse = await fetch('/ext/at67/gigatronemulator/emulator/scan_files.php?type=rom');
+                this.files.rom = await romResponse.json();
+
+                const gt1Response = await fetch('/ext/at67/gigatronemulator/emulator/scan_files.php?type=gt1');
+                this.files.gt1 = await gt1Response.json();
+            }
 
             this.applySearch();
         }
@@ -376,13 +396,26 @@ class FileBrowser
     {
         const fileDiv = document.createElement('div');
         fileDiv.className = 'file-item';
-        if(this.selectedFile === file)
-        {
-            fileDiv.classList.add('selected');
-        }
 
-        fileDiv.innerHTML = `<input type="radio" name="selected-file" class="file-radio" ${this.selectedFile === file ? 'checked' : ''}>
-                             <span>${file.filename}</span>`;
+        if(this.mode === 'rombuilder')
+        {
+            const isSelected = this.selectedFiles.includes(file);
+            if(isSelected)
+            {
+                fileDiv.classList.add('selected');
+            }
+            fileDiv.innerHTML = `<input type="checkbox" class="file-checkbox" ${isSelected ? 'checked' : ''}>
+                                 <span>${file.filename}</span>`;
+        }
+        else
+        {
+            if(this.selectedFile === file)
+            {
+                fileDiv.classList.add('selected');
+            }
+            fileDiv.innerHTML = `<input type="radio" name="selected-file" class="file-radio" ${this.selectedFile === file ? 'checked' : ''}>
+                                 <span>${file.filename}</span>`;
+        }
 
         fileDiv.addEventListener('click', () =>
         {
@@ -405,7 +438,7 @@ class FileBrowser
         this.renderFileTree();
     }
 
-    selectFile(file)
+    selectFileOld(file)
     {
         this.selectedFile = file;
         this.renderFileTree();
@@ -417,8 +450,38 @@ class FileBrowser
             window.uiManager.onFileSelected(file);
         }
     }
+    selectFile(file)
+    {
+        if(this.mode === 'rombuilder')
+        {
+            // Multiple selection for ROM Builder
+            const index = this.selectedFiles.indexOf(file);
+            if(index === -1)
+            {
+                this.selectedFiles.push(file);
+            }
+            else
+            {
+                this.selectedFiles.splice(index, 1);
+            }
+        }
+        else
+        {
+            // Single selection for emulator (existing logic)
+            this.selectedFile = file;
 
-    updateLoadingStatus()
+            // Notify UI manager about file selection
+            if(window.uiManager)
+            {
+                window.uiManager.onFileSelected(file);
+            }
+        }
+
+        this.renderFileTree();
+        this.updateLoadingStatus();
+    }
+
+    updateLoadingStatusOld()
     {
         const statusElement = document.getElementById('loading-status');
         if(this.selectedFile)
@@ -430,10 +493,32 @@ class FileBrowser
             statusElement.textContent = 'No file selected';
         }
     }
+    updateLoadingStatus()
+    {
+        const statusElement = document.getElementById('loading-status');
+
+        if(this.mode === 'rombuilder')
+        {
+            if(this.selectedFiles.length > 0)
+            {
+                statusElement.textContent = `Selected: ${this.selectedFiles.length} files`;
+            }
+            else
+            {
+                statusElement.textContent = 'No files selected';
+            }
+        }
+        else
+        {
+            if(this.selectedFile)
+            {
+                statusElement.textContent = `Selected: ${this.selectedFile.filename}`;
+            }
+            else
+            {
+                statusElement.textContent = 'No file selected';
+            }
+        }
+    }
 }
 
-// Initialize file browser when DOM is loaded
-document.addEventListener('DOMContentLoaded', () =>
-{
-    window.fileBrowser = new FileBrowser();
-});

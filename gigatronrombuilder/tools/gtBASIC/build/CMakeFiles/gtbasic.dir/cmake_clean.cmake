@@ -1,0 +1,43 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/gtbasic.dir/gtbasic.cpp.o"
+  "CMakeFiles/gtbasic.dir/gtbasic.cpp.o.d"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/assembler.cpp.o"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/assembler.cpp.o.d"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/compiler.cpp.o"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/compiler.cpp.o.d"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/cpu.cpp.o"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/cpu.cpp.o.d"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/expression.cpp.o"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/expression.cpp.o.d"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/functions.cpp.o"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/functions.cpp.o.d"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/image.cpp.o"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/image.cpp.o.d"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/keywords.cpp.o"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/keywords.cpp.o.d"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/linker.cpp.o"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/linker.cpp.o.d"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/load.cpp.o"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/load.cpp.o.d"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/loader.cpp.o"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/loader.cpp.o.d"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/memory.cpp.o"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/memory.cpp.o.d"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/midi.cpp.o"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/midi.cpp.o.d"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/operators.cpp.o"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/operators.cpp.o.d"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/optimiser.cpp.o"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/optimiser.cpp.o.d"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/pragmas.cpp.o"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/pragmas.cpp.o.d"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/validater.cpp.o"
+  "CMakeFiles/gtbasic.dir/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools/src/validater.cpp.o.d"
+  "gtbasic"
+  "gtbasic.pdb"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang CXX)
+  include(CMakeFiles/gtbasic.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()

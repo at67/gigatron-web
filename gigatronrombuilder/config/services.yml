@@ -1,0 +1,15 @@
+services:
+   at67.gigatronrombuilder.controller.main:
+       class: at67\gigatronrombuilder\controller\main
+       arguments:
+           - '@controller.helper'
+           - '@template'
+           - '@user'
+
+   at67.gigatronrombuilder.main_listener:
+       class: at67\gigatronrombuilder\event\main_listener
+       arguments:
+           - '@controller.helper'
+           - '@template'
+       tags:
+           - { name: event.listener }
