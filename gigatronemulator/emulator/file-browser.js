@@ -440,23 +440,10 @@ class FileBrowser
         this.renderFileTree();
     }
 
-    selectFileOld(file)
-    {
-        this.selectedFile = file;
-        this.renderFileTree();
-        this.updateLoadingStatus();
-
-        // Notify UI manager about file selection
-        if(window.uiManager)
-        {
-            window.uiManager.onFileSelected(file);
-        }
-    }
     selectFile(file, path = null)
     {
         if(this.mode === 'rombuilder')
         {
-            // Store the path with the file
             if(path)
             {
                 file.fullPath = path;
@@ -465,6 +452,8 @@ class FileBrowser
             const index = this.selectedFiles.indexOf(file);
             if(index === -1)
             {
+                // Initialize alias when file is first selected
+                file.alias = null;
                 this.selectedFiles.push(file);
             }
             else
@@ -486,20 +475,13 @@ class FileBrowser
 
         this.renderFileTree();
         this.updateLoadingStatus();
+
+        if(this.mode === 'rombuilder')
+        {
+            updateStatusDisplay();
+        }
     }
 
-    updateLoadingStatusOld()
-    {
-        const statusElement = document.getElementById('loading-status');
-        if(this.selectedFile)
-        {
-            statusElement.textContent = `Selected: ${this.selectedFile.filename}`;
-        }
-        else
-        {
-            statusElement.textContent = 'No file selected';
-        }
-    }
     updateLoadingStatus()
     {
         const statusElement = document.getElementById('loading-status');

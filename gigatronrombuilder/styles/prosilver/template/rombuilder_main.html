@@ -27,23 +27,23 @@
     <div class="emulator-panel">
         <div class="emulator-container">
             <!-- Combined Status Display -->
-            <div id="status-display" style="background: #2d2d2d; border: 2px solid #444; border-radius: 8px; color: #e0e0e0; width: 320px; height: 400px; display: flex; flex-direction: column;">
+            <div id="status-display" style="background: #2d2d2d; border: 2px solid #444; border-radius: 8px; color: #e0e0e0; width: 320px; height: 400px; display: flex; flex-direction: column; overflow: hidden;">
                 <!-- ROM Status (Top 1/5) -->
-                <div style="padding: 10px; border-bottom: 1px solid #444; height: 20%; box-sizing: border-box;">
+                <div style="padding: 10px; border-bottom: 1px solid #444; flex-shrink: 0;">
                     <div style="font-weight: normal; margin-bottom: 8px; font-size: 13px;">Selected ROM:</div>
                     <div id="selected-rom-display" style="font-size: 16px;">ROMv6</div>
                 </div>
 
                 <!-- Selected Files (Bottom 4/5) -->
-                <div style="padding: 10px; height: 80%; box-sizing: border-box; display: flex; flex-direction: column;">
-                    <div style="font-weight: normal; margin-bottom: 10px; font-size: 13px;">Selected Files:</div>
-                    <div id="selected-files-list" style="flex: 1; overflow-y: auto; font-family: monospace; font-size: 14px;">
+                <div style="padding: 10px; flex: 1; display: flex; flex-direction: column; min-height: 0;">
+                    <div style="font-weight: normal; margin-bottom: 10px; font-size: 13px; flex-shrink: 0;">Selected Files:</div>
+                    <div id="selected-files-list" style="flex: 1; overflow-y: auto; font-family: monospace; font-size: 14px; min-height: 0;">
                         <div style="color: #888;">No files selected</div>
                     </div>
                 </div>
 
                 <!-- Build Button -->
-                <div style="padding: 10px; border-top: 1px solid #444; box-sizing: border-box;">
+                <div style="padding: 10px; border-top: 1px solid #444; flex-shrink: 0;">
                     <button id="build-rom-btn" style="width: 100%; background: #28a745; color: white; padding: 12px; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer;" onclick="buildROM()">
                         Build ROM
                     </button>
@@ -57,30 +57,75 @@
 <script src="/ext/at67/gigatronemulator/emulator/file-browser.js"></script>
 
 <script>
+function removeFile(index) {
+    if (window.fileBrowser && window.fileBrowser.selectedFiles) {
+        window.fileBrowser.selectedFiles.splice(index, 1);
+        window.fileBrowser.renderFileTree(); // Update checkboxes
+        updateStatusDisplay(); // Update status display
+    }
+}
+
+// Update status display when files are selected
+function updateStatusDisplay() {
+    const romSelect = document.getElementById('base-rom-select');
+    const romDisplay = document.getElementById('selected-rom-display');
+    const filesList = document.getElementById('selected-files-list');
+
+    // Update ROM display - preserve ROM prefix
+    romDisplay.textContent = 'ROM' + romSelect.value;
+
+    // Update files list with alias dropdowns
+    if (window.fileBrowser.selectedFiles.length > 0) {
+        var html = '';
+
+        // Track which aliases are already used
+        var usedAliases = {};
+        for (var j = 0; j < window.fileBrowser.selectedFiles.length; j++) {
+            if (window.fileBrowser.selectedFiles[j].alias) {
+                usedAliases[window.fileBrowser.selectedFiles[j].alias] = j;
+            }
+        }
+
+        for (var i = 0; i < window.fileBrowser.selectedFiles.length; i++) {
+            var file = window.fileBrowser.selectedFiles[i];
+            var currentAlias = file.alias || '';
+
+            // Build each option separately for clarity
+            var noneOption = '<option value=""' + (currentAlias === '' ? ' selected' : '') + '>(none)</option>';
+            var bootOption = '<option value="Boot"' + (currentAlias === 'Boot' ? ' selected' : '') + (('Boot' in usedAliases && usedAliases['Boot'] !== i) ? ' disabled' : '') + '>Boot</option>';
+            var mainOption = '<option value="Main"' + (currentAlias === 'Main' ? ' selected' : '') + (('Main' in usedAliases && usedAliases['Main'] !== i) ? ' disabled' : '') + '>Main</option>';
+            var resetOption = '<option value="Reset"' + (currentAlias === 'Reset' ? ' selected' : '') + (('Reset' in usedAliases && usedAliases['Reset'] !== i) ? ' disabled' : '') + '>Reset</option>';
+            var eggOption = '<option value="Egg"' + (currentAlias === 'Egg' ? ' selected' : '') + (('Egg' in usedAliases && usedAliases['Egg'] !== i) ? ' disabled' : '') + '>Egg</option>';
+
+            var aliasOptions = noneOption + bootOption + mainOption + resetOption + eggOption;
+
+            var aliasSelect = '<select class="alias-select" data-file-index="' + i + '" style="margin-left: 10px; background: #1a1a1a; color: #e0e0e0; border: 1px solid #444; padding: 2px;">' + aliasOptions + '</select>';
+            html += '<div style="margin-bottom: 4px; display: flex; align-items: center;">' +
+                    '<button onclick="removeFile(' + i + ')" style="background: #dc3545; color: white; border: none; border-radius: 3px; padding: 2px 6px; cursor: pointer; font-size: 12px;">×</button>' +
+                    aliasSelect +
+                    '<span style="flex: 1; margin-left: 10px;">' + file.filename + '</span>' +
+                    '</div>';
+        }
+        filesList.innerHTML = html;
+
+        // Add event listeners for alias changes
+        document.querySelectorAll('.alias-select').forEach(select => {
+            select.addEventListener('change', function() {
+                var fileIndex = parseInt(this.dataset.fileIndex);
+                var alias = this.value || null;
+                window.fileBrowser.selectedFiles[fileIndex].alias = alias;
+
+                // Refresh the display to update disabled states
+                updateStatusDisplay();
+            });
+        });
+    } else {
+        filesList.innerHTML = '<div style="color: #888;">No files selected</div>';
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     window.fileBrowser = new FileBrowser('rombuilder');
-
-    // Update status display when files are selected
-    function updateStatusDisplay() {
-        const romSelect = document.getElementById('base-rom-select');
-        const romDisplay = document.getElementById('selected-rom-display');
-        const filesList = document.getElementById('selected-files-list');
-
-        // Update ROM display - preserve ROM prefix
-        romDisplay.textContent = 'ROM' + romSelect.value;
-
-        // Update files list
-        if (window.fileBrowser.selectedFiles.length > 0) {
-            var html = '';
-            for (var i = 0; i < window.fileBrowser.selectedFiles.length; i++) {
-                var file = window.fileBrowser.selectedFiles[i];
-                html += '<div style="margin-bottom: 4px;">' + file.filename + '</div>';
-            }
-            filesList.innerHTML = html;
-        } else {
-            filesList.innerHTML = '<div style="color: #888;">No files selected</div>';
-        }
-    }
 
     // Listen for ROM changes, clear selections when ROM changes
     document.getElementById('base-rom-select').addEventListener('change', function() {
@@ -128,23 +173,19 @@ function generateManifest(romVersion, selectedFiles)
     {
         var file = selectedFiles[i];
 
-        // Extract symbol name from filename
-        var symbolName = file.filename.replace(/\.(gt1|gcl)$/i, '');
-        symbolName = symbolName.replace(/_v[\w\d]+$/i, '');
-        symbolName = symbolName.replace(/_ROM.*$/i, '');
-
-        // Special case Boot
-        if (symbolName.startsWith('CardBoot')) {
-            symbolName = 'Boot';
-        } else if (symbolName.startsWith('MainMenu')) {
-            symbolName = 'Main';
+        // Use alias if set, otherwise extract from filename
+        var symbolName;
+        if (file.alias) {
+            symbolName = file.alias;
+        } else {
+            symbolName = file.filename.replace(/\.(gt1|gcl)$/i, '');
+            symbolName = symbolName.replace(/_v[\w\d]+$/i, '');
+            // Keep your existing special cases for CardBoot, etc.
         }
 
-        // Build entry: SymbolName=Apps/Path/File
         var entry = symbolName + '=' + file.fullPath;
         entries.push(entry);
     }
-
     manifest += entries.join(',\n      ') + '"';
 
     return manifest;

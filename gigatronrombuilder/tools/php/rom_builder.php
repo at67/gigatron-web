@@ -183,6 +183,11 @@ class RomBuilder {
         if (!file_exists($core_link)) {
             symlink('../romdeps/Core', $core_link);
         }
+
+        $games_link = $this->romsrc_dir . '/games';
+        if (!file_exists($games_link)) {
+            symlink('../../gigatronemulator/gt1/games', $games_link);
+        }
     }
 
     private function cleanupTempSymlinks() {
@@ -194,6 +199,11 @@ class RomBuilder {
         $core_link = $this->romsrc_dir . '/Core';
         if (is_link($core_link)) {
             unlink($core_link);
+        }
+
+        $games_link = $this->romsrc_dir . '/games';
+        if (is_link($games_link)) {
+            unlink($games_link);
         }
     }
 }
