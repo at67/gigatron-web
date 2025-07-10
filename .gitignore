@@ -1,5 +1,6 @@
 # Build artifacts
 *.o
+*.o.d
 *.wasm
 *.js.map
 
