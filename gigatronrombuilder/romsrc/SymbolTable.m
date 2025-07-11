@@ -133,4 +133,4 @@ const buttonA = &h80
 const Reset = &hf0e
 const Command = &h81
 const Boot = &h11e3
-const Main = &h1d5b
+const MainMenu = &h1d5b
