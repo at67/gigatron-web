@@ -38,10 +38,15 @@ class main
 
         try {
             require_once(__DIR__ . '/../tools/php/rom_builder.php');
-
             $builder = new \RomBuilder();
 
-            $result = $builder->buildRom($data['rom_version'], [], $data['manifest']);
+            // Extract variables from the request data
+            $rom_version = $data['rom_version'] ?? '';
+            $custom_manifest = $data['manifest'] ?? null;
+            $app_overrides = []; // or extract from $data if needed
+            $symbols_only = isset($data['symbols_only']) ? $data['symbols_only'] : false;
+
+            $result = $builder->buildRom($rom_version, $app_overrides, $custom_manifest, $symbols_only);
         } catch (\Exception $e) {
             $result = ['success' => false, 'error' => $e->getMessage()];
         }

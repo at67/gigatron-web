@@ -27,7 +27,7 @@
     <div class="emulator-panel" style="flex: 4;">
         <div class="emulator-container" style="width: 100%;">
             <!-- Combined Status Display -->
-            <div id="status-display" style="background: #2d2d2d; border: 2px solid #444; border-radius: 8px; color: #e0e0e0; width: 100%; height: 400px; display: flex; flex-direction: column; overflow: hidden; position: relative;">
+            <div id="status-display" style="background: #2d2d2d; border: 2px solid #444; border-radius: 8px; color: #e0e0e0; width: 100%; height: 600px; display: flex; flex-direction: column; overflow: hidden; position: relative;">
                 <!-- ROM Status (Top 1/5) -->
                 <div style="padding: 10px; border-bottom: 1px solid #444; flex-shrink: 0;">
                     <div style="font-weight: normal; margin-bottom: 8px; font-size: 13px;">Selected ROM:</div>
@@ -44,8 +44,8 @@
 
                 <!-- Build Button -->
                 <div style="padding: 10px; border-top: 1px solid #444; flex-shrink: 0;">
-                    <button id="build-rom-btn" style="width: 100%; background: #28a745; color: white; padding: 12px; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer;" onclick="buildROM()">
-                        Build ROM
+                    <button id="build-rom-btn" style="width: 100%; background: #28a745; color: white; padding: 12px; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer;" onclick="buildSymbolTable()">
+                        Build SymbolTable
                     </button>
                 </div>
 
@@ -58,7 +58,7 @@
                         <div style="flex: 1; padding: 15px; overflow-y: auto;">
                             <pre id="modal-content" style="color: #e0e0e0; font-family: monospace; white-space: pre-wrap; margin: 0; font-size: 1.2em;"></pre>
                         </div>
-                        <div style="padding: 15px; border-top: 1px solid #444;">
+                        <div class="button-container" style="padding: 15px; border-top: 1px solid #444;">
                             <button id="modal-continue-btn" style="width: 100%; padding: 12px; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer;">
                                 Continue
                             </button>
@@ -160,18 +160,18 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 });
 
-// Modal event listeners
-document.getElementById('modal-continue-btn').addEventListener('click', hideBuildResult);
-
-// ESC key to close modal
+// ESC key support
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
-        hideBuildResult();
+        const modal = document.getElementById('build-result-modal');
+        if (modal.style.display === 'block') {
+            hideBuildResult();
+        }
     }
 });
 
-// Build ROM function
-function buildROM()
+// Build SymbolTable, uses the same buildRom function
+function buildSymbolTable()
 {
     const romVersion = document.getElementById('base-rom-select').value;
     const selectedFiles = window.fileBrowser.selectedFiles;
@@ -186,7 +186,17 @@ function buildROM()
     console.log(manifest);
 
     // Actually send the build request instead of just showing an alert
-    sendBuildRequest(romVersion, selectedFiles, manifest);
+    sendBuildRequest(romVersion, selectedFiles, manifest, true);
+}
+
+// Build ROM, uses the same buildRom function
+function buildROM(apps, buildResponse) {
+    const romVersion = document.getElementById('base-rom-select').value;
+    const selectedFiles = window.fileBrowser.selectedFiles;
+    const manifest = generateManifest(romVersion, selectedFiles);
+
+    // Pass symbols_only: false for actual ROM building
+    sendBuildRequest(romVersion, selectedFiles, manifest, false);
 }
 
 // Generate manifest from selected files
@@ -219,7 +229,7 @@ function generateManifest(romVersion, selectedFiles)
 }
 
 // Send ROM build request to server
-function sendBuildRequest(romVersion, selectedFiles, manifest)
+function sendBuildRequest(romVersion, selectedFiles, manifest, symbolsOnly = false)
 {
     var xhr = new XMLHttpRequest();
     xhr.open('POST', '/app.php/gigatronrombuilder/build', true);
@@ -234,7 +244,16 @@ function sendBuildRequest(romVersion, selectedFiles, manifest)
                 var response = JSON.parse(xhr.responseText);
                 if (response.success)
                 {
-                    showBuildResult(true, 'Build Successful', response.output);
+                    // Check if user selected existing mainmenu
+                    const hasMainAlias = window.fileBrowser.selectedFiles.some(file => file.alias === 'Main');
+
+                    if (hasMainAlias) {
+                        // User chose existing mainmenu - single continue button
+                        showBuildResult(true, 'Build Successful', response.output);
+                    } else {
+                        // No mainmenu - need Phase 2 - show cancel/continue buttons
+                        showBuildResult(true, 'Build Successful', response.output, response);
+                    }
                 }
                 else
                 {
@@ -252,28 +271,53 @@ function sendBuildRequest(romVersion, selectedFiles, manifest)
     {
         rom_version: romVersion,
         manifest: manifest,
-        selected_files: selectedFiles.map(f => f.path)
+        selected_files: selectedFiles.map(f => f.path),
+        symbols_only: symbolsOnly
     };
 
     xhr.send(JSON.stringify(data));
 }
 
 // Modal control functions
-function showBuildResult(success, title, content) {
+function showBuildResult(success, title, content, buildResponse = null) {
     const modal = document.getElementById('build-result-modal');
     const titleElement = document.getElementById('modal-title');
     const contentElement = document.getElementById('modal-content');
-    const continueBtn = document.getElementById('modal-continue-btn');
+    const buttonContainer = document.querySelector('#build-result-modal .button-container');
 
     titleElement.textContent = title;
     contentElement.textContent = content;
 
-    if (success) {
-        continueBtn.style.background = '#28a745';
-        continueBtn.style.color = 'white';
+    // Scroll to bottom of content
+    setTimeout(() => {
+        const scrollContainer = contentElement.parentElement;
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+    }, 0);
+
+    // Create appropriate buttons
+    if (success && buildResponse) {
+        // Two buttons for Phase 2 entry
+        buttonContainer.innerHTML = `
+            <div style="display: flex; gap: 4%;">
+                <button id="modal-cancel-btn" style="width: 48%; padding: 12px; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; background: #6c757d; color: white;">Cancel</button>
+                <button id="modal-continue-btn" style="width: 48%; padding: 12px; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; background: #28a745; color: white;">Continue</button>
+            </div>`;
     } else {
-        continueBtn.style.background = '#dc3545';
-        continueBtn.style.color = 'white';
+        // Single button for all other cases
+        buttonContainer.innerHTML = `
+            <div style="display: flex;">
+                <button id="modal-continue-btn" style="width: 100%; padding: 12px; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; background: ${success ? '#28a745' : '#dc3545'}; color: white;">Continue</button>
+            </div>`;
+    }
+
+    // Add event listeners for the buttons
+    if (success && buildResponse) {
+        // Two buttons for Phase 2 entry
+        document.getElementById('modal-cancel-btn').addEventListener('click', hideBuildResult);
+        document.getElementById('modal-continue-btn').addEventListener('click', () => showMainmenuEditor(buildResponse));
+    } else {
+        // Single button for all other cases
+        document.getElementById('modal-continue-btn').addEventListener('click', hideBuildResult);
     }
 
     modal.style.display = 'block';
@@ -282,6 +326,74 @@ function showBuildResult(success, title, content) {
 function hideBuildResult() {
     document.getElementById('build-result-modal').style.display = 'none';
 }
+
+function showMainmenuEditor(buildResponse) {
+    // Filter apps for mainmenu (exclude Reset, Boot, Main, Egg)
+    const menuApps = window.fileBrowser.selectedFiles.filter(file => {
+        const alias = file.alias;
+        return alias !== 'Reset' && alias !== 'Boot' && alias !== 'Main' && alias !== 'Egg';
+    });
+
+    // Show Phase 2 as modal overlay
+    showPhase2Modal(menuApps, buildResponse);
+}
+
+function showPhase2Modal(apps, buildResponse) {
+    const modal = document.getElementById('build-result-modal');
+    const titleElement = document.getElementById('modal-title');
+    const contentElement = document.getElementById('modal-content');
+    const buttonContainer = document.querySelector('#build-result-modal .button-container');
+
+    // Override modal structure for Phase 2 - remove scrollable design
+    const modalInner = modal.querySelector('div');
+    modalInner.style.height = 'auto';
+    modalInner.style.maxHeight = 'none';
+    contentElement.parentElement.style.flex = 'none';
+    contentElement.parentElement.style.overflow = 'visible';
+    contentElement.style.overflow = 'visible';
+    titleElement.textContent = 'Mainmenu Editor';
+    contentElement.innerHTML = createMainmenuPreviewHTML(apps);
+
+    // Phase 2 buttons
+    buttonContainer.innerHTML = `
+        <div style="display: flex; gap: 4%;">
+            <button id="modal-cancel-btn" style="width: 48%; padding: 12px; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; background: #6c757d; color: white;">Cancel</button>
+            <button id="modal-continue-btn" style="width: 48%; padding: 12px; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; background: #28a745; color: white;">Build ROM</button>
+        </div>`;
+
+    // Event listeners
+    document.getElementById('modal-cancel-btn').addEventListener('click', hideBuildResult);
+    document.getElementById('modal-continue-btn').addEventListener('click', () => buildROM(apps, buildResponse));
+
+    modal.style.display = 'block';
+}
+
+function createMainmenuPreviewHTML(apps) {
+    return `
+        <div style="width: 480px; height: 360px; background: #000; border: 2px solid #444; margin: 0 auto; font-family: monospace; color: #0f0; padding: 20px; box-sizing: border-box;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; height: 100%;">
+                <div>
+                    ${apps.slice(0, 5).map(app => `<div>${app.alias || app.filename.replace(/\.(gt1|gcl)$/i, '')}</div>`).join('')}
+                </div>
+                <div>
+                    ${apps.slice(5, 10).map(app => `<div>${app.alias || app.filename.replace(/\.(gt1|gcl)$/i, '')}</div>`).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function buildROM(apps, buildResponse) {
+    // TODO: Implement ROM finalisation
+    // 1. Generate mainmenu.gbas from apps
+    // 2. Compile with gbas_compiler.php
+    // 3. Rebuild ROM with new mainmenu
+    // 4. Show final success/failure modal
+
+    // For now, show placeholder
+    showBuildResult(false, 'Build Failed', 'Finalise ROM not yet implemented');
+}
+
 </script>
 
 {% include 'overall_footer.html' %}

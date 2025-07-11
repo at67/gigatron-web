@@ -1,0 +1,44 @@
+_runtimePath_ "runtime"
+_runtimeStart_ &h7FFE
+_codeRomType_ ROMv6
+_enableRomCheck_ Off
+
+_stringWorkArea_ &h77A0
+
+module "../build/SymbolTable.m"
+
+const NUM_APPS = 2
+const LIST_X   = 18
+const LIST_Y   = 34
+const LIST_DY  = 9
+const CURS_X   = 10
+const CURS_Y   = LIST_Y
+
+const dim apps$(NUM_APPS-1) = "Invader", ""
+
+dim execs(NUM_APPS-1) = Invader, 0
+
+tscroll off
+set BG_COLOUR, 0 : mode 2 : cls
+
+set FGBG_COLOUR, &h0C00
+at LIST_X, LIST_Y : print apps$(0)
+
+x = CURS_X : y = CURS_Y
+index = 0
+
+repeat
+    gosub get("BUTTON_STATE")
+    
+    set FG_COLOUR, &h3F
+    at x, y : put 62
+forever
+
+execApp:
+    cls
+    exec execs(index), &h0200
+return
+
+'button A
+127:    gosub execApp
+        return

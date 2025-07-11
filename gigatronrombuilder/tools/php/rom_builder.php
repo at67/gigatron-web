@@ -18,7 +18,7 @@ class RomBuilder {
         }
     }
 
-    public function buildRom($rom_version, $app_overrides = [], $custom_manifest = null) {
+    public function buildRom($rom_version, $app_overrides = [], $custom_manifest = null, $symbols_only = false) {
         $script_name = "ROM{$rom_version}.asm.py";
         $script_path = $this->romsrc_dir . '/' . $script_name;
 
@@ -38,6 +38,9 @@ class RomBuilder {
 
             // Build the command
             $command = "python3 $script_name";
+            if ($symbols_only) {
+                $command .= " --symbols-only";
+            }
 
             // Add app files as arguments
             if ($custom_manifest !== null) {

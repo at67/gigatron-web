@@ -1,0 +1,783 @@
+_startAddress_                    EQU                          0x0200
+
+; Internal Variables
+serialRawPrev                     EQU                          0x0081
+frameCountPrev                    EQU                          0x00d6
+register0                         EQU                          0x0082
+register1                         EQU                          register0 + 0x02
+register2                         EQU                          register0 + 0x04
+register3                         EQU                          register0 + 0x06
+register4                         EQU                          register0 + 0x08
+register5                         EQU                          register0 + 0x0A
+register6                         EQU                          register0 + 0x0C
+register7                         EQU                          register0 + 0x0E
+register8                         EQU                          register0 + 0x10
+register9                         EQU                          register0 + 0x12
+register10                        EQU                          register0 + 0x14
+register11                        EQU                          register0 + 0x16
+register12                        EQU                          register0 + 0x18
+register13                        EQU                          register0 + 0x1A
+register14                        EQU                          register0 + 0x1C
+register15                        EQU                          register0 + 0x1E
+fgbgColour                        EQU                          register0 + 0x20
+cursorXY                          EQU                          register0 + 0x22
+midiStream                        EQU                          register0 + 0x24
+midiDelay                         EQU                          register0 + 0x26
+miscFlags                         EQU                          register0 + 0x28
+register16                        EQU                          register0 + 0x2A
+timerTick                         EQU                          register0 + 0x2C
+timerJiff                         EQU                          register0 + 0x2E
+
+; Internal Constants
+MISC_WAIT_VBLANK_BIT              EQU                          0x01
+MISC_ENABLE_SCROLL_BIT            EQU                          0x02
+MISC_ON_BOTTOM_ROW_BIT            EQU                          0x04
+MISC_DISABLE_CLIP_BIT             EQU                          0x08
+MISC_ENABLE_FNT4X6_BIT            EQU                          0x10
+MISC_WAIT_VBLANK_MSK              EQU                          0xfe
+MISC_ENABLE_SCROLL_MSK            EQU                          0xfd
+MISC_ON_BOTTOM_ROW_MSK            EQU                          0xfb
+MISC_DISABLE_CLIP_MSK             EQU                          0xf7
+MISC_ENABLE_FNT4X6_MSK            EQU                          0xef
+
+; Internal Buffers
+regsWorkArea                      EQU                          0x0000
+textWorkArea                      EQU                          0x77a0
+
+; Includes
+%includePath                      "runtime"
+%include                          util.i
+%include                          gigatron.i
+%include                          macros_ROMv5a.i
+
+; Labels
+_entryPoint_                      EQU                          0x0200
+_execApp                          EQU                          0x0276
+_127                              EQU                          0x028c
+_repeat_0x0000                    EQU                          0x0254
+
+; Constants
+_videoZ                           EQU                          0x0100
+_startVideo                       EQU                          0x0103
+_vBlankStart                      EQU                          0x0104
+_sound1                           EQU                          0x0166
+_vBlankNormal                     EQU                          0x019f
+_vBlankSample                     EQU                          0x01a6
+_videoA                           EQU                          0x0201
+_pixels                           EQU                          0x020a
+_sound3                           EQU                          0x02ae
+_sound2                           EQU                          0x02b1
+_videoB                           EQU                          0x02ca
+_videoC                           EQU                          0x02d3
+_videoD                           EQU                          0x02dc
+_videoE                           EQU                          0x02e9
+_videoF                           EQU                          0x02ec
+_nopixels                         EQU                          0x02f6
+_ENTER                            EQU                          0x02ff
+_NEXTY                            EQU                          0x0300
+_NEXT                             EQU                          0x0301
+_EXIT                             EQU                          0x030b
+_RESYNC                           EQU                          0x030c
+_LDWI                             EQU                          0x0311
+_LD                               EQU                          0x031a
+_LDW                              EQU                          0x0321
+_STW                              EQU                          0x032b
+_BCC                              EQU                          0x0335
+_EQ                               EQU                          0x033f
+_GT                               EQU                          0x034d
+_LT                               EQU                          0x0350
+_GE                               EQU                          0x0353
+_LE                               EQU                          0x0356
+_LDI                              EQU                          0x0359
+_ST                               EQU                          0x035e
+_POP                              EQU                          0x0363
+_NE                               EQU                          0x0372
+_PUSH                             EQU                          0x0375
+_LUP                              EQU                          0x037f
+_ANDI                             EQU                          0x0382
+_ORI                              EQU                          0x0388
+_XORI                             EQU                          0x038c
+_BRA                              EQU                          0x0390
+_INC                              EQU                          0x0393
+_ADDW                             EQU                          0x0399
+_PEEK                             EQU                          0x03ad
+_SYS                              EQU                          0x03b4
+_SUBW                             EQU                          0x03b8
+_REENTER                          EQU                          0x03cb
+_DEF                              EQU                          0x03cd
+_CALL                             EQU                          0x03cf
+_ALLOC                            EQU                          0x03df
+_ADDI                             EQU                          0x03e3
+_SUBI                             EQU                          0x03e6
+_LSLW                             EQU                          0x03e9
+_STLW                             EQU                          0x03ec
+_LDLW                             EQU                          0x03ee
+_POKE                             EQU                          0x03f0
+_DOKE                             EQU                          0x03f3
+_DEEK                             EQU                          0x03f6
+_ANDW                             EQU                          0x03f8
+_ORW                              EQU                          0x03fa
+_XORW                             EQU                          0x03fc
+_RET                              EQU                          0x03ff
+_addi                             EQU                          0x0418
+_subi                             EQU                          0x0426
+_lslw                             EQU                          0x0435
+_stlw                             EQU                          0x0441
+_ldlw                             EQU                          0x044c
+_poke                             EQU                          0x0457
+_peek                             EQU                          0x0462
+_doke                             EQU                          0x046d
+_deek                             EQU                          0x047a
+_andw                             EQU                          0x0486
+_orw                              EQU                          0x0491
+_xorw                             EQU                          0x049c
+_shiftTable                       EQU                          0x0500
+_txReturn                         EQU                          0x06bc
+_font32up                         EQU                          0x0700
+_font82up                         EQU                          0x0800
+_notesTable                       EQU                          0x0900
+_invTable                         EQU                          0x0a00
+_memSize                          EQU                          0x0001
+_entropy0                         EQU                          0x0006
+_entropy1                         EQU                          0x0007
+_entropy2                         EQU                          0x0008
+_videoY                           EQU                          0x0009
+_frameCount                       EQU                          0x000e
+_serialRaw                        EQU                          0x000f
+_buttonState                      EQU                          0x0011
+_xoutMask                         EQU                          0x0014
+_vPC                              EQU                          0x0016
+_vAC                              EQU                          0x0018
+_vACH                             EQU                          0x0019
+_vLR                              EQU                          0x001a
+_vSP                              EQU                          0x001c
+_vTmp                             EQU                          0x001d
+_romType                          EQU                          0x0021
+_sysFn                            EQU                          0x0022
+_sysArgs0                         EQU                          0x0024
+_sysArgs1                         EQU                          0x0025
+_sysArgs2                         EQU                          0x0026
+_sysArgs3                         EQU                          0x0027
+_sysArgs4                         EQU                          0x0028
+_sysArgs5                         EQU                          0x0029
+_sysArgs6                         EQU                          0x002a
+_sysArgs7                         EQU                          0x002b
+_soundTimer                       EQU                          0x002c
+_ledTimer                         EQU                          0x002d
+_ledTempo                         EQU                          0x002f
+_userVars                         EQU                          0x0030
+_videoTable                       EQU                          0x0100
+_userCode                         EQU                          0x0200
+_soundTable                       EQU                          0x0700
+_screenMemory                     EQU                          0x0800
+_vReset                           EQU                          0x01f0
+_wavA                             EQU                          0x00fa
+_wavX                             EQU                          0x00fb
+_keyL                             EQU                          0x00fc
+_keyH                             EQU                          0x00fd
+_oscL                             EQU                          0x00fe
+_oscH                             EQU                          0x00ff
+_maxTicks                         EQU                          0x000e
+_qqVgaWidth                       EQU                          0x00a0
+_qqVgaHeight                      EQU                          0x0078
+_buttonRight                      EQU                          0x0001
+_buttonLeft                       EQU                          0x0002
+_buttonDown                       EQU                          0x0004
+_buttonUp                         EQU                          0x0008
+_buttonStart                      EQU                          0x0010
+_buttonSelect                     EQU                          0x0020
+_buttonB                          EQU                          0x0040
+_buttonA                          EQU                          0x0080
+_Reset                            EQU                          0x150e
+_ledTimer                         EQU                          0x002d
+_Command                          EQU                          0x0081
+_Invader                          EQU                          0x18c6
+_NUM_APPS                         EQU                          0x0002
+_LIST_X                           EQU                          0x0012
+_LIST_Y                           EQU                          0x0022
+_LIST_DY                          EQU                          0x0009
+_CURS_X                           EQU                          0x000a
+_CURS_Y                           EQU                          0x0022
+
+; Global Variables
+_x                                EQU                          0x0030
+_y                                EQU                          0x0032
+_index                            EQU                          0x0034
+
+; Local Variables
+
+; Arrays
+_execs                            EQU                          0x7fec
+_execs                            DW                           0x18c6 0x0000 
+
+; Strings
+_apps$                            EQU                          0x7ff0
+_apps$                            DW                           0x7ff7 0x7ff5 
+_apps$_0x7ff7                     EQU                          0x7ff7
+_apps$_0x7ff7                     DB                           7 'Invader' 0
+_apps$_0x7ff5                     EQU                          0x7ff5
+_apps$_0x7ff5                     DB                           0 '' 0
+
+; Constant Strings
+
+; Data
+
+; Time
+
+; Define Bytes
+
+; Define Words
+
+; Define Images
+
+; Define Loader Image Chunks
+
+; Define Midis
+
+; Define Blits
+
+; Define Fonts
+
+; Define Sprites
+
+; Define Patterns
+
+; Lookup Tables
+_lut_numericLabs                  EQU                          0x7fe8
+_lut_numericLabs                  DW                           127 0x0000
+_lut_numericAddrs                 EQU                          0x7fe6
+_lut_numericAddrs                 DW                           0x028c 
+
+; Lazy Constants
+
+; Code
+_entryPoint_                      InitialiseOn                 
+%define FONT_BOTH
+%define TEXT_SCROLL                                                                         ; INIT
+
+                                  LD                           miscFlags
+                                  ANDI                         0xfd
+                                  ST                           miscFlags                    ; tscroll off
+
+                                  LDI                          0
+                                  ST                           fgbgColour
+                                  LDI                          2
+                                  STW                          graphicsMode
+                                  ScanlineMode                 
+                                  ClearVertBlinds                                           ; set BG_COLOUR, 0 : mode 2 : cls
+
+                                  LDWI                         3072
+                                  STW                          fgbgColour                   ; set FGBG_COLOUR, &h0C00
+
+                                  LDI                          18
+                                  ST                           cursorXY
+                                  LDI                          34
+                                  ST                           cursorXY + 1
+                                  AtTextCursor                 
+                                  LDWI                         0x7ff0
+                                  DEEK                         
+                                  PrintAcString                
+                                  NewLine                                                   ; at LIST_X, LIST_Y : print apps$(0)
+
+                                  LDI                          10
+                                  STW                          _x
+                                  LDI                          34
+                                  STW                          _y                           ; x = CURS_X : y = CURS_Y
+
+                                  LDI                          0
+                                  STW                          _index                       ; index = 0
+
+_repeat_0x0000                    LD                           giga_buttonState
+                                  STW                          numericLabel
+                                  LDI                          0
+                                  STW                          defaultLabel
+                                  GosubNumeric                                              ; gosub get("BUTTON_STATE")
+
+                                  LDI                          63
+                                  ST                           fgbgColour + 1               ; set FG_COLOUR, &h3F
+
+                                  LDW                          _x
+                                  ST                           cursorXY
+                                  LDW                          _y
+                                  ST                           cursorXY + 1
+                                  AtTextCursor                 
+                                  LDI                          62
+                                  PrintAcChr                                                ; at x, y : put 62
+
+                                  CALLI                        _repeat_0x0000               ; forever
+
+_execApp                          PUSH                         
+                                  ClearVertBlinds                                           ; cls
+
+                                  LDWI                         0x7fec
+                                  ADDW                         _index
+                                  ADDW                         _index
+                                  DEEK                         
+                                  STW                          giga_sysArg0
+                                  LDWI                         512
+                                  RomExec                                                   ; exec execs(index), &h0200
+
+                                  Return                                                    ; return
+
+_127                              PUSH                         
+                                  CALLI                        _execApp                     ; gosub execApp
+
+                                  Return                                                    ; return
+
+                                  HALT                                                      ; END
+
+
+
+;*************************************************************************************************************
+;*************************************************************************************************************
+;* Internal runtime, DO NOT MODIFY PAST THIS POINT, modifications must be made in the original include files *
+;*************************************************************************************************************
+;*************************************************************************************************************
+
+romExec                           EQU     0x7ae2
+gosubNumericLabel                 EQU     0x7fb4
+scanlineMode                      EQU     0x7ba3
+resetVideoFlags                   EQU     0x7ea1
+initClearFuncs                    EQU     0x7fa5
+clearVertBlinds                   EQU     0x7ccd
+clearCursorRow                    EQU     0x7ca1
+printInit                         EQU     0x7bad
+printText                         EQU     0x7aea
+printChr                          EQU     0x7da6
+printChar                         EQU     0x7db3
+printClip                         EQU     0x7bc3
+newLineScroll                     EQU     0x7eac
+atTextCursor                      EQU     0x7bdb
+
+
+
+realTimeAddr        EQU     register0
+realTimeProc0       EQU     register1
+realTimeProc1       EQU     register2
+realTimeProc2       EQU     register3
+numericLabel        EQU     register12
+defaultLabel        EQU     register13
+lutLabs             EQU     register14
+lutAddrs            EQU     register15
+lutIndex            EQU     register16
+romUser             EQU     register0                       
+romType             EQU     register1                       
+romReadAddr         EQU     register0
+romErrAddr          EQU     0x7E                            
+vramErrAddr         EQU     0x0101
+
+romErrAddr          DW      vramErrAddr
+
+
+
+romExec             STW     giga_vLR
+                    LDI     SYS_Exec_88                     
+                    STW     giga_sysFn
+                    SYS     88                              
+
+
+                    
+gosubNumericLabel   PUSH
+                    LDWI    _lut_numericLabs
+                    STW     lutLabs
+                    STW     lutIndex
+                    LDWI    _lut_numericAddrs
+                    STW     lutAddrs
+
+gosubNL_loop        LDW     lutIndex
+                    DEEK
+                    BNE     gosubNL_cont                    
+                    LDW     defaultLabel
+                    BEQ     gosubNL_exit
+                    CALL    defaultLabel                    
+
+gosubNL_exit        POP
+                    RET
+
+gosubNL_cont        SUBW    numericLabel
+                    BEQ     gosubNL_found
+                    INC     lutIndex
+                    INC     lutIndex
+                    BRA     gosubNL_loop                    
+
+gosubNL_found       LDW     lutIndex
+                    SUBW    lutLabs
+                    ADDW    lutAddrs
+                    DEEK
+                    CALL    giga_vAC                        
+                    POP
+                    RET
+
+
+
+graphicsMode        EQU     register0
+waitVBlankNum       EQU     register0
+
+drawHLine_x1        EQU     register0
+drawHLine_y1        EQU     register1
+drawHLine_x2        EQU     register2
+
+drawVLine_x1        EQU     register0
+drawVLine_y1        EQU     register1
+drawVLine_y2        EQU     register2
+drawVLine_y8        EQU     register3
+
+drawLine_x1         EQU     register0
+drawLine_y1         EQU     register1
+drawLine_x2         EQU     register2
+drawLine_y2         EQU     register3
+drawLine_xy1        EQU     register0
+drawLine_xy2        EQU     register1
+drawLine_dxy1       EQU     register2
+drawLine_dxy2       EQU     register3
+drawLine_dx1        EQU     register8
+drawLine_dy1        EQU     register9
+drawLine_dx2        EQU     register10
+drawLine_dy2        EQU     register11
+drawLine_sx         EQU     register12
+drawLine_sy         EQU     register13
+drawLine_h          EQU     register14
+drawLine_num        EQU     register15
+drawLine_count      EQU     register14
+drawLine_tmp        EQU     register15
+drawLine_dx         EQU     register2
+drawLine_dy         EQU     register3
+drawLine_u          EQU     register8
+drawLine_v          EQU     register9
+drawLine_addr       EQU     register10
+drawLine_ddx        EQU     register11
+drawLine_cnt        EQU     register12
+drawLine_swp        EQU     register13
+drawLine_xy         EQU     register7
+
+readPixel_xy        EQU     register0
+drawPixel_xy        EQU     register0
+
+drawCircle_cycx     EQU     register0
+drawCircle_r        EQU     register2
+drawCircle_a        EQU     register3
+drawCircle_d        EQU     register8
+drawCircle_x        EQU     register9
+drawCircle_y        EQU     register10
+drawCircle_ch0      EQU     register11
+drawCircle_ch1      EQU     register12
+drawCircle_ch2      EQU     register13
+drawCircle_ch3      EQU     register14
+
+drawCircleF_x1      EQU     register0
+drawCircleF_y1      EQU     register1
+drawCircleF_x2      EQU     register2
+drawCircleF_cx      EQU     register15
+drawCircleF_cy      EQU     register10
+drawCircleF_r       EQU     register11
+drawCircleF_v       EQU     register8
+drawCircleF_w       EQU     register9
+
+drawRect_x1         EQU     register7
+drawRect_y1         EQU     register10
+drawRect_x2         EQU     register11
+drawRect_y2         EQU     register16
+
+drawRectF_x1        EQU     register0
+drawRectF_y1        EQU     register1
+drawRectF_x2        EQU     register2
+drawRectF_y2        EQU     register8
+
+drawPoly_addr       EQU     register7
+drawPoly_mode       EQU     register14
+
+    
+scanlineMode        LDWI    SYS_SetMode_v2_80
+                    STW     giga_sysFn
+                    LDW     graphicsMode
+                    SYS     80
+                    RET
+
+
+
+xreset              EQU     register0
+xcount              EQU     register1
+ycount              EQU     register2
+treset              EQU     register3
+breset              EQU     register8
+top                 EQU     register9
+bot                 EQU     register10
+vramAddr            EQU     register11
+evenAddr            EQU     register12
+clsAddress          EQU     register13
+clsLines            EQU     register14
+varAddress          EQU     register13
+clrAddress          EQU     register13
+clrLines            EQU     register14
+clrWidth            EQU     register15
+ramAddr0            EQU     register14
+ramAddr1            EQU     register15
+
+
+resetVideoFlags     LDI     giga_CursorX                    
+                    STW     cursorXY
+                    LD      miscFlags
+                    ANDI    MISC_ON_BOTTOM_ROW_MSK
+                    ST      miscFlags                       
+                    RET
+
+
+
+initClearFuncs      PUSH
+                    CALLI   resetVideoFlags
+                    LDWI    SYS_SetMemory_v2_54             
+                    STW     giga_sysFn
+                    LD      fgbgColour
+                    ST      giga_sysArg1                    
+                    POP
+                    RET
+
+
+                    
+clearVertBlinds     PUSH
+                    CALLI   initClearFuncs
+                    LDI     giga_vram >> 8
+                    STW     top  
+                    
+clearVB_loopy       LDI     giga_xres
+                    ST      giga_sysArg0
+                    LDI     0
+                    ST      giga_sysArg2                    
+                    LD      top
+                    ST      giga_sysArg3                    
+                    SYS     54                              
+    
+                    LDI     giga_xres
+                    ST      giga_sysArg0
+                    LDI     0
+                    ST      giga_sysArg2                    
+                    LDWI    giga_yres - 1 + 16
+                    SUBW    top
+                    ST      giga_sysArg3                    
+                    SYS     54                              
+                    INC     top                             
+                    LD      top
+                    SUBI    giga_yres / 2 + 8
+                    BLT     clearVB_loopy
+                    POP
+                    RET
+
+
+
+
+textStr             EQU     register0
+textNum             EQU     register0
+textBak             EQU     register0
+textHex             EQU     register1
+textSpc             EQU     register1
+textLen             EQU     register2
+textOfs             EQU     register3
+textChr             EQU     register8
+textFont            EQU     register9
+textSlice           EQU     register10
+scanLine            EQU     register11
+digitMult           EQU     register12
+digitIndex          EQU     register13
+clearLoop           EQU     register14
+    
+    
+printInit           LDWI    SYS_VDrawBits_134
+                    STW     giga_sysFn
+                    LDW     fgbgColour
+                    STW     giga_sysArg0
+                    LD      cursorXY + 1                        
+                    LSLW
+                    INC     giga_vAC + 1
+                    PEEK
+                    ST      giga_sysArg4 + 1
+                    LD      cursorXY
+                    ST      giga_sysArg4                        
+                    RET
+
+
+
+                    
+printText           PUSH
+                    STW     textStr
+                    CALLI   printInit
+
+                    
+printT_char         INC     textStr                             
+                    LDW     textStr             
+                    PEEK
+                    BEQ     printT_exit                         
+                    CALLI   printChar
+                    BRA     printT_char
+                    
+printT_exit         POP
+                    RET
+
+
+                    
+printChr            PUSH
+                    ST      textChr
+                    CALLI   printInit
+                    LD      textChr
+                    CALLI   printChar
+                    POP
+                    RET
+
+
+
+                    
+printChar           SUBI    130                                 
+                    BGT     printC_exit
+                    ADDI    130
+                    SUBI    82
+                    BGE     printC_text82
+                    ADDI    50
+                    BLT     printC_exit                         
+                    STW     textChr                             
+                    LDWI    giga_text32                         
+                    BRA     printC_font
+                    
+printC_text82       STW     textChr                             
+                    LDWI    giga_text82                         
+                    
+printC_font         STW     textFont
+                    LD      textChr
+                    LSLW    
+                    LSLW    
+                    ADDW    textChr
+                    ADDW    textFont
+                    STW     textFont                            
+                    LDI     0x05
+
+printC_slice        ST      textSlice
+                    LDW     textFont                            
+                    LUP     0x00                                
+                    ST      giga_sysArg2
+                    SYS     134                                 
+                    INC     textFont                            
+                    INC     giga_sysArg4                        
+                    LD      textSlice
+                    SUBI    1
+                    BNE     printC_slice
+                    
+                    ST      giga_sysArg2                        
+                    SYS     134                                 
+                    INC     giga_sysArg4                        
+                    
+                    PUSH
+                    CALLI   printClip
+                    POP
+                    
+printC_exit         RET
+
+
+printClip           LD      cursorXY
+                    ADDI    giga_xfont
+                    ST      cursorXY
+                    SUBI    giga_xres - giga_xfont              
+                    BLE     printCl_exit
+                    LD      miscFlags
+                    ANDI    MISC_DISABLE_CLIP_BIT
+                    BNE     printCl_exit                        
+                    PUSH
+                    CALLI   newLineScroll                       
+                    POP
+                    
+printCl_exit        RET
+
+
+
+                    
+clearCursorRow      PUSH
+                    LDWI    SYS_SetMemory_v2_54
+                    STW     giga_sysFn                          
+                    LD      fgbgColour
+                    ST      giga_sysArg1                        
+                    LDWI    giga_videoTable
+                    PEEK
+                    ST      giga_sysArg3                        
+                    LDI     giga_yfont
+
+clearCR_loopy       ST      clearLoop                    
+                    LDI     giga_xres
+                    ST      giga_sysArg0
+                    LDI     0
+                    ST      giga_sysArg2                        
+                    SYS     54                                  
+                    INC     giga_sysArg3                        
+                    LD      clearLoop
+                    SUBI    1
+                    BNE     clearCR_loopy
+                    CALLI   printInit                           
+                    POP
+                    RET
+
+
+                    
+newLineScroll       LDI     giga_CursorX                        
+                    ST      cursorXY
+                    ST      giga_sysArg4
+                    LD      miscFlags
+                    ANDI    MISC_ENABLE_SCROLL_BIT
+                    BNE     newLS_cont0                         
+                    RET
+                    
+newLS_cont0         PUSH
+                    LD      miscFlags
+                    ANDI    MISC_ON_BOTTOM_ROW_BIT
+                    BNE     newLS_cont1                         
+                    LD      cursorXY + 1
+                    ADDI    giga_yfont
+                    ST      cursorXY + 1
+                    SUBI    giga_yres
+                    BLT     newLS_exit
+                    LDI     giga_yres - giga_yfont
+                    ST      cursorXY + 1
+                    
+newLS_cont1         CALLI   clearCursorRow
+                    LDWI    giga_videoTable
+                    STW     scanLine
+    
+newLS_scroll        LDW     scanLine
+                    PEEK
+                    ADDI    giga_yfont
+                    SUBI    0x7F
+                    BLE     newLS_adjust
+                    ADDI    0x88
+                    
+newLS_adjust        ADDI    0x7F
+                    POKE    scanLine
+                    INC     scanLine                            
+                    INC     scanLine
+                    LD      scanLine
+                    SUBI    0xF0                                
+                    BLT     newLS_scroll
+                    LD      miscFlags
+                    ORI     MISC_ON_BOTTOM_ROW_BIT
+                    ST      miscFlags                           
+                    
+newLS_exit          CALLI   printInit                           
+                    POP
+                    RET
+
+
+atTextCursor        LD      cursorXY
+                    SUBI    giga_xres - giga_xfont
+                    BLE     atTC_checkY
+                    LDI     0
+                    ST      cursorXY
+                    
+atTC_checkY         LD      cursorXY + 1
+                    SUBI    giga_yres - giga_yfont
+                    BLT     atTC_resbot
+                    LDI     giga_yres - giga_yfont
+                    ST      cursorXY + 1
+                    LD      miscFlags
+                    ORI     MISC_ON_BOTTOM_ROW_BIT
+                    ST      miscFlags                           
+                    RET
+                    
+atTC_resbot         LD      miscFlags
+                    ANDI    MISC_ON_BOTTOM_ROW_MSK
+                    ST      miscFlags                           
+                    RET
+

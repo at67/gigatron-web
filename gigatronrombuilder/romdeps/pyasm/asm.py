@@ -22,6 +22,14 @@ _str = type(u'')
 # gtBASIC symbol table
 gtBasicSymbolsFile = open('SymbolTable.m', 'w')
 
+# Symbol-only mode flag
+_symbolsOnlyMode = False
+
+def setSymbolsOnlyMode(enabled):
+    """Enable or disable symbols-only mode"""
+    global _symbolsOnlyMode
+    _symbolsOnlyMode = enabled
+    
 #------------------------------------------------------------------------
 #       Public interface
 #------------------------------------------------------------------------
@@ -238,13 +246,13 @@ def end():
     if name in _symbols:
       _rom1[where] += _symbols[name] # Addition allows some label tricks
       _rom1[where] &= 255
-    else:
+    elif not _symbolsOnlyMode:
       highlight('Error: Undefined symbol %s' % repr(name))
 
   for name, where in _refsH:
     if name in _symbols:
       _rom1[where] += _symbols[name] >> 8
-    else:
+    elif not _symbolsOnlyMode:
       highlight('Error: Undefined symbol %s' % repr(name))
 
   align(1)
