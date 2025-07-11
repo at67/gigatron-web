@@ -36,7 +36,8 @@ class main
         $json = file_get_contents('php://input');
         $data = json_decode($json, true);
 
-        try {
+        try
+        {
             require_once(__DIR__ . '/../tools/php/rom_builder.php');
             $builder = new \RomBuilder();
 
@@ -47,10 +48,59 @@ class main
             $symbols_only = isset($data['symbols_only']) ? $data['symbols_only'] : false;
 
             $result = $builder->buildRom($rom_version, $app_overrides, $custom_manifest, $symbols_only);
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e)
+        {
             $result = ['success' => false, 'error' => $e->getMessage()];
         }
 
+        $response = new \Symfony\Component\HttpFoundation\JsonResponse($result);
+        return $response;
+    }
+
+    public function buildMainmenu()
+    {
+        // Get the JSON data
+        $json = file_get_contents('php://input');
+        $data = json_decode($json, true);
+        try {
+            // Extract variables from the request data
+            $rom_version = $data['rom_version'] ?? '';
+            $gbas_source = $data['gbas_source'] ?? '';
+            $custom_manifest = $data['manifest'] ?? null;
+
+            // Write GBAS source to file
+            $gbas_file = __DIR__ . '/../tools/mainmenu.gbas';
+            file_put_contents($gbas_file, $gbas_source);
+
+            // Compile GBAS to GT1
+            require_once(__DIR__ . '/../tools/php/gbas_compiler.php');
+            $compiler = new \GbasCompiler();
+            $compile_result = $compiler->compile($gbas_file);
+
+            if (!$compile_result['success']) {
+                $result = ['success' => false, 'error' => 'GBAS compilation failed', 'output' => "GBAS Compilation Output:\n" . $compile_result['output'] . "\n\nGBAS Source:\n" . $gbas_source];
+            } else {
+                // Build ROM with compiled mainmenu
+                require_once(__DIR__ . '/../tools/php/rom_builder.php');
+                $builder = new \RomBuilder();
+
+                // Remove the closing quote, add comma + Main entry, then add closing quote back
+                $updated_manifest = rtrim($custom_manifest, '"') . ",\n      Main=../tools/" . basename($compile_result['gt1_file']) . '"';
+
+                // DEBUG: Add manifest info to output
+                $debug_output = "DEBUG INFO:\n";
+                $debug_output .= "Original manifest:\n" . $custom_manifest . "\n\n";
+                $debug_output .= "Updated manifest:\n" . $updated_manifest . "\n\n";
+                $debug_output .= "GT1 file: " . $compile_result['gt1_file'] . "\n\n";
+
+                $result = $builder->buildRom($rom_version, [], $updated_manifest, false);
+                // Prepend debug and GBAS compilation output to the ROM build output
+                $result['output'] = $debug_output . "GBAS Compilation:\n" . $compile_result['output'] . "\n\nROM Build:\n" . $result['output'];
+            }
+        } catch (\Exception $e) {
+            $result = ['success' => false, 'error' => $e->getMessage()];
+        }
         $response = new \Symfony\Component\HttpFoundation\JsonResponse($result);
         return $response;
     }

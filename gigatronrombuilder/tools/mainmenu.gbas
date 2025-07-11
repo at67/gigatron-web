@@ -1,0 +1,156 @@
+_runtimePath_ "runtime"
+_runtimeStart_ &h7FFE
+_codeRomType_ ROMv5a
+_enableRomCheck_ Off
+_stringWorkArea_ &h77A0
+module "../build/SymbolTable.m"
+const NUM_APPS = 4
+const LIST_X0  = 18
+const LIST_X1  = 92
+const LIST_Y   = 34
+const LIST_DY  = 9
+const CURS_DX  = 8
+const CURS_X   = LIST_X0 - CURS_DX
+const CURS_Y   = LIST_Y
+const dim apps$(NUM_APPS-1) = "Invader", "PucMon_ROMv5a", "tetronis", "bricks"
+dim execs(NUM_APPS-1) = Invader, PucMon_ROMv5a, tetronis, bricks
+tscroll off
+set BG_COLOUR, 0 : mode 2 : cls
+set FGBG_COLOUR, &h0C00
+y = LIST_Y
+for i=0 to 4
+    if i < NUM_APPS then at LIST_X0, y : print apps$(i)
+    if i + 5 < NUM_APPS then at LIST_X1, y : print apps$(i + 5)
+    y = y + LIST_DY
+next i
+x = CURS_X : y = CURS_Y
+index = 0
+play music, &h75a0, 3
+gosub resetAudio
+call initStars
+repeat
+    wait 1
+    gosub get("BUTTON_STATE")
+    set FG_COLOUR, &h3F
+    at x, y : put 62
+    call drawStars
+forever
+execApp:
+    cls
+    exec execs(index), &h0200
+return
+'button A
+127:    gosub beep
+        gosub execApp
+        return
+'right
+254:    at x, y : put 32
+        if x = (LIST_X1 - CURS_DX) then return
+        x = (LIST_X1 - CURS_DX)
+        gosub beep
+        index = index + 5
+        return
+'left
+253:    at x, y : put 32
+        if x = (LIST_X0 - CURS_DX) then return
+        x = (LIST_X0 - CURS_DX)
+        gosub beep
+        index = index - 5
+        return
+'down
+251:    at x, y : put 32
+        y = y + LIST_DY
+        if y > (LIST_Y + 4*LIST_DY)
+            y = (LIST_Y + 4*LIST_DY)
+            return
+        endif
+        gosub beep
+        index = index + 1
+        if (x = LIST_X0 - CURS_DX) AND index > 4 then index = 4
+        if (x = LIST_X1 - CURS_DX) AND index > 9 then index = 9
+        return
+'up
+247:    at x, y : put 32
+        y = y - LIST_DY
+        if y < LIST_Y
+            y = LIST_Y
+            return
+        endif
+        gosub beep
+        index = index - 1
+        if (x = LIST_X0 - CURS_DX) AND index < 0 then index = 0
+        if (x = LIST_X1 - CURS_DX) AND index < 5 then index = 5
+        return
+def byte(&h75a0) = &h90, &h3c, &h91, &h40, &h92, &h43, &h93, &h48, &h0c, &h80, &h81, &h82, &h83, &h01, &h90, &h3c,
+def byte         = &h91, &h40, &h92, &h43, &h93, &h48, &h24, &h80, &h81, &h82, &h83, &hd0, &h00, &h00
+resetAudio:
+    asm
+        LDI     2
+        ST      waveType + 1
+        CALLI   resetAudio
+    endasm
+return
+beep:
+    sound on, 1, 8200
+    set SOUND_TIMER, 2
+    set BUTTON_STATE, &hEF
+return
+const NUM_STARS = 32
+const STARS_ORG_X = 80
+const STARS_ORG_Y = 60 + 8
+dim star%(NUM_STARS-1) = 0
+dim xPos(NUM_STARS-1) = 0
+dim yPos(NUM_STARS-1) = 0
+dim xVel(NUM_STARS-1) = 0
+dim yVel(NUM_STARS-1) = 0
+proc drawStars
+    local i, xr, yr, xp, yp, ss, pxy
+    for i=0 to NUM_STARS-1
+        xp = xPos(i) : xr = xp : xv = xVel(i)
+        yp = yPos(i) : yr = yp : yv = yVel(i)
+        xp = xp + xv
+        yp = yp + yv
+        if abs(yp) > 59*256
+            call newStar, i
+            xp = xv : yp = yv
+        endif
+        if abs(xp) > 79*256
+            call newStar, i
+            xp = xv : yp = yv
+        endif
+        xPos(i) = xp : yPos(i) = yp
+        pxy.lo = xr.hi + STARS_ORG_X
+        pxy.hi = yr.hi + STARS_ORG_Y
+        if peek(pxy) AND &h80
+            poke pxy, 0
+        endif
+        ss = star(i)
+        pxy.lo = xp.hi + STARS_ORG_X
+        pxy.hi = yp.hi + STARS_ORG_Y
+        if peek(pxy) = 0
+            if ss > 20
+                poke pxy, &h3F OR &h80
+            elseif ss > 10
+                poke pxy, &h2A OR &h80
+            elseif ss > 4
+                poke pxy, &h15 OR &h80
+            endif
+            star(i) = ss + 1
+        endif
+    next i
+endproc
+proc newStar, i
+    star(i) = 0
+    xPos(i) = 0
+    yPos(i) = 0
+    repeat
+        xv = (rnd(0) AND 2047) - 1024 : xVel(i) = xv
+        yv = (rnd(0) AND 2047) - 1024 : yVel(i) = yv
+    until abs(xv) > 200  OR  abs(yv) > 200
+endproc
+proc initStars
+    local i
+    for i=0 to NUM_STARS-1
+        call newStar, i
+    next i
+endproc

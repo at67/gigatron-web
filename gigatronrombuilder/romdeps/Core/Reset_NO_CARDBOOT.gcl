@@ -1,0 +1,15 @@
+{-----------------------------------------------------------------------+
+|                                                                       |
+|       Reset Gigatron (pseudo) hardware                                |
+|                                                                       |
++-----------------------------------------------------------------------}
+
+gcl0x
+
+{ Resetting waveform tables after video/audio/vCPU have started }
+\SYS_ResetWaveforms_v4_50 \sysFn: 0 50!!
+\SYS_ShuffleNoise_v4_46   \sysFn: 0 46!! 46!! 46!! 46!!
+
+{ Load and start ROM program }
+\Main _sysArgs0= $200 _vLR= \SYS_Exec_88 _sysFn= 88!!
+

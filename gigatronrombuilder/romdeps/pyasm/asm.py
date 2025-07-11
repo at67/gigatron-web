@@ -132,7 +132,8 @@ def define(name, newValue):
     if newValue != oldValue:
       highlight('Warning: redefining %s (old %s new %s)' % (name, oldValue, newValue))
   _symbols[name] = newValue
-  if name.isalnum():
+  # GBAS naming rules: first char alpha, last char alnum, middle can have underscores
+  if re.match(r'^[a-zA-Z][a-zA-Z0-9_]*[a-zA-Z0-9]$|^[a-zA-Z]$', name):
     if isinstance(newValue, (int, bool)) and not isinstance(newValue, float):
       gtBasicSymbolsFile.write('const ' + name + ' = &h' + hex(newValue)[2:] + '\n')
 

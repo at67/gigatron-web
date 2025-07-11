@@ -278,6 +278,45 @@ function sendBuildRequest(romVersion, selectedFiles, manifest, symbolsOnly = fal
     xhr.send(JSON.stringify(data));
 }
 
+function sendMainmenuBuildRequest(romVersion, selectedFiles, manifest, gbasSource)
+{
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/app.php/gigatronrombuilder/buildMainmenu', true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+
+    xhr.onreadystatechange = function()
+    {
+        if (xhr.readyState === 4)
+        {
+            if (xhr.status === 200)
+            {
+                var response = JSON.parse(xhr.responseText);
+                if (response.success)
+                {
+                    showBuildResult(true, 'ROM Build Complete', response.output);
+                }
+                else
+                {
+                    showBuildResult(false, 'Build Failed', response.output || response.error);
+                }
+            }
+            else
+            {
+                showBuildResult(false, 'Build Failed', 'Server error: ' + xhr.status);
+            }
+        }
+    };
+
+    var data =
+    {
+        rom_version: romVersion,
+        manifest: manifest,
+        gbas_source: gbasSource
+    };
+
+    xhr.send(JSON.stringify(data));
+}
+
 // Modal control functions
 function showBuildResult(success, title, content, buildResponse = null) {
     const modal = document.getElementById('build-result-modal');
@@ -287,6 +326,14 @@ function showBuildResult(success, title, content, buildResponse = null) {
 
     titleElement.textContent = title;
     contentElement.textContent = content;
+
+    // Reset modal structure in case it was modified by Phase 2
+    const modalInner = modal.querySelector('div');
+    modalInner.style.height = 'calc(100% - 20px)';
+    modalInner.style.maxHeight = '';
+    contentElement.parentElement.style.flex = '1';
+    contentElement.parentElement.style.overflow = 'auto';
+    contentElement.style.overflow = 'visible';
 
     // Scroll to bottom of content
     setTimeout(() => {
@@ -384,14 +431,229 @@ function createMainmenuPreviewHTML(apps) {
 }
 
 function buildROM(apps, buildResponse) {
-    // TODO: Implement ROM finalisation
-    // 1. Generate mainmenu.gbas from apps
-    // 2. Compile with gbas_compiler.php
-    // 3. Rebuild ROM with new mainmenu
-    // 4. Show final success/failure modal
+    // Generate GBAS source from apps
+    const gbasSource = generateGbasSource(apps);
 
-    // For now, show placeholder
-    showBuildResult(false, 'Build Failed', 'Finalise ROM not yet implemented');
+    // Send request to compile mainmenu and rebuild ROM
+    const romVersion = document.getElementById('base-rom-select').value;
+    const selectedFiles = window.fileBrowser.selectedFiles;
+    const manifest = generateManifest(romVersion, selectedFiles);
+
+    sendMainmenuBuildRequest(romVersion, selectedFiles, manifest, gbasSource);
+}
+
+function generateGbasSource(apps) {
+    return generateMainmenuCode(apps, {
+           enableMusic: true,
+           enableBeep: true,
+           enableStars: true
+    });
+}
+
+function generateMainmenuCode(apps, options = {}) {
+    const {
+        enableMusic = false,
+        enableBeep = false,
+        enableStars = false
+    } = options;
+
+    const numApps = apps.length;
+    const appNames = apps.map(app => app.alias || app.filename.replace(/\.(gt1|gcl)$/i, ''));
+    const appSymbols = apps.map(app => app.alias || app.filename.replace(/\.(gt1|gcl)$/i, ''));
+
+    let code = generateBaseCode(numApps, appNames, appSymbols);
+    code += generateMainLoop(enableStars, enableMusic);
+    code += generateEventHandlers(enableBeep);
+
+    if (enableMusic) code += generateMusicModule();
+    if (enableBeep) code += generateBeepModule();
+    if (enableStars) code += generateStarsModule();
+
+    return code;
+}
+
+function generateBaseCode(numApps, appNames, appSymbols) {
+    return '_runtimePath_ "runtime"\n' +
+           '_runtimeStart_ &h7FFE\n' +
+           '_codeRomType_ ROMv5a\n' +
+           '_enableRomCheck_ Off\n' +
+           '_stringWorkArea_ &h77A0\n' +
+           'module "../build/SymbolTable.m"\n' +
+           'const NUM_APPS = ' + numApps + '\n' +
+           'const LIST_X0  = 18\n' +
+           'const LIST_X1  = 92\n' +
+           'const LIST_Y   = 34\n' +
+           'const LIST_DY  = 9\n' +
+           'const CURS_DX  = 8\n' +
+           'const CURS_X   = LIST_X0 - CURS_DX\n' +
+           'const CURS_Y   = LIST_Y\n' +
+           'const dim apps$(NUM_APPS-1) = ' + appNames.map(name => '"' + name + '"').join(', ') + '\n' +
+           'dim execs(NUM_APPS-1) = ' + appSymbols.join(', ') + '\n' +
+           'tscroll off\n' +
+           'set BG_COLOUR, 0 : mode 2 : cls\n' +
+           'set FGBG_COLOUR, &h0C00\n' +
+           'y = LIST_Y\n' +
+           'for i=0 to 4\n' +
+           '    if i < NUM_APPS then at LIST_X0, y : print apps$(i)\n' +
+           '    if i + 5 < NUM_APPS then at LIST_X1, y : print apps$(i + 5)\n' +
+           '    y = y + LIST_DY\n' +
+           'next i\n' +
+           'x = CURS_X : y = CURS_Y\n' +
+           'index = 0\n';
+}
+
+function generateMusicModule() {
+    return 'def byte(&h75a0) = &h90, &h3c, &h91, &h40, &h92, &h43, &h93, &h48, &h0c, &h80, &h81, &h82, &h83, &h01, &h90, &h3c,\n' +
+           'def byte         = &h91, &h40, &h92, &h43, &h93, &h48, &h24, &h80, &h81, &h82, &h83, &hd0, &h00, &h00\n' +
+           'resetAudio:\n' +
+           '    asm\n' +
+           '        LDI     2\n' +
+           '        ST      waveType + 1\n' +
+           '        CALLI   resetAudio\n' +
+           '    endasm\n' +
+           'return\n';
+}
+
+function generateBeepModule() {
+    return 'beep:\n' +
+           '    sound on, 1, 8200\n' +
+           '    set SOUND_TIMER, 2\n' +
+           '    set BUTTON_STATE, &hEF\n' +
+           'return\n';
+}
+
+function generateStarsModule() {
+    return 'const NUM_STARS = 32\n' +
+           'const STARS_ORG_X = 80\n' +
+           'const STARS_ORG_Y = 60 + 8\n' +
+           'dim star%(NUM_STARS-1) = 0\n' +
+           'dim xPos(NUM_STARS-1) = 0\n' +
+           'dim yPos(NUM_STARS-1) = 0\n' +
+           'dim xVel(NUM_STARS-1) = 0\n' +
+           'dim yVel(NUM_STARS-1) = 0\n' +
+           'proc drawStars\n' +
+           '    local i, xr, yr, xp, yp, ss, pxy\n' +
+           '    for i=0 to NUM_STARS-1\n' +
+           '        xp = xPos(i) : xr = xp : xv = xVel(i)\n' +
+           '        yp = yPos(i) : yr = yp : yv = yVel(i)\n' +
+           '        xp = xp + xv\n' +
+           '        yp = yp + yv\n' +
+           '        if abs(yp) > 59*256\n' +
+           '            call newStar, i\n' +
+           '            xp = xv : yp = yv\n' +
+           '        endif\n' +
+           '        if abs(xp) > 79*256\n' +
+           '            call newStar, i\n' +
+           '            xp = xv : yp = yv\n' +
+           '        endif\n' +
+           '        xPos(i) = xp : yPos(i) = yp\n' +
+           '        pxy.lo = xr.hi + STARS_ORG_X\n' +
+           '        pxy.hi = yr.hi + STARS_ORG_Y\n' +
+           '        if peek(pxy) AND &h80\n' +
+           '            poke pxy, 0\n' +
+           '        endif\n' +
+           '        ss = star(i)\n' +
+           '        pxy.lo = xp.hi + STARS_ORG_X\n' +
+           '        pxy.hi = yp.hi + STARS_ORG_Y\n' +
+           '        if peek(pxy) = 0\n' +
+           '            if ss > 20\n' +
+           '                poke pxy, &h3F OR &h80\n' +
+           '            elseif ss > 10\n' +
+           '                poke pxy, &h2A OR &h80\n' +
+           '            elseif ss > 4\n' +
+           '                poke pxy, &h15 OR &h80\n' +
+           '            endif\n' +
+           '            star(i) = ss + 1\n' +
+           '        endif\n' +
+           '    next i\n' +
+           'endproc\n' +
+           'proc newStar, i\n' +
+           '    star(i) = 0\n' +
+           '    xPos(i) = 0\n' +
+           '    yPos(i) = 0\n' +
+           '    repeat\n' +
+           '        xv = (rnd(0) AND 2047) - 1024 : xVel(i) = xv\n' +
+           '        yv = (rnd(0) AND 2047) - 1024 : yVel(i) = yv\n' +
+           '    until abs(xv) > 200  OR  abs(yv) > 200\n' +
+           'endproc\n' +
+           'proc initStars\n' +
+           '    local i\n' +
+           '    for i=0 to NUM_STARS-1\n' +
+           '        call newStar, i\n' +
+           '    next i\n' +
+           'endproc\n';
+}
+
+function generateMainLoop(enableStars, enableMusic) {
+    let loop = '';
+
+    // Only add initialization if modules are enabled
+    if (enableMusic) {
+        loop += 'play music, &h75a0, 3\n' +
+                'gosub resetAudio\n';
+    }
+    if (enableStars) {
+        loop += 'call initStars\n';
+    }
+
+    loop += 'repeat\n' +
+            '    wait 1\n' +
+            '    gosub get("BUTTON_STATE")\n' +
+            '    set FG_COLOUR, &h3F\n' +
+            '    at x, y : put 62\n';
+
+    if (enableStars) {
+        loop += '    call drawStars\n';
+    }
+
+    loop += 'forever\n';
+    return loop;
+}
+
+function generateEventHandlers(enableBeep) {
+    const beepCall = enableBeep ? 'gosub beep\n        ' : '';
+
+    return 'execApp:\n' +
+           '    cls\n' +
+           '    exec execs(index), &h0200\n' +
+           'return\n' +
+           "'button A\n" +
+           '127:    ' + beepCall + 'gosub execApp\n' +
+           '        return\n' +
+           "'right\n" +
+           '254:    at x, y : put 32\n' +
+           '        if x = (LIST_X1 - CURS_DX) then return\n' +
+           '        x = (LIST_X1 - CURS_DX)\n' +
+           '        ' + beepCall + 'index = index + 5\n' +
+           '        return\n' +
+           "'left\n" +
+           '253:    at x, y : put 32\n' +
+           '        if x = (LIST_X0 - CURS_DX) then return\n' +
+           '        x = (LIST_X0 - CURS_DX)\n' +
+           '        ' + beepCall + 'index = index - 5\n' +
+           '        return\n' +
+           "'down\n" +
+           '251:    at x, y : put 32\n' +
+           '        y = y + LIST_DY\n' +
+           '        if y > (LIST_Y + 4*LIST_DY)\n' +
+           '            y = (LIST_Y + 4*LIST_DY)\n' +
+           '            return\n' +
+           '        endif\n' +
+           '        ' + beepCall + 'index = index + 1\n' +
+           '        if (x = LIST_X0 - CURS_DX) AND index > 4 then index = 4\n' +
+           '        if (x = LIST_X1 - CURS_DX) AND index > 9 then index = 9\n' +
+           '        return\n' +
+           "'up\n" +
+           '247:    at x, y : put 32\n' +
+           '        y = y - LIST_DY\n' +
+           '        if y < LIST_Y\n' +
+           '            y = LIST_Y\n' +
+           '            return\n' +
+           '        endif\n' +
+           '        ' + beepCall + 'index = index - 1\n' +
+           '        if (x = LIST_X0 - CURS_DX) AND index < 0 then index = 0\n' +
+           '        if (x = LIST_X1 - CURS_DX) AND index < 5 then index = 5\n' +
+           '        return\n';
 }
 
 </script>

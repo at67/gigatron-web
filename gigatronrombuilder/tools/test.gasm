@@ -188,10 +188,10 @@ _buttonStart                      EQU                          0x0010
 _buttonSelect                     EQU                          0x0020
 _buttonB                          EQU                          0x0040
 _buttonA                          EQU                          0x0080
-_Reset                            EQU                          0x150e
-_ledTimer                         EQU                          0x002d
+_Reset                            EQU                          0x130e
 _Command                          EQU                          0x0081
-_Invader                          EQU                          0x18c6
+_Boot                             EQU                          0x15e3
+_Invader                          EQU                          0x215b
 _NUM_APPS                         EQU                          0x0002
 _LIST_X                           EQU                          0x0012
 _LIST_Y                           EQU                          0x0022
@@ -208,7 +208,7 @@ _index                            EQU                          0x0034
 
 ; Arrays
 _execs                            EQU                          0x7fec
-_execs                            DW                           0x18c6 0x0000 
+_execs                            DW                           0x215b 0x0000 
 
 ; Strings
 _apps$                            EQU                          0x7ff0

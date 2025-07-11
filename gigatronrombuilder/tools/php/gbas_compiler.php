@@ -10,7 +10,7 @@ class GbasCompiler {
 
     public function __construct($build_dir = '/var/www/html/phpbb/ext/at67/gigatronrombuilder/tools') {
         $this->build_dir = $build_dir;
-        $this->gtbasic_path = $build_dir . '/gtBASIC/gtbasic';
+        $this->gtbasic_path = $build_dir . '/gtbasic';
     }
 
     /**
@@ -27,7 +27,7 @@ class GbasCompiler {
 
         try {
             // Build command
-            $command = './gtBASIC/gtbasic ' . escapeshellarg($gbas_file);
+            $command = './gtbasic ' . escapeshellarg($gbas_file);
 
             // Execute compilation
             $output = [];

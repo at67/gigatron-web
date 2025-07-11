@@ -1,11 +1,14 @@
 _runtimePath_ "runtime"
 _runtimeStart_ &h7FFE
-_codeRomType_ ROMv6
+_codeRomType_ ROMv5a
 _enableRomCheck_ Off
+_enableInitialise_ Off
+_enableTextScroll_ Off
+
+module "../build/SymbolTable.m"
 
 _stringWorkArea_ &h77A0
 
-module "../build/SymbolTable.m"
 
 const NUM_APPS = 2
 const LIST_X   = 18
