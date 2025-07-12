@@ -63,11 +63,13 @@ class main
         // Get the JSON data
         $json = file_get_contents('php://input');
         $data = json_decode($json, true);
-        try {
+        try
+        {
             // Extract variables from the request data
             $rom_version = $data['rom_version'] ?? '';
             $gbas_source = $data['gbas_source'] ?? '';
             $custom_manifest = $data['manifest'] ?? null;
+            $rom_name = $data['rom_name'] ?? null;
 
             // Write GBAS source to file
             $gbas_file = __DIR__ . '/../tools/mainmenu.gbas';
@@ -78,9 +80,12 @@ class main
             $compiler = new \GbasCompiler();
             $compile_result = $compiler->compile($gbas_file);
 
-            if (!$compile_result['success']) {
+            if(!$compile_result['success'])
+            {
                 $result = ['success' => false, 'error' => 'GBAS compilation failed', 'output' => "GBAS Compilation Output:\n" . $compile_result['output'] . "\n\nGBAS Source:\n" . $gbas_source];
-            } else {
+            }
+            else
+            {
                 // Build ROM with compiled mainmenu
                 require_once(__DIR__ . '/../tools/php/rom_builder.php');
                 $builder = new \RomBuilder();
@@ -94,14 +99,68 @@ class main
                 $debug_output .= "Updated manifest:\n" . $updated_manifest . "\n\n";
                 $debug_output .= "GT1 file: " . $compile_result['gt1_file'] . "\n\n";
 
-                $result = $builder->buildRom($rom_version, [], $updated_manifest, false);
                 // Prepend debug and GBAS compilation output to the ROM build output
+                $result = $builder->buildRom($rom_version, [], $updated_manifest, false, $rom_name);
                 $result['output'] = $debug_output . "GBAS Compilation:\n" . $compile_result['output'] . "\n\nROM Build:\n" . $result['output'];
             }
-        } catch (\Exception $e) {
+        }
+        catch(\Exception $e)
+        {
             $result = ['success' => false, 'error' => $e->getMessage()];
         }
+
         $response = new \Symfony\Component\HttpFoundation\JsonResponse($result);
         return $response;
     }
+
+    public function download($filename)
+    {
+        try {
+            require_once(__DIR__ . '/../tools/php/rom_builder.php');
+            $builder = new \RomBuilder();
+
+            $build_dir = $builder->getBuildDir();
+            $rom_file = $build_dir . '/' . $filename;
+            $lst_file = $build_dir . '/' . str_replace('.rom', '.lst', $filename);
+
+            if (!file_exists($rom_file)) {
+                throw new \Exception("ROM file not found: $filename");
+            }
+
+            // Create ZIP in /tmp
+            $zip_name = str_replace('.rom', '.zip', $filename);
+            $zip_path = '/tmp/' . $zip_name;
+
+            $zip = new \ZipArchive();
+            if ($zip->open($zip_path, \ZipArchive::CREATE) !== TRUE) {
+                throw new \Exception("Cannot create ZIP file");
+            }
+
+            // Add ROM file
+            $zip->addFile($rom_file, $filename);
+
+            // Add LST file if it exists
+            if (file_exists($lst_file)) {
+                $zip->addFile($lst_file, str_replace('.rom', '.lst', $filename));
+            }
+
+            $zip->close();
+
+            // Serve the ZIP file
+            $response = new \Symfony\Component\HttpFoundation\BinaryFileResponse($zip_path);
+            $response->setContentDisposition(
+                \Symfony\Component\HttpFoundation\ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+                $zip_name
+            );
+            $response->deleteFileAfterSend(true);
+
+            return $response;
+
+        } catch (\Exception $e) {
+            $result = ['success' => false, 'error' => $e->getMessage()];
+            $response = new \Symfony\Component\HttpFoundation\JsonResponse($result);
+            return $response;
+        }
+    }
 }
+

@@ -52,24 +52,26 @@ textWorkArea                      EQU                          0x77a0
 
 ; Labels
 _entryPoint_                      EQU                          0x0200
-_execApp                          EQU                          0x02d9
-_127                              EQU                          0x02ef
-_254                              EQU                          0x0302
-_253                              EQU                          0x0332
-_251                              EQU                          0x0362
-_247                              EQU                          0x03d0
+_execApp                          EQU                          0x02ec
+_127                              EQU                          0x030b
+_254                              EQU                          0x0314
+_253                              EQU                          0x0343
+_251                              EQU                          0x0372
+_247                              EQU                          0x03df
+_resetAudio                       EQU                          0x0454
+_beep                             EQU                          0x045e
 _next_0x0000                      EQU                          0x023b
 _if_0x0001                        EQU                          0x0267
-_if_0x0002                        EQU                          0x0299
-_repeat_0x0003                    EQU                          0x02b7
-_if_0x0004                        EQU                          0x0322
-_if_0x0005                        EQU                          0x0352
-_endif_0x0006                     EQU                          0x038c
-_if_0x0007                        EQU                          0x03b2
-_if_0x0008                        EQU                          0x03ce
-_endif_0x0009                     EQU                          0x0404
-_if_0x000a                        EQU                          0x0428
-_if_0x000b                        EQU                          0x0444
+_if_0x0002                        EQU                          0x029a
+_repeat_0x0003                    EQU                          0x02ca
+_if_0x0004                        EQU                          0x0334
+_if_0x0005                        EQU                          0x0363
+_endif_0x0006                     EQU                          0x039c
+_if_0x0007                        EQU                          0x03c1
+_if_0x0008                        EQU                          0x03dd
+_endif_0x0009                     EQU                          0x0413
+_if_0x000a                        EQU                          0x0436
+_if_0x000b                        EQU                          0x0452
 _page_0x0300                      EQU                          0x0300
 _page_0x0400                      EQU                          0x0400
 
@@ -382,13 +384,8 @@ _buttonB                          EQU                          0x0040
 _buttonA                          EQU                          0x0080
 _Reset                            EQU                          0x130e
 _Invader                          EQU                          0x1348
-_PucMon_ROMv5a                    EQU                          0x3cea
-_tetronis                         EQU                          0x6c31
-_Craps                            EQU                          0x935e
-_VideoPoker                       EQU                          0xafaa
-_bricks                           EQU                          0xdccc
-_sys_ReadRomDir                   EQU                          0xe317
-_NUM_APPS                         EQU                          0x0006
+_sys_ReadRomDir                   EQU                          0x3cdc
+_NUM_APPS                         EQU                          0x0001
 _LIST_X0                          EQU                          0x000a
 _LIST_X1                          EQU                          0x0058
 _LIST_Y                           EQU                          0x0022
@@ -406,24 +403,14 @@ _index                            EQU                          0x0036
 ; Local Variables
 
 ; Arrays
-_execs                            EQU                          0x7faa
-_execs                            DW                           0x1348 0x3cea 0x6c31 0x935e 0xafaa 0xdccc 
+_execs                            EQU                          0x7ff2
+_execs                            DW                           0x1348 
 
 ; Strings
-_apps$                            EQU                          0x7fb6
-_apps$                            DW                           0x7ff7 0x7fe8 0x7fde 0x7fd7 0x7fcb 0x7fc3 
+_apps$                            EQU                          0x7ff4
+_apps$                            DW                           0x7ff7 
 _apps$_0x7ff7                     EQU                          0x7ff7
 _apps$_0x7ff7                     DB                           7 'Invader' 0
-_apps$_0x7fe8                     EQU                          0x7fe8
-_apps$_0x7fe8                     DB                           13 'PucMon_ROMv5a' 0
-_apps$_0x7fde                     EQU                          0x7fde
-_apps$_0x7fde                     DB                           8 'tetronis' 0
-_apps$_0x7fd7                     EQU                          0x7fd7
-_apps$_0x7fd7                     DB                           5 'Craps' 0
-_apps$_0x7fcb                     EQU                          0x7fcb
-_apps$_0x7fcb                     DB                           10 'VideoPoker' 0
-_apps$_0x7fc3                     EQU                          0x7fc3
-_apps$_0x7fc3                     DB                           6 'bricks' 0
 
 ; Constant Strings
 
@@ -432,6 +419,10 @@ _apps$_0x7fc3                     DB                           6 'bricks' 0
 ; Time
 
 ; Define Bytes
+def_bytes_0x75a0                  EQU                          0x75a0
+def_bytes_0x75a0                  DB                           144 60 145 64 146 67 147 72 12 128 129 130 131 1 144 60 
+def_bytes_0x75b0                  EQU                          0x75b0
+def_bytes_0x75b0                  DB                           145 64 146 67 147 72 36 128 129 130 131 208 0 0 
 
 ; Define Words
 
@@ -450,10 +441,10 @@ _apps$_0x7fc3                     DB                           6 'bricks' 0
 ; Define Patterns
 
 ; Lookup Tables
-_lut_numericLabs                  EQU                          0x7ef4
+_lut_numericLabs                  EQU                          0x7fe6
 _lut_numericLabs                  DW                           127 254 253 251 247 0x0000
-_lut_numericAddrs                 EQU                          0x7fa0
-_lut_numericAddrs                 DW                           0x02ef 0x0302 0x0332 0x0362 0x03d0 
+_lut_numericAddrs                 EQU                          0x7fdc
+_lut_numericAddrs                 DW                           0x030b 0x0314 0x0343 0x0372 0x03df 
 
 ; Lazy Constants
 
@@ -483,7 +474,7 @@ _entryPoint_                      InitialiseOn
                                   STW                          _i                           ; for i=0 to 4
 
 _next_0x0000                      LDW                          _i
-                                  SUBI                         6
+                                  SUBI                         1
                                   CALLI                        convertLtOp
                                   JumpFalse                    _if_0x0001 0
                                   LDI                          10
@@ -491,7 +482,7 @@ _next_0x0000                      LDW                          _i
                                   LDW                          _y
                                   ST                           cursorXY + 1
                                   AtTextCursor                 
-                                  LDWI                         0x7fb6
+                                  LDWI                         0x7ff4
                                   ADDW                         _i
                                   ADDW                         _i
                                   DEEK                         
@@ -501,9 +492,9 @@ _next_0x0000                      LDW                          _i
                                   PrintAcLeft                  
                                   NewLine                                                   ; if i < NUM_APPS   then at LIST_X0, y : print left$(apps$(i), 11)
 
-_if_0x0001                        LDW                          _i
-                                  SUBI                         1
-                                  CALLI                        convertLtOp
+_if_0x0001                        LDWI                         -4
+                                  SUBW                         _i
+                                  CALLI                        convertGtOp
                                   JumpFalse                    _if_0x0002 1
                                   LDI                          88
                                   ST                           cursorXY
@@ -513,7 +504,7 @@ _if_0x0001                        LDW                          _i
                                   LDW                          _i
                                   ADDI                         5
                                   STW                          memIndex0
-                                  LDWI                         0x7fb6
+                                  LDWI                         0x7ff4
                                   ADDW                         memIndex0
                                   ADDW                         memIndex0
                                   DEEK                         
@@ -537,6 +528,13 @@ _if_0x0002                        LDW                          _y
                                   LDI                          0
                                   STW                          _index                       ; index = 0
 
+                                  LDI                          3
+                                  ST                           waveType + 1
+                                  LDWI                         30112
+                                  PlayMusic                                                 ; play music, &h75a0, 3
+
+                                  CALLI                        _resetAudio                  ; gosub resetAudio
+
 _repeat_0x0003                    LD                           giga_buttonState
                                   STW                          numericLabel
                                   LDI                          0
@@ -559,10 +557,11 @@ _repeat_0x0003                    LD                           giga_buttonState
 _execApp                          PUSH                         
                                   ClearVertBlinds                                           ; cls
 
-                                  LDWI                         0x7faa
+                                  LDWI                         0x7ff2
                                   ADDW                         _index
                                   ADDW                         _index
-                                  DEEK                         
+                                  CALLI                        _page_0x0300
+_page_0x0300                      DEEK                         
                                   STW                          giga_sysArg0
                                   LDWI                         512
                                   RomExec                                                   ; exec execs(index), &h0200
@@ -570,13 +569,11 @@ _execApp                          PUSH
                                   Return                                                    ; return
 
 _127                              PUSH                         
-                                  LDI                          239
-                                  ST                           giga_buttonState             ; set BUTTON_STATE, &hEF
+                                  CALLI                        _beep                        ; gosub beep
 
                                   CALLI                        _execApp                     ; gosub execApp
 
-                                  CALLI                        _page_0x0300
-_page_0x0300                      Return                                                    ; return
+                                  Return                                                    ; return
 
 _254                              PUSH                         
                                   LDW                          _x
@@ -596,8 +593,7 @@ _254                              PUSH
 _if_0x0004                        LDI                          80
                                   STW                          _x                           ; x = (LIST_X1 - CURS_DX)
 
-                                  LDI                          239
-                                  ST                           giga_buttonState             ; set BUTTON_STATE, &hEF
+                                  CALLI                        _beep                        ; gosub beep
 
                                   LDW                          _index
                                   ADDI                         5
@@ -623,8 +619,7 @@ _253                              PUSH
 _if_0x0005                        LDI                          2
                                   STW                          _x                           ; x = (LIST_X0 - CURS_DX)
 
-                                  LDI                          239
-                                  ST                           giga_buttonState             ; set BUTTON_STATE, &hEF
+                                  CALLI                        _beep                        ; gosub beep
 
                                   LDW                          _index
                                   SUBI                         5
@@ -655,8 +650,7 @@ _251                              PUSH
 
                                   Return                                                    ; return
 
-_endif_0x0006                     LDI                          239
-                                  ST                           giga_buttonState             ; set BUTTON_STATE, &hEF
+_endif_0x0006                     CALLI                        _beep                        ; gosub beep
 
                                   LDW                          _index
                                   ADDI                         1
@@ -701,19 +695,18 @@ _247                              PUSH
                                   SUBI                         9
                                   STW                          _y                           ; y = y - LIST_DY
 
-                                  LDW                          _y
+                                  CALLI                        _page_0x0400
+_page_0x0400                      LDW                          _y
                                   SUBI                         34
                                   CALLI                        convertLtOp
                                   JumpFalse                    _endif_0x0009 7              ; if y < LIST_Y
 
                                   LDI                          34
-                                  CALLI                        _page_0x0400
-_page_0x0400                      STW                          _y                           ; y = LIST_Y
+                                  STW                          _y                           ; y = LIST_Y
 
                                   Return                                                    ; return
 
-_endif_0x0009                     LDI                          239
-                                  ST                           giga_buttonState             ; set BUTTON_STATE, &hEF
+_endif_0x0009                     CALLI                        _beep                        ; gosub beep
 
                                   LDW                          _index
                                   SUBI                         1
@@ -744,6 +737,29 @@ _if_0x000a                        LDW                          _x
 
 _if_0x000b                        Return                                                    ; return
 
+_resetAudio                       PUSH                                                      ; asm
+
+                                  LDI                          2                            ; LDI     2
+                                  ST                           waveType+1                   ; ST      waveType + 1
+                                  CALLI                        resetAudio                   ; CALLI   resetAudio
+
+                                  Return                                                    ; return
+
+_beep                             PUSH                         
+                                  LDI                          1
+                                  ST                           sndChannel + 1
+                                  LDWI                         8200
+                                  STW                          sndFrequency
+                                  SoundOn                                                   ; sound on, 1, 8200
+
+                                  LDI                          2
+                                  ST                           giga_soundTimer              ; set SOUND_TIMER, 2
+
+                                  LDI                          239
+                                  ST                           giga_buttonState             ; set BUTTON_STATE, &hEF
+
+                                  Return                                                    ; return
+
                                   HALT                                                      ; END
 
 
@@ -754,23 +770,31 @@ _if_0x000b                        Return                                        
 ;*************************************************************************************************************
 ;*************************************************************************************************************
 
-romExec                           EQU     0x79d0
-convertEqOp                       EQU     0x7ba0
-convertLtOp                       EQU     0x79e1
-convertGtOp                       EQU     0x79d8
-gosubNumericLabel                 EQU     0x7ccd
-scanlineMode                      EQU     0x79ea
-resetVideoFlags                   EQU     0x79f4
-initClearFuncs                    EQU     0x7da4
+romExec                           EQU     0x78ac
+convertEqOp                       EQU     0x78c6
+convertLtOp                       EQU     0x78bd
+convertGtOp                       EQU     0x78b4
+gosubNumericLabel                 EQU     0x7faa
+scanlineMode                      EQU     0x7fa0
+waitVBlank                        EQU     0x79a2
+waitVBlanks                       EQU     0x7da2
+resetVideoFlags                   EQU     0x7ea1
+initClearFuncs                    EQU     0x78dc
 clearVertBlinds                   EQU     0x7bcd
-clearCursorRow                    EQU     0x7ca1
-printInit                         EQU     0x7ab2
-printLeft                         EQU     0x7ae0
-printChr                          EQU     0x7aa5
+clearCursorRow                    EQU     0x7ba1
+resetAudio                        EQU     0x7ad7
+resetMusic                        EQU     0x78a6
+midiGetNote                       EQU     0x7ca0
+playMusic                         EQU     0x7cb9
+musicPlayNote                     EQU     0x7aa2
+soundOn                           EQU     0x78eb
+printInit                         EQU     0x79b2
+printLeft                         EQU     0x79e0
+printChr                          EQU     0x78cf
 printChar                         EQU     0x7db3
-printClip                         EQU     0x7ac8
-newLineScroll                     EQU     0x7ea1
-atTextCursor                      EQU     0x7ba9
+printClip                         EQU     0x79c8
+newLineScroll                     EQU     0x7eac
+atTextCursor                      EQU     0x7ab3
 
 
 
@@ -1007,6 +1031,161 @@ clearVB_loopy       LDI     giga_xres
                     SUBI    giga_yres / 2 + 8
                     BLT     clearVB_loopy
                     POP
+                    RET
+
+
+midiId              EQU     register0
+audioAddr           EQU     register1
+waveType            EQU     register2
+midiNote            EQU     register4                       
+midiCommand         EQU     register5
+midiPtr             EQU     register6
+sndChannel          EQU     register8
+sndFrequency        EQU     register9
+sndVolume           EQU     register10
+sndWaveType         EQU     register11
+musicStream         EQU     register8
+musicNote           EQU     register9
+musicCommand        EQU     register10
+musicPtr            EQU     register11
+
+
+resetAudio          LDI     giga_soundChan1 >>8
+                    ST      audioAddr + 1
+                    LDI     0
+                    ST      waveType                        
+
+resetA_loop         LDI     giga_soundChan1
+                    ST      audioAddr                       
+                    LDW     waveType
+                    DOKE    audioAddr                       
+                    INC     audioAddr
+                    INC     audioAddr
+                    LDI     0
+                    DOKE    audioAddr                       
+                    INC     audioAddr
+                    INC     audioAddr
+                    DOKE    audioAddr                       
+                    INC     audioAddr + 1                   
+                    LD      audioAddr + 1
+                    SUBI    4
+                    BLE     resetA_loop
+                    RET
+
+
+resetMusic          PUSH
+                    CALLI   resetAudio
+                    POP
+                    RET
+
+
+
+midiGetNote         LDWI    giga_notesTable - 22            
+                    STW     musicPtr
+                    LD      musicNote
+                    LSLW
+                    ADDW    musicPtr
+                    STW     musicPtr
+                    LUP     0x00                            
+                    ST      musicNote                       
+                    LDW     musicPtr
+                    LUP     0x01                            
+                    ST      musicNote + 1
+                    LDW     musicNote                       
+                    RET
+
+
+
+
+
+%if VBLANK_INTERRUPT
+waitVBlank          LD      timerJiff + 1                       
+%else
+waitVBlank          LD      giga_frameCount
+%endif
+                    XORW    frameCountPrev
+                    BEQ     waitVBlank
+%if VBLANK_INTERRUPT
+                    LD      timerJiff + 1                       
+%else
+                    LD      giga_frameCount
+%endif
+                    STW     frameCountPrev
+                    RET
+
+
+waitVBlanks         LDW     waitVBlankNum
+                    SUBI    0x01
+                    STW     waitVBlankNum
+                    BGE     waitVB_vblank
+                    RET
+    
+waitVB_vblank       PUSH
+                    CALLI   waitVBlank
+                    POP
+                    BRA     waitVBlanks
+
+
+playMusic           PUSH
+
+playN_process       LDW     musicStream
+                    INC     musicStream
+                    PEEK                                    
+                    ST      musicCommand
+                    ANDI    0xF0
+                    XORI    0x90                            
+                    BNE     playN_endnote
+                    LDW     musicStream
+                    INC     musicStream
+                    PEEK                                    
+                    ST      musicNote
+                    CALLI   midiGetNote                     
+                    CALLI   musicPlayNote
+                    BRA     playN_process
+
+playN_endnote       XORI    0x10                            
+                    BNE     playN_segment
+                    LDI     0
+                    STW     musicNote
+                    CALLI   musicPlayNote         			
+                    BRA     playN_process
+
+playN_segment       XORI    0x50                            
+                    BNE     playN_delay
+                    LDW     musicStream                     
+                    DEEK
+                    STW     musicStream                     
+                    BNE     playN_process                   
+                    POP
+                    RET
+
+playN_delay         LD      musicCommand
+                    ST      giga_soundTimer                 
+                    STW     waitVBlankNum
+                    CALLI   waitVBlanks
+                    BRA     playN_process
+
+
+musicPlayNote       LD      musicCommand
+                    ANDI    0x03                            
+                    ADDI    0x01
+                    ST      musicPtr + 1
+                    LDI     0xFC
+                    ST      musicPtr                        
+                    LDW     musicNote
+                    DOKE    musicPtr                        
+                    RET
+
+
+soundOn             LDWI    SYS_LSRW1_48
+                    STW     giga_sysFn
+                    LDI     0xFC
+                    ST      sndChannel
+                    LD      sndFrequency
+                    SYS     48
+                    ST      sndFrequency                    
+                    LDW     sndFrequency                    
+                    DOKE    sndChannel                      
                     RET
 
 

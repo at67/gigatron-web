@@ -9,3 +9,7 @@ at67_gigatronrombuilder_build:
 at67_gigatronrombuilder_buildMainmenu:
     path: /gigatronrombuilder/buildMainmenu
     defaults: { _controller: at67.gigatronrombuilder.controller.main:buildMainmenu }
+
+at67_gigatronrombuilder_download:
+    path: /gigatronrombuilder/download/{filename}
+    defaults: { _controller: at67.gigatronrombuilder.controller.main:download }

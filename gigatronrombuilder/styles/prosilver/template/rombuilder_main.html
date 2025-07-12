@@ -150,6 +150,12 @@ document.addEventListener('DOMContentLoaded', () => {
         window.fileBrowser.selectedFiles = [];
         window.fileBrowser.renderFileTree();
         updateStatusDisplay();
+
+        // Close any open modals and return to main page
+        const modal = document.getElementById('build-result-modal');
+        if (modal && modal.style.display === 'block') {
+            hideBuildResult();
+        }
     });
 
     // Override FileBrowser's updateLoadingStatus to also update our status display
@@ -293,7 +299,7 @@ function sendMainmenuBuildRequest(romVersion, selectedFiles, manifest, gbasSourc
                 var response = JSON.parse(xhr.responseText);
                 if (response.success)
                 {
-                    showBuildResult(true, 'ROM Build Complete', response.output);
+                    showBuildResult(true, 'ROM Build Complete', response.output, response);
                 }
                 else
                 {
@@ -307,11 +313,15 @@ function sendMainmenuBuildRequest(romVersion, selectedFiles, manifest, gbasSourc
         }
     };
 
+    // Get custom ROM name from UI
+    const customRomName = document.getElementById('rom-name')?.value || 'ROMv5a.rom';
+
     var data =
     {
         rom_version: romVersion,
         manifest: manifest,
-        gbas_source: gbasSource
+        gbas_source: gbasSource,
+        rom_name: customRomName
     };
 
     xhr.send(JSON.stringify(data));
@@ -346,19 +356,39 @@ function showBuildResult(success, title, content, buildResponse = null) {
     }, 0);
 
     // Create appropriate buttons
-    if (success && buildResponse) {
+    if (success && buildResponse && title !== 'ROM Build Complete') {
         // Two buttons for Phase 2 entry
         buttonContainer.innerHTML = `
             <div style="display: flex; gap: 4%;">
                 <button id="modal-cancel-btn" style="width: 48%; padding: 12px; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; background: #6c757d; color: white;">Cancel</button>
                 <button id="modal-continue-btn" style="width: 48%; padding: 12px; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; background: #28a745; color: white;">Continue</button>
             </div>`;
+        document.getElementById('modal-cancel-btn').addEventListener('click', hideBuildResult);
+        document.getElementById('modal-continue-btn').addEventListener('click', () => showMainmenuEditor(buildResponse));
+    } else if (success && buildResponse) {
+        // Final ROM build complete - three buttons
+        buttonContainer.innerHTML = `
+            <div style="display: flex; gap: 2%;">
+                <button id="modal-cancel-btn" style="width: 32%; padding: 12px; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; background: #6c757d; color: white;">Cancel</button>
+                <button id="modal-download-btn" style="width: 32%; padding: 12px; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; background: #007bff; color: white;">Download</button>
+                <button id="modal-emulate-btn" style="width: 32%; padding: 12px; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; background: #28a745; color: white;">Emulate</button>
+            </div>`;
+        document.getElementById('modal-cancel-btn').addEventListener('click', () => showMainmenuEditor(buildResponse));
+        document.getElementById('modal-download-btn').addEventListener('click', () => {
+            const romFilePath = buildResponse.rom_file;
+            const filename = romFilePath.split('/').pop();
+            window.location.href = '/app.php/gigatronrombuilder/download/' + encodeURIComponent(filename);
+        });
+        document.getElementById('modal-emulate-btn').addEventListener('click', () => {
+            console.log('Emulate ROM');
+        });
     } else {
-        // Single button for all other cases
+        // Single button for errors and other cases
         buttonContainer.innerHTML = `
             <div style="display: flex;">
                 <button id="modal-continue-btn" style="width: 100%; padding: 12px; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; background: ${success ? '#28a745' : '#dc3545'}; color: white;">Continue</button>
             </div>`;
+        document.getElementById('modal-continue-btn').addEventListener('click', hideBuildResult);
     }
 
     // Add event listeners for the buttons
@@ -442,6 +472,12 @@ function createPhase2LayoutHTML(apps) {
                     Effects & Modules
                 </div>
                 <div id="module-selection-content" style="padding: 15px; flex: 1; overflow-y: auto; display: block;">
+
+                    <!-- ROM Name -->
+                    <div style="margin-bottom: 15px;">
+                        <h4 style="margin: 0 0 8px 0; color: #e0e0e0; font-size: 14px;">ROM Name:</h4>
+                        <input type="text" id="rom-name" value="ROMv5a.rom" style="width: 96%; padding: 2px; background: #1a1a1a; color: #e0e0e0; border: 1px solid #444; border-radius: 2px; font-size: 12px;">
+                    </div>
 
                     <!-- Audio Effects -->
                     <div style="margin-bottom: 15px;">

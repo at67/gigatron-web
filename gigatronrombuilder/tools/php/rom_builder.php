@@ -18,7 +18,7 @@ class RomBuilder {
         }
     }
 
-    public function buildRom($rom_version, $app_overrides = [], $custom_manifest = null, $symbols_only = false) {
+    public function buildRom($rom_version, $app_overrides = [], $custom_manifest = null, $symbols_only = false, $custom_rom_name = null) {
         $script_name = "ROM{$rom_version}.asm.py";
         $script_path = $this->romsrc_dir . '/' . $script_name;
 
@@ -93,6 +93,16 @@ class RomBuilder {
             $error_str = stream_get_contents($pipes[2]);
             $exit_code = proc_close($process);
 
+            // Replace default ROM name in output log with custom name
+            if ($exit_code === 0 && $custom_rom_name) {
+                $default_rom_name = "ROM{$rom_version}.rom";
+                $default_lst_name = "ROM{$rom_version}.lst";
+                $custom_lst_name = str_replace('.rom', '.lst', $custom_rom_name);
+
+                $output_str = str_replace($default_rom_name, $custom_rom_name, $output_str);
+                $output_str = str_replace($default_lst_name, $custom_lst_name, $output_str);
+            }
+
             $output = explode("\n", trim($output_str . $error_str));
 
             $result = [
@@ -104,9 +114,13 @@ class RomBuilder {
 
             if ($exit_code === 0) {
                 // Move generated files to build directory
-                $this->moveOutputFiles($rom_version);
-                $result['rom_file'] = $this->build_dir . "/ROM{$rom_version}.rom";
-                $result['lst_file'] = $this->build_dir . "/ROM{$rom_version}.lst";
+                $this->moveOutputFiles($rom_version, $custom_rom_name);
+
+                // Use custom ROM name if provided
+                $rom_filename = $custom_rom_name ? $custom_rom_name : "ROM{$rom_version}.rom";
+                $lst_filename = $custom_rom_name ? str_replace('.rom', '.lst', $custom_rom_name) : "ROM{$rom_version}.lst";
+                $result['rom_file'] = $this->build_dir . "/" . $rom_filename;
+                $result['lst_file'] = $this->build_dir . "/" . $lst_filename;
             }
 
             return $result;
@@ -159,18 +173,22 @@ class RomBuilder {
         return array_merge($trimmed_apps, $overrides);
     }
 
-    private function moveOutputFiles($rom_version) {
+    private function moveOutputFiles($rom_version, $custom_rom_name = null) {
+        $default_rom_file = "ROM{$rom_version}.rom";
+        $final_rom_name = $custom_rom_name ? $custom_rom_name : $default_rom_file;
+        $final_lst_name = $custom_rom_name ? str_replace('.rom', '.lst', $custom_rom_name) : "ROM{$rom_version}.lst";
+
         $files_to_move = [
-            "ROM{$rom_version}.rom",
-            "ROM{$rom_version}.lst",
-            "SymbolTable.m"
+            $default_rom_file => $final_rom_name,
+            "ROM{$rom_version}.lst" => $final_lst_name,
+            "SymbolTable.m" => "SymbolTable.m"
         ];
 
-        foreach ($files_to_move as $file) {
-            if (file_exists($this->romsrc_dir . '/' . $file)) {
+        foreach ($files_to_move as $source_file => $dest_file) {
+            if (file_exists($this->romsrc_dir . '/' . $source_file)) {
                 rename(
-                    $this->romsrc_dir . '/' . $file,
-                    $this->build_dir . '/' . $file
+                    $this->romsrc_dir . '/' . $source_file,
+                    $this->build_dir . '/' . $dest_file
                 );
             }
         }
@@ -208,6 +226,10 @@ class RomBuilder {
         if (is_link($games_link)) {
             unlink($games_link);
         }
+    }
+
+    public function getBuildDir() {
+        return $this->build_dir;
     }
 }
 

@@ -4,7 +4,7 @@ _codeRomType_ ROMv5a
 _enableRomCheck_ Off
 _stringWorkArea_ &h77A0
 module "../build/SymbolTable.m"
-const NUM_APPS = 6
+const NUM_APPS = 1
 const LIST_X0  = 10
 const LIST_X1  = 88
 const LIST_Y   = 34
@@ -12,8 +12,8 @@ const LIST_DY  = 9
 const CURS_DX  = 8
 const CURS_X   = LIST_X0 - CURS_DX
 const CURS_Y   = LIST_Y
-const dim apps$(NUM_APPS-1) = "Invader", "PucMon_ROMv5a", "tetronis", "Craps", "VideoPoker", "bricks"
-dim execs(NUM_APPS-1) = Invader, PucMon_ROMv5a, tetronis, Craps, VideoPoker, bricks
+const dim apps$(NUM_APPS-1) = "Invader"
+dim execs(NUM_APPS-1) = Invader
 tscroll off
 set BG_COLOUR, 0 : mode 2 : cls
 set FGBG_COLOUR, &h0C00
@@ -25,6 +25,8 @@ for i=0 to 4
 next i
 x = CURS_X : y = CURS_Y
 index = 0
+play music, &h75a0, 3
+gosub resetAudio
 repeat
     gosub get("BUTTON_STATE")
     set FG_COLOUR, &h3F
@@ -35,21 +37,21 @@ execApp:
     exec execs(index), &h0200
 return
 'button A
-127:    set BUTTON_STATE, &hEF
+127:    gosub beep
         gosub execApp
         return
 'right
 254:    at x, y : put 32
         if x = (LIST_X1 - CURS_DX) then return
         x = (LIST_X1 - CURS_DX)
-        set BUTTON_STATE, &hEF
+        gosub beep
         index = index + 5
         return
 'left
 253:    at x, y : put 32
         if x = (LIST_X0 - CURS_DX) then return
         x = (LIST_X0 - CURS_DX)
-        set BUTTON_STATE, &hEF
+        gosub beep
         index = index - 5
         return
 'down
@@ -59,7 +61,7 @@ return
             y = (LIST_Y + 4*LIST_DY)
             return
         endif
-        set BUTTON_STATE, &hEF
+        gosub beep
         index = index + 1
         if (x = LIST_X0 - CURS_DX) AND index > 4 then index = 4
         if (x = LIST_X1 - CURS_DX) AND index > 9 then index = 9
@@ -71,8 +73,22 @@ return
             y = LIST_Y
             return
         endif
-        set BUTTON_STATE, &hEF
+        gosub beep
         index = index - 1
         if (x = LIST_X0 - CURS_DX) AND index < 0 then index = 0
         if (x = LIST_X1 - CURS_DX) AND index < 5 then index = 5
         return
+def byte(&h75a0) = &h90, &h3c, &h91, &h40, &h92, &h43, &h93, &h48, &h0c, &h80, &h81, &h82, &h83, &h01, &h90, &h3c,
+def byte         = &h91, &h40, &h92, &h43, &h93, &h48, &h24, &h80, &h81, &h82, &h83, &hd0, &h00, &h00
+resetAudio:
+    asm
+        LDI     2
+        ST      waveType + 1
+        CALLI   resetAudio
+    endasm
+return
+beep:
+    sound on, 1, 8200
+    set SOUND_TIMER, 2
+    set BUTTON_STATE, &hEF
+return
