@@ -958,7 +958,7 @@ function generateMainLoop(enableMusic, enableStars, enableStarfield, enableFirew
 }
 
 function generateEventHandlers(enableBeep) {
-    const beepCall = enableBeep ? 'gosub beep\n        ' : '';
+    const beepCall = enableBeep ? 'gosub beep\n        ' : 'set BUTTON_STATE, &hEF\n        ';
 
     return 'execApp:\n' +
            '    cls\n' +

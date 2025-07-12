@@ -312,4 +312,4 @@ const Craps = &h935e
 const VideoPoker = &hafaa
 const bricks = &hdccc
 const Main = &he325
-const sys_ReadRomDir = &hed95
+const sys_ReadRomDir = &he800

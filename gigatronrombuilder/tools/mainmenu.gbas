@@ -25,35 +25,31 @@ for i=0 to 4
 next i
 x = CURS_X : y = CURS_Y
 index = 0
-play music, &h75a0, 3
-gosub resetAudio
-call initFireworks
 repeat
     gosub get("BUTTON_STATE")
     set FG_COLOUR, &h3F
     at x, y : put 62
-    call updateFireworks
 forever
 execApp:
     cls
     exec execs(index), &h0200
 return
 'button A
-127:    gosub beep
+127:    set BUTTON_STATE, &hEF
         gosub execApp
         return
 'right
 254:    at x, y : put 32
         if x = (LIST_X1 - CURS_DX) then return
         x = (LIST_X1 - CURS_DX)
-        gosub beep
+        set BUTTON_STATE, &hEF
         index = index + 5
         return
 'left
 253:    at x, y : put 32
         if x = (LIST_X0 - CURS_DX) then return
         x = (LIST_X0 - CURS_DX)
-        gosub beep
+        set BUTTON_STATE, &hEF
         index = index - 5
         return
 'down
@@ -63,7 +59,7 @@ return
             y = (LIST_Y + 4*LIST_DY)
             return
         endif
-        gosub beep
+        set BUTTON_STATE, &hEF
         index = index + 1
         if (x = LIST_X0 - CURS_DX) AND index > 4 then index = 4
         if (x = LIST_X1 - CURS_DX) AND index > 9 then index = 9
@@ -75,108 +71,8 @@ return
             y = LIST_Y
             return
         endif
-        gosub beep
+        set BUTTON_STATE, &hEF
         index = index - 1
         if (x = LIST_X0 - CURS_DX) AND index < 0 then index = 0
         if (x = LIST_X1 - CURS_DX) AND index < 5 then index = 5
         return
-def byte(&h75a0) = &h90, &h3c, &h91, &h40, &h92, &h43, &h93, &h48, &h0c, &h80, &h81, &h82, &h83, &h01, &h90, &h3c,
-def byte         = &h91, &h40, &h92, &h43, &h93, &h48, &h24, &h80, &h81, &h82, &h83, &hd0, &h00, &h00
-resetAudio:
-    asm
-        LDI     2
-        ST      waveType + 1
-        CALLI   resetAudio
-    endasm
-return
-beep:
-    sound on, 1, 8200
-    set SOUND_TIMER, 2
-    set BUTTON_STATE, &hEF
-return
-const NUM_FIREWORKS = 48
-const FIREWORKS_ORG_X = 80
-const FIREWORKS_ORG_Y = 60 + 8
-const GRAVITY = 48
-const WIND = 5
-dim xPos(NUM_FIREWORKS-1) = 0
-dim yPos(NUM_FIREWORKS-1) = 0
-dim xVel(NUM_FIREWORKS-1) = 0
-dim yVel(NUM_FIREWORKS-1) = 0
-dim life%(NUM_FIREWORKS-1) = 0
-dim color%(NUM_FIREWORKS-1) = 0
-proc initFireworks
-    local i
-    fireworkTimer = 0
-    for i=0 &to NUM_FIREWORKS-1
-        life(i) = 0
-    next i
-endproc
-proc updateFireworks
-    local i, lf, xr, yr, xp, yp, pxy, col
-    for i=0 to NUM_FIREWORKS-1
-        lf = life(i)
-        if lf &> 0
-            xp = xPos(i) : xr = xp : xv = xVel(i)
-            yp = yPos(i) : yr = yp : yv = yVel(i)
-            xv = xv + WIND
-            yv = yv + GRAVITY
-            xp = xp + xv
-            yp = yp + yv
-            if abs(yp) > 59*256 OR abs(xp) > 79*256
-                pxy.lo = xr.hi + FIREWORKS_ORG_X
-                pxy.hi = yr.hi + FIREWORKS_ORG_Y
-                poke pxy, 0
-                lf = 0
-                goto nextParticle
-            endif
-            xPos(i) = xp : yPos(i) = yp
-            xVel(i) = xv : yVel(i) = yv
-            pxy.lo = xr.hi + FIREWORKS_ORG_X
-            pxy.hi = yr.hi + FIREWORKS_ORG_Y
-            if &(peek(pxy) AND &h80)
-                poke pxy, 0
-            endif
-            pxy.lo = xp.hi + FIREWORKS_ORG_X
-            pxy.hi = yp.hi + FIREWORKS_ORG_Y
-            col = color(i)
-            if peek(pxy) &&= 0
-                poke pxy, col OR &h80
-            endif
-            lf = lf - 1
-            if lf &&= 0
-                if &(peek(pxy) AND &h80)
-                    poke pxy, 0
-                endif
-            endif
-        endif
-nextParticle:
-        life(i) = lf
-    next i
-    inc fireworkTimer.lo
-    if fireworkTimer &> 20
-        fireworkTimer = 0
-        centerX = (rnd(0) AND 127) - 64
-        centerY = (rnd(0) AND 63) - 48
-        call createFirework, centerX, centerY
-    endif
-endproc
-proc createFirework, centerX, centerY
-    local i, c, count
-    count = 0
-    c = rnd(0) AND &h3f
-    for i=0 to NUM_FIREWORKS-1
-        if life(i) &= 0
-            xv = (rnd(0) AND 1023) - 512
-            yv = (rnd(0) AND 1023) - 768
-            xPos(i).hi = centerX
-            yPos(i).hi = centerY
-            xVel(i) = xv
-            yVel(i) = yv
-            life(i) = 64 + (rnd(0) AND 31)
-            color(i) = c
-            inc count.lo
-            if count &&= 24 then return
-        endif
-    next i
-endproc

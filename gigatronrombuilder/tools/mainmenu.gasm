@@ -52,46 +52,26 @@ textWorkArea                      EQU                          0x77a0
 
 ; Labels
 _entryPoint_                      EQU                          0x0200
-_execApp                          EQU                          0x02f1
-_127                              EQU                          0x0312
-_254                              EQU                          0x031b
-_253                              EQU                          0x034a
-_251                              EQU                          0x0379
-_247                              EQU                          0x03e6
-_resetAudio                       EQU                          0x045a
-_beep                             EQU                          0x0464
-_nextParticle                     EQU                          0x05c0
+_execApp                          EQU                          0x02d9
+_127                              EQU                          0x02ef
+_254                              EQU                          0x0302
+_253                              EQU                          0x0332
+_251                              EQU                          0x0362
+_247                              EQU                          0x03d0
 _next_0x0000                      EQU                          0x023b
 _if_0x0001                        EQU                          0x0267
 _if_0x0002                        EQU                          0x0299
-_repeat_0x0003                    EQU                          0x02cc
-_if_0x0004                        EQU                          0x033b
-_if_0x0005                        EQU                          0x036a
-_endif_0x0006                     EQU                          0x03a3
-_if_0x0007                        EQU                          0x03c8
-_if_0x0008                        EQU                          0x03e4
-_endif_0x0009                     EQU                          0x0419
-_if_0x000a                        EQU                          0x043c
-_if_0x000b                        EQU                          0x0458
-_initFireworks                    EQU                          0x047b
-_next_0x000c                      EQU                          0x0484
-_updateFireworks                  EQU                          0x049a
-_next_0x000d                      EQU                          0x049f
-_endif_0x000f                     EQU                          0x053d
-_endif_0x0010                     EQU                          0x0589
-_endif_0x0011                     EQU                          0x05a9
-_endif_0x0013                     EQU                          0x05c0
-_endif_0x0012                     EQU                          0x05c0
-_endif_0x000e                     EQU                          0x05c0
-_endif_0x0014                     EQU                          0x0607
-_createFirework                   EQU                          0x0609
-_next_0x0015                      EQU                          0x0619
-_if_0x0017                        EQU                          0x06bd
-_endif_0x0016                     EQU                          0x06bd
+_repeat_0x0003                    EQU                          0x02b7
+_if_0x0004                        EQU                          0x0322
+_if_0x0005                        EQU                          0x0352
+_endif_0x0006                     EQU                          0x038c
+_if_0x0007                        EQU                          0x03b2
+_if_0x0008                        EQU                          0x03ce
+_endif_0x0009                     EQU                          0x0404
+_if_0x000a                        EQU                          0x0428
+_if_0x000b                        EQU                          0x0444
 _page_0x0300                      EQU                          0x0300
 _page_0x0400                      EQU                          0x0400
-_page_0x0500                      EQU                          0x0500
-_page_0x0600                      EQU                          0x0600
 
 ; Constants
 _SYS_Reset_88                     EQU                          0x005e
@@ -416,54 +396,18 @@ _LIST_DY                          EQU                          0x0009
 _CURS_DX                          EQU                          0x0008
 _CURS_X                           EQU                          0x0002
 _CURS_Y                           EQU                          0x0022
-_NUM_FIREWORKS                    EQU                          0x0030
-_FIREWORKS_ORG_X                  EQU                          0x0050
-_FIREWORKS_ORG_Y                  EQU                          0x0044
-_GRAVITY                          EQU                          0x0030
-_WIND                             EQU                          0x0005
 
 ; Global Variables
 _y                                EQU                          0x0030
 _i                                EQU                          0x0032
 _x                                EQU                          0x0034
 _index                            EQU                          0x0036
-_fireworkTimer                    EQU                          0x0038
-_xv                               EQU                          0x003a
-_yv                               EQU                          0x003c
-_centerX                          EQU                          0x003e
-_centerY                          EQU                          0x0040
 
 ; Local Variables
-_initFireworks_i                  EQU                          0x00c4
-_updateFireworks_i                EQU                          0x00c4
-_updateFireworks_lf               EQU                          0x00c6
-_updateFireworks_xr               EQU                          0x00c8
-_updateFireworks_yr               EQU                          0x00ca
-_updateFireworks_xp               EQU                          0x00cc
-_updateFireworks_yp               EQU                          0x00ce
-_updateFireworks_pxy              EQU                          0x00d0
-_updateFireworks_col              EQU                          0x00d2
-_createFirework_centerX           EQU                          0x00c4
-_createFirework_centerY           EQU                          0x00c6
-_createFirework_i                 EQU                          0x00c8
-_createFirework_c                 EQU                          0x00ca
-_createFirework_count             EQU                          0x00cc
 
 ; Arrays
 _execs                            EQU                          0x7faa
 _execs                            DW                           0x1348 0x3cea 0x6c31 0x935e 0xafaa 0xdccc 
-_xPos                             EQU                          0x7ea0
-_xPos                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
-_yPos                             EQU                          0x7da0
-_yPos                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
-_xVel                             EQU                          0x7ca0
-_xVel                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
-_yVel                             EQU                          0x7ba0
-_yVel                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
-_life                             EQU                          0x7ad0
-_life                             DB                           0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 
-_color                            EQU                          0x7aa0
-_color                            DB                           0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 
 
 ; Strings
 _apps$                            EQU                          0x7fb6
@@ -488,10 +432,6 @@ _apps$_0x7fc3                     DB                           6 'bricks' 0
 ; Time
 
 ; Define Bytes
-def_bytes_0x75a0                  EQU                          0x75a0
-def_bytes_0x75a0                  DB                           144 60 145 64 146 67 147 72 12 128 129 130 131 1 144 60 
-def_bytes_0x75b0                  EQU                          0x75b0
-def_bytes_0x75b0                  DB                           145 64 146 67 147 72 36 128 129 130 131 208 0 0 
 
 ; Define Words
 
@@ -510,10 +450,10 @@ def_bytes_0x75b0                  DB                           145 64 146 67 147
 ; Define Patterns
 
 ; Lookup Tables
-_lut_numericLabs                  EQU                          0x79f4
+_lut_numericLabs                  EQU                          0x7ef4
 _lut_numericLabs                  DW                           127 254 253 251 247 0x0000
 _lut_numericAddrs                 EQU                          0x7fa0
-_lut_numericAddrs                 DW                           0x0312 0x031b 0x034a 0x0379 0x03e6 
+_lut_numericAddrs                 DW                           0x02ef 0x0302 0x0332 0x0362 0x03d0 
 
 ; Lazy Constants
 
@@ -597,15 +537,6 @@ _if_0x0002                        LDW                          _y
                                   LDI                          0
                                   STW                          _index                       ; index = 0
 
-                                  LDI                          3
-                                  ST                           waveType + 1
-                                  LDWI                         30112
-                                  PlayMusic                                                 ; play music, &h75a0, 3
-
-                                  CALLI                        _resetAudio                  ; gosub resetAudio
-
-                                  CALLI                        _initFireworks               ; call initFireworks
-
 _repeat_0x0003                    LD                           giga_buttonState
                                   STW                          numericLabel
                                   LDI                          0
@@ -623,15 +554,12 @@ _repeat_0x0003                    LD                           giga_buttonState
                                   LDI                          62
                                   PrintAcChr                                                ; at x, y : put 62
 
-                                  CALLI                        _updateFireworks             ; call updateFireworks
-
                                   CALLI                        _repeat_0x0003               ; forever
 
 _execApp                          PUSH                         
                                   ClearVertBlinds                                           ; cls
 
-                                  CALLI                        _page_0x0300
-_page_0x0300                      LDWI                         0x7faa
+                                  LDWI                         0x7faa
                                   ADDW                         _index
                                   ADDW                         _index
                                   DEEK                         
@@ -642,11 +570,13 @@ _page_0x0300                      LDWI                         0x7faa
                                   Return                                                    ; return
 
 _127                              PUSH                         
-                                  CALLI                        _beep                        ; gosub beep
+                                  LDI                          239
+                                  ST                           giga_buttonState             ; set BUTTON_STATE, &hEF
 
                                   CALLI                        _execApp                     ; gosub execApp
 
-                                  Return                                                    ; return
+                                  CALLI                        _page_0x0300
+_page_0x0300                      Return                                                    ; return
 
 _254                              PUSH                         
                                   LDW                          _x
@@ -666,7 +596,8 @@ _254                              PUSH
 _if_0x0004                        LDI                          80
                                   STW                          _x                           ; x = (LIST_X1 - CURS_DX)
 
-                                  CALLI                        _beep                        ; gosub beep
+                                  LDI                          239
+                                  ST                           giga_buttonState             ; set BUTTON_STATE, &hEF
 
                                   LDW                          _index
                                   ADDI                         5
@@ -692,7 +623,8 @@ _253                              PUSH
 _if_0x0005                        LDI                          2
                                   STW                          _x                           ; x = (LIST_X0 - CURS_DX)
 
-                                  CALLI                        _beep                        ; gosub beep
+                                  LDI                          239
+                                  ST                           giga_buttonState             ; set BUTTON_STATE, &hEF
 
                                   LDW                          _index
                                   SUBI                         5
@@ -723,7 +655,8 @@ _251                              PUSH
 
                                   Return                                                    ; return
 
-_endif_0x0006                     CALLI                        _beep                        ; gosub beep
+_endif_0x0006                     LDI                          239
+                                  ST                           giga_buttonState             ; set BUTTON_STATE, &hEF
 
                                   LDW                          _index
                                   ADDI                         1
@@ -764,8 +697,7 @@ _247                              PUSH
                                   LDI                          32
                                   PrintAcChr                                                ; at x, y : put 32
 
-                                  CALLI                        _page_0x0400
-_page_0x0400                      LDW                          _y
+                                  LDW                          _y
                                   SUBI                         9
                                   STW                          _y                           ; y = y - LIST_DY
 
@@ -775,11 +707,13 @@ _page_0x0400                      LDW                          _y
                                   JumpFalse                    _endif_0x0009 7              ; if y < LIST_Y
 
                                   LDI                          34
-                                  STW                          _y                           ; y = LIST_Y
+                                  CALLI                        _page_0x0400
+_page_0x0400                      STW                          _y                           ; y = LIST_Y
 
                                   Return                                                    ; return
 
-_endif_0x0009                     CALLI                        _beep                        ; gosub beep
+_endif_0x0009                     LDI                          239
+                                  ST                           giga_buttonState             ; set BUTTON_STATE, &hEF
 
                                   LDW                          _index
                                   SUBI                         1
@@ -810,347 +744,6 @@ _if_0x000a                        LDW                          _x
 
 _if_0x000b                        Return                                                    ; return
 
-_resetAudio                       PUSH                                                      ; asm
-
-                                  LDI                          2                            ; LDI     2
-                                  ST                           waveType+1                   ; ST      waveType + 1
-                                  CALLI                        resetAudio                   ; CALLI   resetAudio
-
-                                  Return                                                    ; return
-
-_beep                             PUSH                         
-                                  LDI                          1
-                                  ST                           sndChannel + 1
-                                  LDWI                         8200
-                                  STW                          sndFrequency
-                                  SoundOn                                                   ; sound on, 1, 8200
-
-                                  LDI                          2
-                                  ST                           giga_soundTimer              ; set SOUND_TIMER, 2
-
-                                  LDI                          239
-                                  ST                           giga_buttonState             ; set BUTTON_STATE, &hEF
-
-                                  Return                                                    ; return
-
-_initFireworks                    PUSH                                                      ; proc initFireworks
-
-                                  LDI                          0
-                                  STW                          _fireworkTimer               ; fireworkTimer = 0
-
-                                  LDI                          0
-                                  STW                          _initFireworks_i             ; for i=0 &to NUM_FIREWORKS-1
-
-_next_0x000c                      LDWI                         0x7ad0
-                                  ADDW                         _initFireworks_i
-                                  STW                          memAddr
-                                  LDI                          0
-                                  POKE                         memAddr                      ; life(i) = 0
-
-                                  ForNextInc                   _initFireworks_i _next_0x000c 47                                                                                         ; next i
-
-                                  Return                                                    ; endproc
-
-_updateFireworks                  PUSH                                                      ; proc updateFireworks
-
-                                  LDI                          0
-                                  STW                          _updateFireworks_i           ; for i=0 to NUM_FIREWORKS-1
-
-_next_0x000d                      LDWI                         0x7ad0
-                                  ADDW                         _updateFireworks_i
-                                  PEEK                         
-                                  STW                          _updateFireworks_lf          ; lf = life(i)
-
-                                  LDW                          _updateFireworks_lf
-                                  JumpGT                       _endif_0x000e 10             ; if lf &> 0
-
-                                  LDWI                         0x7ea0
-                                  ADDW                         _updateFireworks_i
-                                  ADDW                         _updateFireworks_i
-                                  DEEK                         
-                                  STW                          _updateFireworks_xp
-                                  STW                          _updateFireworks_xr
-                                  LDWI                         0x7ca0
-                                  ADDW                         _updateFireworks_i
-                                  ADDW                         _updateFireworks_i
-                                  DEEK                         
-                                  STW                          _xv                          ; xp = xPos(i) : xr = xp : xv = xVel(i)
-
-                                  LDWI                         0x7da0
-                                  ADDW                         _updateFireworks_i
-                                  ADDW                         _updateFireworks_i
-                                  DEEK                         
-                                  STW                          _updateFireworks_yp
-                                  STW                          _updateFireworks_yr
-                                  LDWI                         0x7ba0
-                                  ADDW                         _updateFireworks_i
-                                  ADDW                         _updateFireworks_i
-                                  DEEK                         
-                                  STW                          _yv                          ; yp = yPos(i) : yr = yp : yv = yVel(i)
-
-                                  LDW                          _xv
-                                  ADDI                         5
-                                  STW                          _xv                          ; xv = xv + WIND
-
-                                  LDW                          _yv
-                                  ADDI                         48
-                                  STW                          _yv                          ; yv = yv + GRAVITY
-
-                                  LDW                          _updateFireworks_xp
-                                  ADDW                         _xv
-                                  STW                          _updateFireworks_xp          ; xp = xp + xv
-
-                                  LDW                          _updateFireworks_yp
-                                  ADDW                         _yv
-                                  STW                          _updateFireworks_yp          ; yp = yp + yv
-
-                                  LDW                          _updateFireworks_yp
-                                  CALLI                        _page_0x0500
-_page_0x0500                      Absolute                     
-                                  STW                          0xe8
-                                  LDWI                         15104
-                                  SUBW                         0xe8
-                                  CALLI                        convertLtOp
-                                  STW                          0xe8
-                                  LDW                          _updateFireworks_xp
-                                  Absolute                     
-                                  STW                          0xea
-                                  LDWI                         20224
-                                  SUBW                         0xea
-                                  CALLI                        convertLtOp
-                                  ORW                          0xe8
-                                  JumpFalse                    _endif_0x000f 11             ; if abs(yp) > 59*256 OR abs(xp) > 79*256
-
-                                  LD                           _updateFireworks_xr + 1
-                                  ADDI                         80
-                                  ST                           _updateFireworks_pxy         ; pxy.lo = xr.hi + FIREWORKS_ORG_X
-
-                                  LD                           _updateFireworks_yr + 1
-                                  ADDI                         68
-                                  ST                           _updateFireworks_pxy + 1     ; pxy.hi = yr.hi + FIREWORKS_ORG_Y
-
-                                  LDI                          0
-                                  POKE                         _updateFireworks_pxy         ; poke pxy, 0
-
-                                  LDI                          0
-                                  STW                          _updateFireworks_lf          ; lf = 0
-
-                                  CALLI                        _nextParticle                ; goto nextParticle
-
-_endif_0x000f                     LDWI                         0x7ea0
-                                  ADDW                         _updateFireworks_i
-                                  ADDW                         _updateFireworks_i
-                                  STW                          memAddr
-                                  LDW                          _updateFireworks_xp
-                                  DOKE                         memAddr
-                                  LDWI                         0x7da0
-                                  ADDW                         _updateFireworks_i
-                                  ADDW                         _updateFireworks_i
-                                  STW                          memAddr
-                                  LDW                          _updateFireworks_yp
-                                  DOKE                         memAddr                      ; xPos(i) = xp : yPos(i) = yp
-
-                                  LDWI                         0x7ca0
-                                  ADDW                         _updateFireworks_i
-                                  ADDW                         _updateFireworks_i
-                                  STW                          memAddr
-                                  LDW                          _xv
-                                  DOKE                         memAddr
-                                  LDWI                         0x7ba0
-                                  ADDW                         _updateFireworks_i
-                                  ADDW                         _updateFireworks_i
-                                  STW                          memAddr
-                                  LDW                          _yv
-                                  DOKE                         memAddr                      ; xVel(i) = xv : yVel(i) = yv
-
-                                  LD                           _updateFireworks_xr + 1
-                                  ADDI                         80
-                                  ST                           _updateFireworks_pxy         ; pxy.lo = xr.hi + FIREWORKS_ORG_X
-
-                                  LD                           _updateFireworks_yr + 1
-                                  ADDI                         68
-                                  ST                           _updateFireworks_pxy + 1     ; pxy.hi = yr.hi + FIREWORKS_ORG_Y
-
-                                  LDW                          _updateFireworks_pxy
-                                  PEEK                         
-                                  ANDI                         0x80
-                                  BEQ                          _endif_0x0010                ; if &(peek(pxy) AND &h80)
-
-                                  LDI                          0
-                                  POKE                         _updateFireworks_pxy         ; poke pxy, 0
-
-_endif_0x0010                     LD                           _updateFireworks_xp + 1
-                                  ADDI                         80
-                                  ST                           _updateFireworks_pxy         ; pxy.lo = xp.hi + FIREWORKS_ORG_X
-
-                                  LD                           _updateFireworks_yp + 1
-                                  ADDI                         68
-                                  ST                           _updateFireworks_pxy + 1     ; pxy.hi = yp.hi + FIREWORKS_ORG_Y
-
-                                  LDWI                         0x7aa0
-                                  ADDW                         _updateFireworks_i
-                                  PEEK                         
-                                  STW                          _updateFireworks_col         ; col = color(i)
-
-                                  LDW                          _updateFireworks_pxy
-                                  PEEK                         
-                                  BNE                          _endif_0x0011                ; if peek(pxy) &&= 0
-
-                                  LDW                          _updateFireworks_col
-                                  ORI                          0x80
-                                  POKE                         _updateFireworks_pxy         ; poke pxy, col OR &h80
-
-_endif_0x0011                     LDW                          _updateFireworks_lf
-                                  SUBI                         1
-                                  STW                          _updateFireworks_lf          ; lf = lf - 1
-
-                                  LDW                          _updateFireworks_lf
-                                  BNE                          _endif_0x0012                ; if lf &&= 0
-
-                                  LDW                          _updateFireworks_pxy
-                                  PEEK                         
-                                  ANDI                         0x80
-                                  BEQ                          _endif_0x0013                ; if &(peek(pxy) AND &h80)
-
-                                  LDI                          0
-                                  POKE                         _updateFireworks_pxy         ; poke pxy, 0
-
-_nextParticle                     LDWI                         0x7ad0
-                                  ADDW                         _updateFireworks_i
-                                  STW                          memAddr
-                                  LDW                          _updateFireworks_lf
-                                  POKE                         memAddr                      ; life(i) = lf
-
-                                  ForNextFarInc                _updateFireworks_i _next_0x000d 47                                                                                       ; next i
-
-                                  INC                          _fireworkTimer               ; inc fireworkTimer.lo
-
-                                  LDW                          _fireworkTimer
-                                  SUBI                         20
-                                  JumpGT                       _endif_0x0014 16             ; if fireworkTimer &> 20
-
-                                  LDI                          0
-                                  STW                          _fireworkTimer               ; fireworkTimer = 0
-
-                                  Rand                         
-                                  ANDI                         0x7f
-                                  SUBI                         64
-                                  STW                          _centerX                     ; centerX = (rnd(0) AND 127) - 64
-
-                                  Rand                         
-                                  ANDI                         0x3f
-                                  SUBI                         48
-                                  STW                          _centerY                     ; centerY = (rnd(0) AND 63) - 48
-
-                                  LDW                          _centerX
-                                  STW                          0xc4
-                                  CALLI                        _page_0x0600
-_page_0x0600                      LDW                          _centerY
-                                  STW                          0xc6
-                                  CALLI                        _createFirework              ; call createFirework, centerX, centerY
-
-_endif_0x0014                     Return                                                    ; endproc
-
-_createFirework                   PUSH                                                      ; proc createFirework, centerX, centerY
-
-                                  LDI                          0
-                                  STW                          _createFirework_count        ; count = 0
-
-                                  Rand                         
-                                  ANDI                         0x3f
-                                  STW                          _createFirework_c            ; c = rnd(0) AND &h3f
-
-                                  LDI                          0
-                                  STW                          _createFirework_i            ; for i=0 to NUM_FIREWORKS-1
-
-_next_0x0015                      LDWI                         0x7ad0
-                                  ADDW                         _createFirework_i
-                                  PEEK                         
-                                  JumpEQ                       _endif_0x0016 17             ; if life(i) &= 0
-
-                                  Rand                         
-                                  STW                          0xe8
-                                  LDWI                         0x03ff
-                                  ANDW                         0xe8
-                                  STW                          0xe8
-                                  LDWI                         -512
-                                  ADDW                         0xe8
-                                  STW                          _xv                          ; xv = (rnd(0) AND 1023) - 512
-
-                                  Rand                         
-                                  STW                          0xe8
-                                  LDWI                         0x03ff
-                                  ANDW                         0xe8
-                                  STW                          0xe8
-                                  LDWI                         -768
-                                  ADDW                         0xe8
-                                  STW                          _yv                          ; yv = (rnd(0) AND 1023) - 768
-
-                                  LDW                          _createFirework_centerX
-                                  STW                          memValue
-                                  LDW                          _createFirework_i
-                                  STW                          memIndex0
-                                  LDWI                         0x7ea0
-                                  ADDW                         memIndex0
-                                  ADDW                         memIndex0
-                                  STW                          memAddr
-                                  LDW                          memValue
-                                  INC                          memAddr
-                                  POKE                         memAddr                      ; xPos(i).hi = centerX
-
-                                  LDW                          _createFirework_centerY
-                                  STW                          memValue
-                                  LDW                          _createFirework_i
-                                  STW                          memIndex0
-                                  LDWI                         0x7da0
-                                  ADDW                         memIndex0
-                                  ADDW                         memIndex0
-                                  STW                          memAddr
-                                  LDW                          memValue
-                                  INC                          memAddr
-                                  POKE                         memAddr                      ; yPos(i).hi = centerY
-
-                                  LDWI                         0x7ca0
-                                  ADDW                         _createFirework_i
-                                  ADDW                         _createFirework_i
-                                  STW                          memAddr
-                                  LDW                          _xv
-                                  DOKE                         memAddr                      ; xVel(i) = xv
-
-                                  LDWI                         0x7ba0
-                                  ADDW                         _createFirework_i
-                                  ADDW                         _createFirework_i
-                                  STW                          memAddr
-                                  LDW                          _yv
-                                  DOKE                         memAddr                      ; yVel(i) = yv
-
-                                  Rand                         
-                                  ANDI                         0x1f
-                                  ADDI                         64
-                                  STW                          memValue
-                                  LDWI                         0x7ad0
-                                  ADDW                         _createFirework_i
-                                  STW                          memAddr
-                                  LDW                          memValue
-                                  POKE                         memAddr                      ; life(i) = 64 + (rnd(0) AND 31)
-
-                                  LDWI                         0x7aa0
-                                  ADDW                         _createFirework_i
-                                  STW                          memAddr
-                                  LDW                          _createFirework_c
-                                  POKE                         memAddr                      ; color(i) = c
-
-                                  INC                          _createFirework_count        ; inc count.lo
-
-                                  LDW                          _createFirework_count
-                                  XORI                         24
-                                  BNE                          _if_0x0017
-                                  Return                                                    ; if count &&= 24 then return
-
-_endif_0x0016                     ForNextFarInc                _createFirework_i _next_0x0015 47                                                                                        ; next i
-
-                                  Return                                                    ; endproc
-
                                   HALT                                                      ; END
 
 
@@ -1161,33 +754,23 @@ _endif_0x0016                     ForNextFarInc                _createFirework_i
 ;*************************************************************************************************************
 ;*************************************************************************************************************
 
-romExec                           EQU     0x6ff7
-convertEqOp                       EQU     0x70b6
-convertLtOp                       EQU     0x70ad
-convertGtOp                       EQU     0x70a4
-absolute                          EQU     0x70c9
-rand16bit                         EQU     0x6fef
-gosubNumericLabel                 EQU     0x75cd
-scanlineMode                      EQU     0x70bf
-waitVBlank                        EQU     0x71a2
-waitVBlanks                       EQU     0x78a2
-resetVideoFlags                   EQU     0x70d3
-initClearFuncs                    EQU     0x75be
-clearVertBlinds                   EQU     0x73cd
-clearCursorRow                    EQU     0x73a1
-resetAudio                        EQU     0x72d7
-resetMusic                        EQU     0x6fe9
-midiGetNote                       EQU     0x74a0
-playMusic                         EQU     0x74b9
-musicPlayNote                     EQU     0x72a2
-soundOn                           EQU     0x70eb
-printInit                         EQU     0x71b2
-printLeft                         EQU     0x71e0
-printChr                          EQU     0x70de
-printChar                         EQU     0x78b3
-printClip                         EQU     0x71c8
-newLineScroll                     EQU     0x79a1
-atTextCursor                      EQU     0x72b3
+romExec                           EQU     0x79d0
+convertEqOp                       EQU     0x7ba0
+convertLtOp                       EQU     0x79e1
+convertGtOp                       EQU     0x79d8
+gosubNumericLabel                 EQU     0x7ccd
+scanlineMode                      EQU     0x79ea
+resetVideoFlags                   EQU     0x79f4
+initClearFuncs                    EQU     0x7da4
+clearVertBlinds                   EQU     0x7bcd
+clearCursorRow                    EQU     0x7ca1
+printInit                         EQU     0x7ab2
+printLeft                         EQU     0x7ae0
+printChr                          EQU     0x7aa5
+printChar                         EQU     0x7db3
+printClip                         EQU     0x7ac8
+newLineScroll                     EQU     0x7ea1
+atTextCursor                      EQU     0x7ba9
 
 
 
@@ -1237,33 +820,6 @@ convertGtOp         BGT     convertGt_1
                     LDI     0
                     RET
 convertGt_1         LDI     1
-                    RET
-
-
-
-mathX               EQU     register8
-mathY               EQU     register9
-mathSum             EQU     register12
-mathRem             EQU     register12
-mathMask            EQU     register13
-mathSign            EQU     register14
-mathQuot            EQU     register15
-mathShift           EQU     register15
-mathBase            EQU     register10
-mathPow             EQU     register11
-mathResult          EQU     register14
-
-
-absolute            BGE     abs_exit
-                    STW     mathX
-                    LDI     0
-                    SUBW    mathX
-abs_exit            RET
-
-
-rand16bit           LDWI    SYS_Random_34
-                    STW     giga_sysFn
-                    SYS     34
                     RET
 
 
@@ -1451,161 +1007,6 @@ clearVB_loopy       LDI     giga_xres
                     SUBI    giga_yres / 2 + 8
                     BLT     clearVB_loopy
                     POP
-                    RET
-
-
-midiId              EQU     register0
-audioAddr           EQU     register1
-waveType            EQU     register2
-midiNote            EQU     register4                       
-midiCommand         EQU     register5
-midiPtr             EQU     register6
-sndChannel          EQU     register8
-sndFrequency        EQU     register9
-sndVolume           EQU     register10
-sndWaveType         EQU     register11
-musicStream         EQU     register8
-musicNote           EQU     register9
-musicCommand        EQU     register10
-musicPtr            EQU     register11
-
-
-resetAudio          LDI     giga_soundChan1 >>8
-                    ST      audioAddr + 1
-                    LDI     0
-                    ST      waveType                        
-
-resetA_loop         LDI     giga_soundChan1
-                    ST      audioAddr                       
-                    LDW     waveType
-                    DOKE    audioAddr                       
-                    INC     audioAddr
-                    INC     audioAddr
-                    LDI     0
-                    DOKE    audioAddr                       
-                    INC     audioAddr
-                    INC     audioAddr
-                    DOKE    audioAddr                       
-                    INC     audioAddr + 1                   
-                    LD      audioAddr + 1
-                    SUBI    4
-                    BLE     resetA_loop
-                    RET
-
-
-resetMusic          PUSH
-                    CALLI   resetAudio
-                    POP
-                    RET
-
-
-
-midiGetNote         LDWI    giga_notesTable - 22            
-                    STW     musicPtr
-                    LD      musicNote
-                    LSLW
-                    ADDW    musicPtr
-                    STW     musicPtr
-                    LUP     0x00                            
-                    ST      musicNote                       
-                    LDW     musicPtr
-                    LUP     0x01                            
-                    ST      musicNote + 1
-                    LDW     musicNote                       
-                    RET
-
-
-
-
-
-%if VBLANK_INTERRUPT
-waitVBlank          LD      timerJiff + 1                       
-%else
-waitVBlank          LD      giga_frameCount
-%endif
-                    XORW    frameCountPrev
-                    BEQ     waitVBlank
-%if VBLANK_INTERRUPT
-                    LD      timerJiff + 1                       
-%else
-                    LD      giga_frameCount
-%endif
-                    STW     frameCountPrev
-                    RET
-
-
-waitVBlanks         LDW     waitVBlankNum
-                    SUBI    0x01
-                    STW     waitVBlankNum
-                    BGE     waitVB_vblank
-                    RET
-    
-waitVB_vblank       PUSH
-                    CALLI   waitVBlank
-                    POP
-                    BRA     waitVBlanks
-
-
-playMusic           PUSH
-
-playN_process       LDW     musicStream
-                    INC     musicStream
-                    PEEK                                    
-                    ST      musicCommand
-                    ANDI    0xF0
-                    XORI    0x90                            
-                    BNE     playN_endnote
-                    LDW     musicStream
-                    INC     musicStream
-                    PEEK                                    
-                    ST      musicNote
-                    CALLI   midiGetNote                     
-                    CALLI   musicPlayNote
-                    BRA     playN_process
-
-playN_endnote       XORI    0x10                            
-                    BNE     playN_segment
-                    LDI     0
-                    STW     musicNote
-                    CALLI   musicPlayNote         			
-                    BRA     playN_process
-
-playN_segment       XORI    0x50                            
-                    BNE     playN_delay
-                    LDW     musicStream                     
-                    DEEK
-                    STW     musicStream                     
-                    BNE     playN_process                   
-                    POP
-                    RET
-
-playN_delay         LD      musicCommand
-                    ST      giga_soundTimer                 
-                    STW     waitVBlankNum
-                    CALLI   waitVBlanks
-                    BRA     playN_process
-
-
-musicPlayNote       LD      musicCommand
-                    ANDI    0x03                            
-                    ADDI    0x01
-                    ST      musicPtr + 1
-                    LDI     0xFC
-                    ST      musicPtr                        
-                    LDW     musicNote
-                    DOKE    musicPtr                        
-                    RET
-
-
-soundOn             LDWI    SYS_LSRW1_48
-                    STW     giga_sysFn
-                    LDI     0xFC
-                    ST      sndChannel
-                    LD      sndFrequency
-                    SYS     48
-                    ST      sndFrequency                    
-                    LDW     sndFrequency                    
-                    DOKE    sndChannel                      
                     RET
 
 
