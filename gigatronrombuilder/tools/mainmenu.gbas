@@ -4,36 +4,35 @@ _codeRomType_ ROMv5a
 _enableRomCheck_ Off
 _stringWorkArea_ &h77A0
 module "../build/SymbolTable.m"
-const NUM_APPS = 4
-const LIST_X0  = 18
-const LIST_X1  = 92
+const NUM_APPS = 6
+const LIST_X0  = 10
+const LIST_X1  = 88
 const LIST_Y   = 34
 const LIST_DY  = 9
 const CURS_DX  = 8
 const CURS_X   = LIST_X0 - CURS_DX
 const CURS_Y   = LIST_Y
-const dim apps$(NUM_APPS-1) = "Invader", "PucMon_ROMv5a", "tetronis", "bricks"
-dim execs(NUM_APPS-1) = Invader, PucMon_ROMv5a, tetronis, bricks
+const dim apps$(NUM_APPS-1) = "Invader", "PucMon_ROMv5a", "tetronis", "Craps", "VideoPoker", "bricks"
+dim execs(NUM_APPS-1) = Invader, PucMon_ROMv5a, tetronis, Craps, VideoPoker, bricks
 tscroll off
 set BG_COLOUR, 0 : mode 2 : cls
 set FGBG_COLOUR, &h0C00
 y = LIST_Y
 for i=0 to 4
-    if i < NUM_APPS then at LIST_X0, y : print apps$(i)
-    if i + 5 < NUM_APPS then at LIST_X1, y : print apps$(i + 5)
+    if i < NUM_APPS   then at LIST_X0, y : print left$(apps$(i), 11)
+    if i < NUM_APPS-5 then at LIST_X1, y : print left$(apps$(i+5), 11)
     y = y + LIST_DY
 next i
 x = CURS_X : y = CURS_Y
 index = 0
 play music, &h75a0, 3
 gosub resetAudio
-call initStars
+call initFireworks
 repeat
-    wait 1
     gosub get("BUTTON_STATE")
     set FG_COLOUR, &h3F
     at x, y : put 62
-    call drawStars
+    call updateFireworks
 forever
 execApp:
     cls
@@ -95,62 +94,89 @@ beep:
     set SOUND_TIMER, 2
     set BUTTON_STATE, &hEF
 return
-const NUM_STARS = 32
-const STARS_ORG_X = 80
-const STARS_ORG_Y = 60 + 8
-dim star%(NUM_STARS-1) = 0
-dim xPos(NUM_STARS-1) = 0
-dim yPos(NUM_STARS-1) = 0
-dim xVel(NUM_STARS-1) = 0
-dim yVel(NUM_STARS-1) = 0
-proc drawStars
-    local i, xr, yr, xp, yp, ss, pxy
-    for i=0 to NUM_STARS-1
-        xp = xPos(i) : xr = xp : xv = xVel(i)
-        yp = yPos(i) : yr = yp : yv = yVel(i)
-        xp = xp + xv
-        yp = yp + yv
-        if abs(yp) > 59*256
-            call newStar, i
-            xp = xv : yp = yv
-        endif
-        if abs(xp) > 79*256
-            call newStar, i
-            xp = xv : yp = yv
-        endif
-        xPos(i) = xp : yPos(i) = yp
-        pxy.lo = xr.hi + STARS_ORG_X
-        pxy.hi = yr.hi + STARS_ORG_Y
-        if peek(pxy) AND &h80
-            poke pxy, 0
-        endif
-        ss = star(i)
-        pxy.lo = xp.hi + STARS_ORG_X
-        pxy.hi = yp.hi + STARS_ORG_Y
-        if peek(pxy) = 0
-            if ss > 20
-                poke pxy, &h3F OR &h80
-            elseif ss > 10
-                poke pxy, &h2A OR &h80
-            elseif ss > 4
-                poke pxy, &h15 OR &h80
-            endif
-            star(i) = ss + 1
-        endif
+const NUM_FIREWORKS = 48
+const FIREWORKS_ORG_X = 80
+const FIREWORKS_ORG_Y = 60 + 8
+const GRAVITY = 48
+const WIND = 5
+dim xPos(NUM_FIREWORKS-1) = 0
+dim yPos(NUM_FIREWORKS-1) = 0
+dim xVel(NUM_FIREWORKS-1) = 0
+dim yVel(NUM_FIREWORKS-1) = 0
+dim life%(NUM_FIREWORKS-1) = 0
+dim color%(NUM_FIREWORKS-1) = 0
+proc initFireworks
+    local i
+    fireworkTimer = 0
+    for i=0 &to NUM_FIREWORKS-1
+        life(i) = 0
     next i
 endproc
-proc newStar, i
-    star(i) = 0
-    xPos(i) = 0
-    yPos(i) = 0
-    repeat
-        xv = (rnd(0) AND 2047) - 1024 : xVel(i) = xv
-        yv = (rnd(0) AND 2047) - 1024 : yVel(i) = yv
-    until abs(xv) > 200  OR  abs(yv) > 200
+proc updateFireworks
+    local i, lf, xr, yr, xp, yp, pxy, col
+    for i=0 to NUM_FIREWORKS-1
+        lf = life(i)
+        if lf &> 0
+            xp = xPos(i) : xr = xp : xv = xVel(i)
+            yp = yPos(i) : yr = yp : yv = yVel(i)
+            xv = xv + WIND
+            yv = yv + GRAVITY
+            xp = xp + xv
+            yp = yp + yv
+            if abs(yp) > 59*256 OR abs(xp) > 79*256
+                pxy.lo = xr.hi + FIREWORKS_ORG_X
+                pxy.hi = yr.hi + FIREWORKS_ORG_Y
+                poke pxy, 0
+                lf = 0
+                goto nextParticle
+            endif
+            xPos(i) = xp : yPos(i) = yp
+            xVel(i) = xv : yVel(i) = yv
+            pxy.lo = xr.hi + FIREWORKS_ORG_X
+            pxy.hi = yr.hi + FIREWORKS_ORG_Y
+            if &(peek(pxy) AND &h80)
+                poke pxy, 0
+            endif
+            pxy.lo = xp.hi + FIREWORKS_ORG_X
+            pxy.hi = yp.hi + FIREWORKS_ORG_Y
+            col = color(i)
+            if peek(pxy) &&= 0
+                poke pxy, col OR &h80
+            endif
+            lf = lf - 1
+            if lf &&= 0
+                if &(peek(pxy) AND &h80)
+                    poke pxy, 0
+                endif
+            endif
+        endif
+nextParticle:
+        life(i) = lf
+    next i
+    inc fireworkTimer.lo
+    if fireworkTimer &> 20
+        fireworkTimer = 0
+        centerX = (rnd(0) AND 127) - 64
+        centerY = (rnd(0) AND 63) - 48
+        call createFirework, centerX, centerY
+    endif
 endproc
-proc initStars
-    local i
-    for i=0 to NUM_STARS-1
-        call newStar, i
+proc createFirework, centerX, centerY
+    local i, c, count
+    count = 0
+    c = rnd(0) AND &h3f
+    for i=0 to NUM_FIREWORKS-1
+        if life(i) &= 0
+            xv = (rnd(0) AND 1023) - 512
+            yv = (rnd(0) AND 1023) - 768
+            xPos(i).hi = centerX
+            yPos(i).hi = centerY
+            xVel(i) = xv
+            yVel(i) = yv
+            life(i) = 64 + (rnd(0) AND 31)
+            color(i) = c
+            inc count.lo
+            if count &&= 24 then return
+        endif
     next i
 endproc

@@ -86,6 +86,7 @@ printL_char         ST      textLen
                     INC     textStr                             ; next char
                     LDW     textStr             
                     PEEK
+					BEQ		printL_exit
                     CALLI   printChar
 
                     LD      textLen
@@ -111,6 +112,7 @@ printR_char         ST      textLen
                     INC     textStr                             ; next char
                     LDW     textStr             
                     PEEK
+					BEQ		printR_exit
                     CALLI   printChar
 
                     LD      textLen
@@ -134,6 +136,7 @@ printM_char         ST      textLen
                     INC     textStr                             ; next char
                     LDW     textStr             
                     PEEK
+					BEQ		printM_exit
                     CALLI   printChar
 
                     LD      textLen

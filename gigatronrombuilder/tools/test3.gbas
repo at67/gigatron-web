@@ -1,0 +1,120 @@
+_runtimePath_ "runtime"
+_runtimeStart_ &h7FFE
+_codeRomType_ ROMv5a
+
+const NUM_PARTICLES = 32
+const FOUNTAIN_ORG_X = 80
+const FOUNTAIN_ORG_Y = 60 + 8
+const GRAVITY = 64
+const SPAWN_Y = 59
+
+dim xPos(NUM_PARTICLES-1) = 0
+dim yPos(NUM_PARTICLES-1) = 0
+dim xVel(NUM_PARTICLES-1) = 0
+dim yVel(NUM_PARTICLES-1) = 0
+dim age%(NUM_PARTICLES-1) = 0
+
+set BG_COLOUR, 0
+mode 2 : cls
+
+call initFountain
+
+repeat
+    'wait 1
+    call updateFountain
+forever
+
+proc updateFountain
+    local i, xp, yp, color, life
+    
+    for i=0 to NUM_PARTICLES-1
+        life = age(i)
+        if life > 0
+            xp = xPos(i) : xr = xp : xv = xVel(i)
+            yp = yPos(i) : yr = yp : yv = yVel(i)
+            
+            ' Apply gravity
+            yv = yv + GRAVITY
+            
+            ' Update y position
+			xp = xp + xv
+            yp = yp + yv
+            
+			' If particle goes off top, dont kill
+			if yp &&< -59*256
+				if yr &&>= -59*256 then gosub clearParticle
+				goto nextParticle
+			endif
+
+            ' Check if particle goes off screen
+            if yp > 59*256 OR abs(xp) > 79*256
+				gosub clearParticle
+                call respawnParticle, i
+                goto skipParticle
+            endif
+
+            ' Clear old position
+			gosub clearParticle
+				
+            ' Color based on age - blue to white progression
+            if life &&< 10
+                color = &h30    ' dark blue
+            elseif life &< 20
+                color = &h35    ' light blue
+            elseif life &&< 30
+                color = &h3A    ' blue-white
+            else
+                color = &h3F    ' white froth
+            endif
+            
+            ' Draw new position
+            pxy.lo = xp.hi + FOUNTAIN_ORG_X
+            pxy.hi = yp.hi + FOUNTAIN_ORG_Y
+            if &(peek(pxy) = 0)
+                poke pxy, color OR &h80
+            endif
+
+nextParticle:
+            ' Age particle
+            inc life.lo
+            age(i) = life
+
+            xPos(i) = xp : yPos(i) = yp
+            yVel(i) = yv
+        endif
+
+skipParticle:
+    next i
+endproc
+
+clearParticle:
+	pxy.lo = xr.hi + FOUNTAIN_ORG_X
+	pxy.hi = yr.hi + FOUNTAIN_ORG_Y
+	if &(peek(pxy) AND &h80)
+		poke pxy, 0
+	endif
+return
+
+proc respawnParticle, i
+    ' Spawn at bottom center with upward velocity
+	xPos(i).hi = 0
+    yPos(i).hi = SPAWN_Y
+    
+    ' Random spread velocity
+    xVel(i) = (rnd(0) AND 1023) - 500    ' horizontal spread
+    yVel(i) = -((rnd(0) AND 1023) + 1000) ' upward velocity
+    
+    age(i) = 1
+endproc
+
+proc initFountain
+    local i
+    
+	pxy = 0 : xr = pxy : yr = xr
+	
+    ' Initialise all particles
+    for i=0 to NUM_PARTICLES-1
+        call respawnParticle, i
+        age(i) = 1
+    next i
+endproc

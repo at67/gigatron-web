@@ -335,6 +335,10 @@ function showBuildResult(success, title, content, buildResponse = null) {
     contentElement.parentElement.style.overflow = 'auto';
     contentElement.style.overflow = 'visible';
 
+    // RESTORE pre formatting for logging display
+    contentElement.style.whiteSpace = 'pre-wrap';
+    contentElement.style.fontFamily = 'monospace';
+
     // Scroll to bottom of content
     setTimeout(() => {
         const scrollContainer = contentElement.parentElement;
@@ -391,15 +395,26 @@ function showPhase2Modal(apps, buildResponse) {
     const contentElement = document.getElementById('modal-content');
     const buttonContainer = document.querySelector('#build-result-modal .button-container');
 
-    // Override modal structure for Phase 2 - remove scrollable design
+    // Override modal structure for Phase 2 - KEEP ORIGINAL SIZE
     const modalInner = modal.querySelector('div');
-    modalInner.style.height = 'auto';
+    modalInner.style.height = 'calc(100% - 20px)';
     modalInner.style.maxHeight = 'none';
-    contentElement.parentElement.style.flex = 'none';
+    contentElement.parentElement.style.flex = '1';
     contentElement.parentElement.style.overflow = 'visible';
     contentElement.style.overflow = 'visible';
+
+    // FIX: Remove pre tag formatting that causes spacing issues
+    contentElement.style.whiteSpace = 'normal';
+    contentElement.style.fontFamily = 'inherit';
+
+    // Store original styles to restore later
+    contentElement.setAttribute('data-original-whitespace', 'pre-wrap');
+    contentElement.setAttribute('data-original-fontfamily', 'monospace');
+
     titleElement.textContent = 'Mainmenu Editor';
-    contentElement.innerHTML = createMainmenuPreviewHTML(apps);
+
+    // Create two-panel layout
+    contentElement.innerHTML = createPhase2LayoutHTML(apps);
 
     // Phase 2 buttons
     buttonContainer.innerHTML = `
@@ -408,11 +423,72 @@ function showPhase2Modal(apps, buildResponse) {
             <button id="modal-continue-btn" style="width: 48%; padding: 12px; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; background: #28a745; color: white;">Build ROM</button>
         </div>`;
 
-    // Event listeners
+    // Add event listeners for module selection
+    setupModuleEventListeners();
+
+    // Event listeners for buttons
     document.getElementById('modal-cancel-btn').addEventListener('click', hideBuildResult);
     document.getElementById('modal-continue-btn').addEventListener('click', () => buildROM(apps, buildResponse));
 
     modal.style.display = 'block';
+}
+
+function createPhase2LayoutHTML(apps) {
+    return `
+        <div style="display: flex; gap: 20px; width: 100%; height: 360px;">
+            <!-- Left Panel: Module Selection -->
+            <div style="width: 280px; background: #1a1a1a; border: 1px solid #444; border-radius: 4px; display: flex; flex-direction: column;">
+                <div style="padding: 8px 15px; border-bottom: 1px solid #444; color: #e0e0e0; font-weight: bold; flex-shrink: 0;">
+                    Effects & Modules
+                </div>
+                <div id="module-selection-content" style="padding: 15px; flex: 1; overflow-y: auto; display: block;">
+
+                    <!-- Audio Effects -->
+                    <div style="margin-bottom: 15px;">
+                        <h4 style="margin: 0 0 8px 0; color: #e0e0e0; font-size: 14px;">Audio:</h4>
+                        <label style="display: block; margin-bottom: 5px; color: #e0e0e0; cursor: pointer;">
+                            <input type="checkbox" id="enable-music" checked style="margin-right: 8px;"> Music
+                        </label>
+                        <label style="display: block; margin-bottom: 5px; color: #e0e0e0; cursor: pointer;">
+                            <input type="checkbox" id="enable-beep" checked style="margin-right: 8px;"> Button Beeps
+                        </label>
+                    </div>
+
+                    <!-- Visual Effects -->
+                    <div style="margin-bottom: 15px;">
+                        <h4 style="margin: 0 0 8px 0; color: #e0e0e0; font-size: 14px;">Visual Effects:</h4>
+                        <label style="display: block; margin-bottom: 5px; color: #e0e0e0; cursor: pointer;">
+                            <input type="radio" name="graphics" value="none" checked style="margin-right: 8px;"> None
+                        </label>
+                        <label style="display: block; margin-bottom: 5px; color: #e0e0e0; cursor: pointer;">
+                            <input type="radio" name="graphics" value="stars" style="margin-right: 8px;"> Stars
+                        </label>
+                        <label style="display: block; margin-bottom: 5px; color: #e0e0e0; cursor: pointer;">
+                            <input type="radio" name="graphics" value="fireworks" style="margin-right: 8px;"> Fireworks
+                        </label>
+                        <label style="display: block; margin-bottom: 5px; color: #e0e0e0; cursor: pointer;">
+                            <input type="radio" name="graphics" value="starfield" style="margin-right: 8px;"> Starfield
+                        </label>
+                        <label style="display: block; margin-bottom: 5px; color: #e0e0e0; cursor: pointer;">
+                            <input type="radio" name="graphics" value="fountain" style="margin-right: 8px;"> Fountain
+                        </label>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Right Panel: Gigatron Preview -->
+            <div style="flex: 1;">
+                ${createMainmenuPreviewHTML(apps)}
+            </div>
+        </div>
+    `;
+}
+
+function setupModuleEventListeners() {
+    const musicCheckbox = document.getElementById('enable-music');
+    const beepCheckbox = document.getElementById('enable-beep');
+    const graphicsRadios = document.querySelectorAll('input[name="graphics"]');
 }
 
 function createMainmenuPreviewHTML(apps) {
@@ -442,19 +518,34 @@ function buildROM(apps, buildResponse) {
     sendMainmenuBuildRequest(romVersion, selectedFiles, manifest, gbasSource);
 }
 
+function getUISettings() {
+    const musicEnabled = document.getElementById('enable-music')?.checked || false;
+    const beepEnabled = document.getElementById('enable-beep')?.checked || false;
+    const selectedGraphics = document.querySelector('input[name="graphics"]:checked')?.value || 'none';
+
+    return {
+        enableMusic: musicEnabled,
+        enableBeep: beepEnabled,
+        enableStars: selectedGraphics === 'stars',
+        enableStarfield: selectedGraphics === 'starfield',
+        enableFireworks: selectedGraphics === 'fireworks',
+        enableFountain: selectedGraphics === 'fountain'
+    };
+}
+
 function generateGbasSource(apps) {
-    return generateMainmenuCode(apps, {
-           enableMusic: true,
-           enableBeep: true,
-           enableStars: true
-    });
+    const settings = getUISettings();
+    return generateMainmenuCode(apps, settings);
 }
 
 function generateMainmenuCode(apps, options = {}) {
     const {
         enableMusic = false,
         enableBeep = false,
-        enableStars = false
+        enableStars = false,
+        enableStarfield = false,
+        enableFireworks = false,
+        enableFountain = false
     } = options;
 
     const numApps = apps.length;
@@ -462,12 +553,15 @@ function generateMainmenuCode(apps, options = {}) {
     const appSymbols = apps.map(app => app.alias || app.filename.replace(/\.(gt1|gcl)$/i, ''));
 
     let code = generateBaseCode(numApps, appNames, appSymbols);
-    code += generateMainLoop(enableStars, enableMusic);
+    code += generateMainLoop(enableMusic, enableStars, enableStarfield, enableFireworks, enableFountain);
     code += generateEventHandlers(enableBeep);
 
     if (enableMusic) code += generateMusicModule();
     if (enableBeep) code += generateBeepModule();
     if (enableStars) code += generateStarsModule();
+    else if (enableStarfield) code += generateStarfieldModule();
+    else if (enableFireworks) code += generateFireworksModule();
+    else if (enableFountain) code += generateFountainModule();
 
     return code;
 }
@@ -480,8 +574,8 @@ function generateBaseCode(numApps, appNames, appSymbols) {
            '_stringWorkArea_ &h77A0\n' +
            'module "../build/SymbolTable.m"\n' +
            'const NUM_APPS = ' + numApps + '\n' +
-           'const LIST_X0  = 18\n' +
-           'const LIST_X1  = 92\n' +
+           'const LIST_X0  = 10\n' +
+           'const LIST_X1  = 88\n' +
            'const LIST_Y   = 34\n' +
            'const LIST_DY  = 9\n' +
            'const CURS_DX  = 8\n' +
@@ -494,8 +588,8 @@ function generateBaseCode(numApps, appNames, appSymbols) {
            'set FGBG_COLOUR, &h0C00\n' +
            'y = LIST_Y\n' +
            'for i=0 to 4\n' +
-           '    if i < NUM_APPS then at LIST_X0, y : print apps$(i)\n' +
-           '    if i + 5 < NUM_APPS then at LIST_X1, y : print apps$(i + 5)\n' +
+           '    if i < NUM_APPS   then at LIST_X0, y : print left$(apps$(i), 11)\n' +
+           '    if i < NUM_APPS-5 then at LIST_X1, y : print left$(apps$(i+5), 11)\n' +
            '    y = y + LIST_DY\n' +
            'next i\n' +
            'x = CURS_X : y = CURS_Y\n' +
@@ -531,7 +625,13 @@ function generateStarsModule() {
            'dim yPos(NUM_STARS-1) = 0\n' +
            'dim xVel(NUM_STARS-1) = 0\n' +
            'dim yVel(NUM_STARS-1) = 0\n' +
-           'proc drawStars\n' +
+           'proc initStars\n' +
+           '    local i\n' +
+           '    for i=0 to NUM_STARS-1\n' +
+           '        call newStar, i\n' +
+           '    next i\n' +
+           'endproc\n' +
+           'proc updateStars\n' +
            '    local i, xr, yr, xp, yp, ss, pxy\n' +
            '    for i=0 to NUM_STARS-1\n' +
            '        xp = xPos(i) : xr = xp : xv = xVel(i)\n' +
@@ -575,16 +675,246 @@ function generateStarsModule() {
            '        xv = (rnd(0) AND 2047) - 1024 : xVel(i) = xv\n' +
            '        yv = (rnd(0) AND 2047) - 1024 : yVel(i) = yv\n' +
            '    until abs(xv) > 200  OR  abs(yv) > 200\n' +
-           'endproc\n' +
-           'proc initStars\n' +
-           '    local i\n' +
+           'endproc\n';
+}
+
+function generateStarfieldModule() {
+    return 'const NUM_STARS = 64\n' +
+           'const STARFIELD_ORG_X = 80\n' +
+           'const STARFIELD_ORG_Y = 60 + 8\n' +
+           'dim xPos(NUM_STARS-1) = 0\n' +
+           'dim yPos(NUM_STARS-1) = 0\n' +
+           'dim speed%(NUM_STARS-1) = 0\n' +
+           'dim brightness%(NUM_STARS-1) = 0\n' +
+           'dim twinkle%(NUM_STARS-1) = 0\n' +
+           'proc initStarfield\n' +
+           '    local i, layer\n' +
            '    for i=0 to NUM_STARS-1\n' +
-           '        call newStar, i\n' +
+           '        xPos(i).hi = rnd(160) - 80\n' +
+           '        xPos(i).lo = 0\n' +
+           '        yPos(i).hi = rnd(120) - 60\n' +
+           '        yPos(i).lo = 0\n' +
+           '        layer = i AND 3\n' +
+           '        if layer = 0\n' +
+           '            speed(i) = (rnd(0) AND 15) + 48\n' +
+           '            brightness(i) = &h15\n' +
+           '        elseif layer = 1\n' +
+           '            speed(i) = (rnd(0) AND 31) + 64\n' +
+           '            brightness(i) = &h2A\n' +
+           '        elseif layer = 2\n' +
+           '            speed(i) = (rnd(0) AND 63) + 128\n' +
+           '            brightness(i) = &h3F\n' +
+           '        else\n' +
+           '            speed(i) = (rnd(0) AND 63) + 192\n' +
+           '            brightness(i) = &h3F\n' +
+           '        endif\n' +
+           '        twinkle(i) = rnd(0) AND 63\n' +
+           '    next i\n' +
+           'endproc\n' +
+           'proc updateStarfield\n' +
+           '    local i, xp, yp, spd, brt, twk, pxy, color\n' +
+           '    for i=0 to NUM_STARS-1\n' +
+           '        xp = xPos(i) : yp = yPos(i)\n' +
+           '        spd = speed(i) : brt = brightness(i) : twk = twinkle(i)\n' +
+           '        pxy.lo = xp.hi + STARFIELD_ORG_X\n' +
+           '        pxy.hi = yp.hi + STARFIELD_ORG_Y\n' +
+           '        if &(peek(pxy) AND &h80)\n' +
+           '            poke pxy, 0\n' +
+           '        endif\n' +
+           '        xp = xp + spd\n' +
+           '        if abs(xp) &> 79*256\n' +
+           '            xp.hi = -79\n' +
+           '            yp.hi = rnd(120) - 60\n' +
+           '            yPos(i) = yp\n' +
+           '        endif\n' +
+           '        xPos(i) = xp\n' +
+           '        inc twk.lo\n' +
+           '        if twk &&> 63 then twk = 0\n' +
+           '        twinkle(i) = twk\n' +
+           '        if twk &< 21\n' +
+           '            color = &h15\n' +
+           '        elseif twk &&< 42\n' +
+           '            color = &h2A\n' +
+           '        else\n' +
+           '            color = &h3F\n' +
+           '        endif\n' +
+           '        pxy.lo = xp.hi + STARFIELD_ORG_X\n' +
+           '        pxy.hi = yp.hi + STARFIELD_ORG_Y\n' +
+           '        if &(peek(pxy) = 0)\n' +
+           '            poke pxy, color OR &h80\n' +
+           '        endif\n' +
            '    next i\n' +
            'endproc\n';
 }
 
-function generateMainLoop(enableStars, enableMusic) {
+function generateFireworksModule() {
+    return 'const NUM_FIREWORKS = 48\n' +
+           'const FIREWORKS_ORG_X = 80\n' +
+           'const FIREWORKS_ORG_Y = 60 + 8\n' +
+           'const GRAVITY = 48\n' +
+           'const WIND = 5\n' +
+           'dim xPos(NUM_FIREWORKS-1) = 0\n' +
+           'dim yPos(NUM_FIREWORKS-1) = 0\n' +
+           'dim xVel(NUM_FIREWORKS-1) = 0\n' +
+           'dim yVel(NUM_FIREWORKS-1) = 0\n' +
+           'dim life%(NUM_FIREWORKS-1) = 0\n' +
+           'dim color%(NUM_FIREWORKS-1) = 0\n' +
+           'proc initFireworks\n' +
+           '    local i\n' +
+           '    fireworkTimer = 0\n' +
+           '    for i=0 &to NUM_FIREWORKS-1\n' +
+           '        life(i) = 0\n' +
+           '    next i\n' +
+           'endproc\n' +
+           'proc updateFireworks\n' +
+           '    local i, lf, xr, yr, xp, yp, pxy, col\n' +
+           '    for i=0 to NUM_FIREWORKS-1\n' +
+           '        lf = life(i)\n' +
+           '        if lf &> 0\n' +
+           '            xp = xPos(i) : xr = xp : xv = xVel(i)\n' +
+           '            yp = yPos(i) : yr = yp : yv = yVel(i)\n' +
+           '            xv = xv + WIND\n' +
+           '            yv = yv + GRAVITY\n' +
+           '            xp = xp + xv\n' +
+           '            yp = yp + yv\n' +
+           '            if abs(yp) > 59*256 OR abs(xp) > 79*256\n' +
+           '                pxy.lo = xr.hi + FIREWORKS_ORG_X\n' +
+           '                pxy.hi = yr.hi + FIREWORKS_ORG_Y\n' +
+           '                poke pxy, 0\n' +
+           '                lf = 0\n' +
+           '                goto nextParticle\n' +
+           '            endif\n' +
+           '            xPos(i) = xp : yPos(i) = yp\n' +
+           '            xVel(i) = xv : yVel(i) = yv\n' +
+           '            pxy.lo = xr.hi + FIREWORKS_ORG_X\n' +
+           '            pxy.hi = yr.hi + FIREWORKS_ORG_Y\n' +
+           '            if &(peek(pxy) AND &h80)\n' +
+           '                poke pxy, 0\n' +
+           '            endif\n' +
+           '            pxy.lo = xp.hi + FIREWORKS_ORG_X\n' +
+           '            pxy.hi = yp.hi + FIREWORKS_ORG_Y\n' +
+           '            col = color(i)\n' +
+           '            if peek(pxy) &&= 0\n' +
+           '                poke pxy, col OR &h80\n' +
+           '            endif\n' +
+           '            lf = lf - 1\n' +
+           '            if lf &&= 0\n' +
+           '                if &(peek(pxy) AND &h80)\n' +
+           '                    poke pxy, 0\n' +
+           '                endif\n' +
+           '            endif\n' +
+           '        endif\n' +
+           'nextParticle:\n' +
+           '        life(i) = lf\n' +
+           '    next i\n' +
+           '    inc fireworkTimer.lo\n' +
+           '    if fireworkTimer &> 20\n' +
+           '        fireworkTimer = 0\n' +
+           '        centerX = (rnd(0) AND 127) - 64\n' +
+           '        centerY = (rnd(0) AND 63) - 48\n' +
+           '        call createFirework, centerX, centerY\n' +
+           '    endif\n' +
+           'endproc\n' +
+           'proc createFirework, centerX, centerY\n' +
+           '    local i, c, count\n' +
+           '    count = 0\n' +
+           '    c = rnd(0) AND &h3f\n' +
+           '    for i=0 to NUM_FIREWORKS-1\n' +
+           '        if life(i) &= 0\n' +
+           '            xv = (rnd(0) AND 1023) - 512\n' +
+           '            yv = (rnd(0) AND 1023) - 768\n' +
+           '            xPos(i).hi = centerX\n' +
+           '            yPos(i).hi = centerY\n' +
+           '            xVel(i) = xv\n' +
+           '            yVel(i) = yv\n' +
+           '            life(i) = 64 + (rnd(0) AND 31)\n' +
+           '            color(i) = c\n' +
+           '            inc count.lo\n' +
+           '            if count &&= 24 then return\n' +
+           '        endif\n' +
+           '    next i\n' +
+           'endproc\n';
+}
+
+function generateFountainModule() {
+    return 'const NUM_PARTICLES = 40\n' +
+           'const FOUNTAIN_ORG_X = 80\n' +
+           'const FOUNTAIN_ORG_Y = 60 + 8\n' +
+           'const GRAVITY = 64\n' +
+           'const SPAWN_Y = 59\n' +
+           'dim xPos(NUM_PARTICLES-1) = 0\n' +
+           'dim yPos(NUM_PARTICLES-1) = 0\n' +
+           'dim xVel(NUM_PARTICLES-1) = 0\n' +
+           'dim yVel(NUM_PARTICLES-1) = 0\n' +
+           'dim age%(NUM_PARTICLES-1) = 0\n' +
+           'proc initFountain\n' +
+           '    local i\n' +
+           '    pxy = 0 : xr = pxy : yr = xr\n' +
+           '    for i=0 to NUM_PARTICLES-1\n' +
+           '        call respawnParticle, i\n' +
+           '        age(i) = 1\n' +
+           '    next i\n' +
+           'endproc\n' +
+           'proc updateFountain\n' +
+           '    local i, xp, yp, color, life\n' +
+           '    for i=0 to NUM_PARTICLES-1\n' +
+           '        life = age(i)\n' +
+           '        if life > 0\n' +
+           '            xp = xPos(i) : xr = xp : xv = xVel(i)\n' +
+           '            yp = yPos(i) : yr = yp : yv = yVel(i)\n' +
+           '            yv = yv + GRAVITY\n' +
+           '            xp = xp + xv\n' +
+           '            yp = yp + yv\n' +
+           '            if yp &&< -59*256\n' +
+           '                if yr &&>= -59*256 then gosub clearParticle\n' +
+           '                goto nextParticle\n' +
+           '            endif\n' +
+           '            if yp > 59*256 OR abs(xp) > 79*256\n' +
+           '                gosub clearParticle\n' +
+           '                call respawnParticle, i\n' +
+           '                goto skipParticle\n' +
+           '            endif\n' +
+           '            gosub clearParticle\n' +
+           '            if life &&< 10\n' +
+           '                color = &h30\n' +
+           '            elseif life &< 20\n' +
+           '                color = &h35\n' +
+           '            elseif life &&< 30\n' +
+           '                color = &h3A\n' +
+           '            else\n' +
+           '                color = &h3F\n' +
+           '            endif\n' +
+           '            pxy.lo = xp.hi + FOUNTAIN_ORG_X\n' +
+           '            pxy.hi = yp.hi + FOUNTAIN_ORG_Y\n' +
+           '            if &(peek(pxy) = 0)\n' +
+           '                poke pxy, color OR &h80\n' +
+           '            endif\n' +
+           'nextParticle:\n' +
+           '            inc life.lo\n' +
+           '            age(i) = life\n' +
+           '            xPos(i) = xp : yPos(i) = yp\n' +
+           '            yVel(i) = yv\n' +
+           '        endif\n' +
+           'skipParticle:\n' +
+           '    next i\n' +
+           'endproc\n' +
+           'clearParticle:\n' +
+           '    pxy.lo = xr.hi + FOUNTAIN_ORG_X\n' +
+           '    pxy.hi = yr.hi + FOUNTAIN_ORG_Y\n' +
+           '    if &(peek(pxy) AND &h80)\n' +
+           '        poke pxy, 0\n' +
+           '    endif\n' +
+           'return\n' +
+           'proc respawnParticle, i\n' +
+           '    xPos(i).hi = 0\n' +
+           '    yPos(i).hi = SPAWN_Y\n' +
+           '    xVel(i) = (rnd(0) AND 1023) - 500\n' +
+           '    yVel(i) = -((rnd(0) AND 1023) + 1000)\n' +
+           '    age(i) = 1\n' +
+           'endproc\n';
+}
+
+function generateMainLoop(enableMusic, enableStars, enableStarfield, enableFireworks, enableFountain) {
     let loop = '';
 
     // Only add initialization if modules are enabled
@@ -595,15 +925,32 @@ function generateMainLoop(enableStars, enableMusic) {
     if (enableStars) {
         loop += 'call initStars\n';
     }
+    else if (enableStarfield) {
+        loop += 'call initStarfield\n';
+    }
+    else if (enableFireworks) {
+        loop += 'call initFireworks\n';
+    }
+    else if (enableFountain) {
+        loop += 'call initFountain\n';
+    }
 
     loop += 'repeat\n' +
-            '    wait 1\n' +
             '    gosub get("BUTTON_STATE")\n' +
             '    set FG_COLOUR, &h3F\n' +
             '    at x, y : put 62\n';
 
     if (enableStars) {
-        loop += '    call drawStars\n';
+        loop += '    call updateStars\n';
+    }
+    else if (enableStarfield) {
+        loop += '    call updateStarfield\n';
+    }
+    else if (enableFireworks) {
+        loop += '    call updateFireworks\n';
+    }
+    else if (enableFountain) {
+        loop += '    call updateFountain\n';
     }
 
     loop += 'forever\n';

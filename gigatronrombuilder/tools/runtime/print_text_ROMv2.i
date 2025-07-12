@@ -93,6 +93,7 @@ printL_char         ST      textLen
                     INC     textStr                         ; next char
                     LDW     textStr             
                     PEEK
+					BEQ		printL_exit
                     ST      textChr
                     LDWI    printChar
                     CALL    giga_vAC
@@ -121,6 +122,7 @@ printR_char         ST      textLen
                     INC     textStr                         ; next char
                     LDW     textStr             
                     PEEK
+					BEQ		printR_exit
                     ST      textChr
                     LDWI    printChar
                     CALL    giga_vAC
@@ -147,6 +149,7 @@ printM_char         ST      textLen
                     INC     textStr                         ; next char
                     LDW     textStr             
                     PEEK
+					BEQ		printM_exit
                     ST      textChr
                     LDWI    printChar
                     CALL    giga_vAC

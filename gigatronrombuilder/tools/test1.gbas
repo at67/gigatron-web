@@ -1,0 +1,128 @@
+_runtimePath_ "runtime"
+_runtimeStart_ &h7FFE
+_codeRomType_ ROMv5a
+
+const NUM_FIREWORKS = 48
+const FIREWORKS_ORG_X = 80
+const FIREWORKS_ORG_Y = 60 + 8
+const GRAVITY = 48
+const WIND = 5
+
+dim xPos(NUM_FIREWORKS-1) = 0
+dim yPos(NUM_FIREWORKS-1) = 0
+dim xVel(NUM_FIREWORKS-1) = 0
+dim yVel(NUM_FIREWORKS-1) = 0
+dim life%(NUM_FIREWORKS-1) = 0
+dim color%(NUM_FIREWORKS-1) = 0
+
+set FGBG_COLOUR, &h3C00
+mode 2 : cls
+t = 0
+
+call initFireworks
+
+repeat
+	'wait
+	
+    call updateFireworks
+forever
+
+proc updateFireworks
+    local i, lf, xr, yr, xp, yp, pxy, col
+    
+    for i=0 to NUM_FIREWORKS-1
+		lf = life(i)
+        if lf &> 0
+            xp = xPos(i) : xr = xp : xv = xVel(i)
+            yp = yPos(i) : yr = yp : yv = yVel(i)
+            
+            ' Apply physics
+            xv = xv + WIND
+            yv = yv + GRAVITY
+            
+            xp = xp + xv
+            yp = yp + yv
+            
+            ' Check bounds and kill particle if out of range
+            if abs(yp) > 59*256 OR abs(xp) > 79*256
+				pxy.lo = xr.hi + FIREWORKS_ORG_X
+				pxy.hi = yr.hi + FIREWORKS_ORG_Y
+				poke pxy, 0			
+			
+                lf = 0
+                goto nextParticle
+            endif
+            
+            xPos(i) = xp : yPos(i) = yp
+            xVel(i) = xv : yVel(i) = yv
+            
+            ' Clear old position
+            pxy.lo = xr.hi + FIREWORKS_ORG_X
+            pxy.hi = yr.hi + FIREWORKS_ORG_Y
+            if &(peek(pxy) AND &h80)
+                poke pxy, 0
+            endif
+            
+            ' Draw new position
+            pxy.lo = xp.hi + FIREWORKS_ORG_X
+            pxy.hi = yp.hi + FIREWORKS_ORG_Y
+            col = color(i)
+            if peek(pxy) &&= 0
+                poke pxy, col OR &h80
+            endif
+            
+            ' Age particle
+            lf = lf - 1
+			if lf &&= 0
+			    if &(peek(pxy) AND &h80)
+					poke pxy, 0
+				endif
+			endif
+        endif
+        
+nextParticle:
+		life(i) = lf
+    next i
+
+    inc t.lo
+    if t &&> 15
+        t = 0
+        centerX = (rnd(0) AND 127) - 64
+        centerY = (rnd(0) AND 63) - 48
+		call createFirework, centerX, centerY
+    endif
+endproc
+
+proc createFirework, centerX, centerY
+    local i, c, count
+    
+    ' Find dead particles and spawn new firework burst    
+    count = 0
+	c = rnd(0) AND &h3f
+    for i=0 to NUM_FIREWORKS-1
+        if life(i) &= 0
+            ' Create particle
+            xv = (rnd(0) AND 1023) - 512
+            yv = (rnd(0) AND 1023) - 768
+            
+            xPos(i).hi = centerX
+            yPos(i).hi = centerY
+            xVel(i) = xv
+            yVel(i) = yv
+            life(i) = 64 + (rnd(0) AND 31)
+            color(i) = c
+            
+            inc count.lo
+            if count &&= 16 then return
+        endif
+    next i
+endproc
+
+proc initFireworks
+    local i
+    
+    ' Initialize all particles as dead
+    for i=0 &to NUM_FIREWORKS-1
+        life(i) = 0
+    next i
+endproc
