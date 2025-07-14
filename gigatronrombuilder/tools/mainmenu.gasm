@@ -58,9 +58,7 @@ _251                              EQU                          0x0327
 _247                              EQU                          0x0373
 _resetAudio                       EQU                          0x03bd
 _beep                             EQU                          0x03c7
-_nextParticle                     EQU                          0x0484
-_skipParticle                     EQU                          0x04aa
-_clearParticle                    EQU                          0x04df
+_nextParticle                     EQU                          0x04cd
 _next_0x0000                      EQU                          0x0236
 _if_0x0001                        EQU                          0x0255
 _if_0x0002                        EQU                          0x0277
@@ -73,24 +71,22 @@ _if_0x0008                        EQU                          0x0371
 _endif_0x0009                     EQU                          0x0390
 _if_0x000a                        EQU                          0x03a8
 _if_0x000b                        EQU                          0x03bb
-_initFireworks                    EQU                          0x03db
-_next_0x000c                      EQU                          0x03e2
-_updateFireworks                  EQU                          0x03f1
+_initSnow                         EQU                          0x03db
+_next_0x000c                      EQU                          0x03e3
+_updateSnow                       EQU                          0x03f3
 _next_0x000d                      EQU                          0x0400
-_if_0x0010                        EQU                          0x0446
-_endif_0x000f                     EQU                          0x0449
-_endif_0x0011                     EQU                          0x045a
-_endif_0x0012                     EQU                          0x046e
-_endif_0x0013                     EQU                          0x0484
-_endif_0x0015                     EQU                          0x0498
-_endif_0x0014                     EQU                          0x0498
-_endif_0x000e                     EQU                          0x04aa
-_endif_0x0016                     EQU                          0x04dd
-_endif_0x0017                     EQU                          0x04f3
-_createFirework                   EQU                          0x04f5
-_next_0x0018                      EQU                          0x050e
-_if_0x001a                        EQU                          0x08ee
-_endif_0x0019                     EQU                          0x08ee
+_endif_0x000e                     EQU                          0x0425
+_if_0x0010                        EQU                          0x043b
+_endif_0x000f                     EQU                          0x0444
+_endif_0x0011                     EQU                          0x045d
+_else_0x0014                      EQU                          0x048e
+_endif_0x0015                     EQU                          0x04a1
+_endif_0x0013                     EQU                          0x04a1
+_endif_0x0012                     EQU                          0x04a1
+_endif_0x0016                     EQU                          0x04b5
+_respawnSnowParticle              EQU                          0x04db
+_else_0x0017                      EQU                          0x0511
+_endif_0x0018                     EQU                          0x0515
 _page_0x0300                      EQU                          0x0300
 _page_0x0500                      EQU                          0x0500
 _page_0x08a0                      EQU                          0x08a0
@@ -499,11 +495,21 @@ _buttonSelect                     EQU                          0x0020
 _buttonB                          EQU                          0x0040
 _buttonA                          EQU                          0x0080
 _Reset                            EQU                          0x500e
-_Sprites_ROMvX0                   EQU                          0x5065
-_MAD_ROMvX0_64k                   EQU                          0xb14e
-_vblank_ROMvX0                    EQU                          0xc82f
-_sys_ReadRomDir                   EQU                          0xe70a
-_NUM_APPS                         EQU                          0x0003
+_CirclesF_ROMvX0                  EQU                          0x5065
+_Fill_ROMvX0                      EQU                          0x51be
+_Flood_ROMvX0                     EQU                          0x5493
+_Fonts_ROMvX0                     EQU                          0x5aad
+_Lines_ROMvX0                     EQU                          0x85a9
+_Pixels_ROMvX0                    EQU                          0x894e
+_Points_ROMvX0                    EQU                          0x8cc5
+_Polys_ROMvX0                     EQU                          0x9043
+_RectsF_ROMvX0                    EQU                          0x947e
+_Rects_ROMvX0                     EQU                          0x95d8
+_vblank_ROMvX0                    EQU                          0x9757
+_arecibo_ROMvX0                   EQU                          0xb640
+_Main                             EQU                          0xb861
+_sys_ReadRomDir                   EQU                          0xbe73
+_NUM_APPS                         EQU                          0x000c
 _LIST_X0                          EQU                          0x000a
 _LIST_X1                          EQU                          0x0058
 _LIST_Y                           EQU                          0x0022
@@ -511,63 +517,74 @@ _LIST_DY                          EQU                          0x0009
 _CURS_DX                          EQU                          0x0008
 _CURS_X                           EQU                          0x0002
 _CURS_Y                           EQU                          0x0022
-_NUM_FIREWORKS                    EQU                          0x003c
-_FIREWORKS_ORG_X                  EQU                          0x0050
-_FIREWORKS_ORG_Y                  EQU                          0x0044
-_GRAVITY                          EQU                          0x0028
+_NUM_SNOW_PARTICLES               EQU                          0x0050
+_SNOW_ORG_X                       EQU                          0x0050
+_SNOW_ORG_Y                       EQU                          0x0044
+_GROUND_Y                         EQU                          0x003b
 
 ; Global Variables
 _y                                EQU                          0x0030
 _i                                EQU                          0x0032
 _x                                EQU                          0x0034
 _index                            EQU                          0x0036
-_fireworkTimer                    EQU                          0x0038
-_xr                               EQU                          0x003a
-_xv                               EQU                          0x003c
-_yr                               EQU                          0x003e
-_yv                               EQU                          0x0040
-_centerX                          EQU                          0x0042
-_centerY                          EQU                          0x0044
-_pxy                              EQU                          0x0046
+_snowTimer                        EQU                          0x0038
+_rxy                              EQU                          0x003a
+_pixel                            EQU                          0x003c
 
 ; Local Variables
-_initFireworks_i                  EQU                          0x00c4
-_updateFireworks_i                EQU                          0x00c4
-_updateFireworks_lf               EQU                          0x00c6
-_updateFireworks_xp               EQU                          0x00c8
-_updateFireworks_yp               EQU                          0x00ca
-_updateFireworks_pxy              EQU                          0x00cc
-_createFirework_centerX           EQU                          0x00c4
-_createFirework_centerY           EQU                          0x00c6
-_createFirework_i                 EQU                          0x00c8
-_createFirework_c                 EQU                          0x00ca
-_createFirework_count             EQU                          0x00cc
+_initSnow_i                       EQU                          0x00c4
+_updateSnow_i                     EQU                          0x00c4
+_updateSnow_xp                    EQU                          0x00c6
+_updateSnow_yp                    EQU                          0x00c8
+_updateSnow_yv                    EQU                          0x00ca
+_updateSnow_col                   EQU                          0x00cc
+_updateSnow_pxy                   EQU                          0x00ce
+_respawnSnowParticle_i            EQU                          0x00c4
+_respawnSnowParticle_y            EQU                          0x00c6
 
 ; Arrays
-_execs                            EQU                          0x7fc4
-_execs                            DW                           0x5065 0xb14e 0xc82f 
-_xPos                             EQU                          0x0688
-_xPos                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
-_yPos                             EQU                          0x0610
-_yPos                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
-_xVel                             EQU                          0x0598
-_xVel                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
+_execs                            EQU                          0x7dd0
+_execs                            DW                           0x5065 0x51be 0x5493 0x5aad 0x85a9 0x894e 0x8cc5 0x9043 0x947e 0x95d8 0x9757 0xb640 
+_snowColour                       EQU                          0x7fa5
+_snowColour                       DB                           0x95 0xaa 0xbf 0xbf 
+_jitterOffset                     EQU                          0x7dc0
+_jitterOffset                     DW                           0x0000 0x0001 0x0000 0xffff 0x0000 0xffff 0x0000 0x0001 
+_xPos                             EQU                          0x0660
+_xPos                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
+_yPos                             EQU                          0x05c0
+_yPos                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
 _yVel                             EQU                          0x0520
-_yVel                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
-_life                             EQU                          0x7ec4
-_life                             DB                           0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 
-_colour                           EQU                          0x7dc4
-_colour                           DB                           0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 
+_yVel                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
+_colour                           EQU                          0x7cb0
+_colour                           DB                           0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 
 
 ; Strings
-_apps$                            EQU                          0x7fca
-_apps$                            DW                           0x7ff0 0x7fe0 0x7fd1 
-_apps$_0x7ff0                     EQU                          0x7ff0
-_apps$_0x7ff0                     DB                           14 'Sprites_ROMvX0' 0
-_apps$_0x7fe0                     EQU                          0x7fe0
-_apps$_0x7fe0                     DB                           14 'MAD_ROMvX0_64k' 0
-_apps$_0x7fd1                     EQU                          0x7fd1
-_apps$_0x7fd1                     DB                           13 'vblank_ROMvX0' 0
+_apps$                            EQU                          0x7de8
+_apps$                            DW                           0x7fef 0x7fe2 0x7fd4 0x7fc6 0x7fb8 0x7fa9 0x7ef1 0x7ee3 0x7ed4 0x7ec6 0x7eb7 0x7ea7 
+_apps$_0x7fef                     EQU                          0x7fef
+_apps$_0x7fef                     DB                           15 'CirclesF_ROMvX0' 0
+_apps$_0x7fe2                     EQU                          0x7fe2
+_apps$_0x7fe2                     DB                           11 'Fill_ROMvX0' 0
+_apps$_0x7fd4                     EQU                          0x7fd4
+_apps$_0x7fd4                     DB                           12 'Flood_ROMvX0' 0
+_apps$_0x7fc6                     EQU                          0x7fc6
+_apps$_0x7fc6                     DB                           12 'Fonts_ROMvX0' 0
+_apps$_0x7fb8                     EQU                          0x7fb8
+_apps$_0x7fb8                     DB                           12 'Lines_ROMvX0' 0
+_apps$_0x7fa9                     EQU                          0x7fa9
+_apps$_0x7fa9                     DB                           13 'Pixels_ROMvX0' 0
+_apps$_0x7ef1                     EQU                          0x7ef1
+_apps$_0x7ef1                     DB                           13 'Points_ROMvX0' 0
+_apps$_0x7ee3                     EQU                          0x7ee3
+_apps$_0x7ee3                     DB                           12 'Polys_ROMvX0' 0
+_apps$_0x7ed4                     EQU                          0x7ed4
+_apps$_0x7ed4                     DB                           13 'RectsF_ROMvX0' 0
+_apps$_0x7ec6                     EQU                          0x7ec6
+_apps$_0x7ec6                     DB                           12 'Rects_ROMvX0' 0
+_apps$_0x7eb7                     EQU                          0x7eb7
+_apps$_0x7eb7                     DB                           13 'vblank_ROMvX0' 0
+_apps$_0x7ea7                     EQU                          0x7ea7
+_apps$_0x7ea7                     DB                           14 'arecibo_ROMvX0' 0
 
 ; Constant Strings
 
@@ -598,9 +615,9 @@ def_bytes_0x75b0                  DB                           145 64 146 67 147
 ; Define Patterns
 
 ; Lookup Tables
-_lut_numericLabs                  EQU                          0x7fb8
+_lut_numericLabs                  EQU                          0x7db4
 _lut_numericLabs                  DW                           127 254 253 251 247 0x0000
-_lut_numericAddrs                 EQU                          0x7fae
+_lut_numericAddrs                 EQU                          0x7daa
 _lut_numericAddrs                 DW                           0x02d1 0x02da 0x0306 0x0327 0x0373 
 
 ; Lazy Constants
@@ -625,26 +642,26 @@ _entryPoint_                      InitialiseOn
                                   MOVQW                        _i, 0                        ; for i=0 to 4
 
 _next_0x0000                      LDW                          _i
-                                  SUBI                         3
+                                  SUBI                         12
                                   JGE                          _if_0x0001
                                   MOVQB                        cursorXY, 10
                                   MOVB                         _y, cursorXY + 1
                                   AtTextCursor                 
-                                  LDARRW                       _i, 0x7fca
+                                  LDARRW                       _i, 0x7de8
                                   STW                          textStr
                                   MOVQW                        textLen, 11
                                   PrintAcLeft                  
                                   NewLine                                                   ; if i < NUM_APPS   then at LIST_X0, y : print left$(apps$(i), 11)
 
-_if_0x0001                        LDNI                         2
-                                  SUBW                         _i
-                                  JLE                          _if_0x0002
+_if_0x0001                        LDW                          _i
+                                  SUBI                         7
+                                  JGE                          _if_0x0002
                                   MOVQB                        cursorXY, 88
                                   MOVB                         _y, cursorXY + 1
                                   AtTextCursor                 
                                   LDW                          _i
                                   ADDI                         5
-                                  ARRW                         0x7fca
+                                  ARRW                         0x7de8
                                   DEEKA                        textStr
                                   MOVQW                        textLen, 11
                                   PrintAcLeft                  
@@ -665,7 +682,7 @@ _if_0x0002                        ADDVI                        _y, _y, 9        
 
                                   CALLI                        _resetAudio                  ; gosub resetAudio
 
-                                  CALLI                        _initFireworks               ; call initFireworks
+                                  CALLI                        _initSnow                    ; call initSnow
 
 _repeat_0x0003                    LD                           giga_buttonState
                                   STW                          numericLabel
@@ -679,14 +696,14 @@ _repeat_0x0003                    LD                           giga_buttonState
                                   LDI                          62
                                   PrintAcChr                                                ; at x, y : put 62
 
-                                  CALLI                        _updateFireworks             ; call updateFireworks
+                                  CALLI                        _updateSnow                  ; call updateSnow
 
                                   CALLI                        _repeat_0x0003               ; forever
 
 _execApp                          PUSH                         
                                   ClearVertBlinds                                           ; cls
 
-                                  LDARRW                       _index, 0x7fc4
+                                  LDARRW                       _index, 0x7dd0
                                   STW                          giga_sysArg0
                                   LDWI                         512
                                   RomExec                                                   ; exec execs(index), &h0200
@@ -836,211 +853,177 @@ _beep                             PUSH
 
                                   Return                                                    ; return
 
-_initFireworks                    PUSH                                                      ; proc initFireworks
+_initSnow                         PUSH                                                      ; proc initSnow
 
-                                  MOVQW                        _fireworkTimer, 0            ; fireworkTimer = 0
+                                  LDNI                         1
+                                  STW                          _snowTimer                   ; snowTimer = -1
 
-                                  MOVQW                        _initFireworks_i, 0          ; for i=0 &to NUM_FIREWORKS-1
+                                  MOVQW                        _initSnow_i, 0               ; for i=0 to NUM_SNOW_PARTICLES-1
 
-_next_0x000c                      STARRI                       _initFireworks_i, 0x7ec4, 0  ; life(i) = 0
+_next_0x000c                      MOVWA                        _initSnow_i, 0xc4
+                                  CALLI                        _respawnSnowParticle         ; call respawnSnowParticle, i
 
-                                  ForNextInc                   _initFireworks_i _next_0x000c 59                                                                                         ; next i
+                                  ForNextInc                   _initSnow_i _next_0x000c 79  ; next i
 
                                   Return                                                    ; endproc
 
-_updateFireworks                  PUSH                                                      ; proc updateFireworks
+_updateSnow                       PUSH                                                      ; proc updateSnow
 
-                                  MOVQW                        _updateFireworks_i, 0        ; for i=0 to NUM_FIREWORKS-1
+                                  MOVQW                        _updateSnow_i, 0             ; for i=0 to NUM_SNOW_PARTICLES-1
 
                                   CALLI                        _next_0x000d
-_next_0x000d                      LDARRB                       _updateFireworks_i, 0x7ec4
-                                  STW                          _updateFireworks_lf          ; lf = life(i)
+_next_0x000d                      LDARRW                       _updateSnow_i, 0x0660
+                                  STW                          _updateSnow_xp               ; xp = xPos(i)
 
-                                  LDW                          _updateFireworks_lf
-                                  JumpGT                       _endif_0x000e                ; if lf &> 0
+                                  LDARRW                       _updateSnow_i, 0x05c0
+                                  STW                          _updateSnow_yp               ; yp = yPos(i)
 
-                                  LDARRW                       _updateFireworks_i, 0x0688
-                                  STW                          _updateFireworks_xp
-                                  STW                          _xr
-                                  LDARRW                       _updateFireworks_i, 0x0598
-                                  STW                          _xv                          ; xp = xPos(i) : xr = xp : xv = xVel(i)
+                                  LDARRW                       _updateSnow_i, 0x0520
+                                  STW                          _updateSnow_yv               ; yv = yVel(i)
 
-                                  LDARRW                       _updateFireworks_i, 0x0610
-                                  STW                          _updateFireworks_yp
-                                  STW                          _yr
-                                  LDARRW                       _updateFireworks_i, 0x0520
-                                  STW                          _yv                          ; yp = yPos(i) : yr = yp : yv = yVel(i)
+                                  ADDBI                        _updateSnow_xp + 1, _rxy, 80 ; rxy.lo = xp.hi + SNOW_ORG_X
 
-                                  ADDVI                        _yv, _yv, 40                 ; yv = yv + GRAVITY
+                                  ADDBI                        _updateSnow_yp + 1, _rxy + 1, 68                                                                                         ; rxy.hi = yp.hi + SNOW_ORG_Y
 
-                                  ADDVW                        _updateFireworks_xp, _xv, _updateFireworks_xp                                                                            ; xp = xp + xv
+                                  PEEKV                        _rxy
+                                  ANDI                         0x80
+                                  BEQ                          _endif_0x000e                ; if &(peek(rxy) AND &h80)
 
-                                  ADDVW                        _updateFireworks_yp, _yv, _updateFireworks_yp                                                                            ; yp = yp + yv
+                                  LDW                          _rxy
+                                  POKEI                        0                            ; poke rxy, 0
 
-                                  LDWI                         -15104
-                                  SUBW                         _updateFireworks_yp
-                                  JumpGT                       _endif_0x000f                ; if yp &< -59*256
+_endif_0x000e                     ADDVW                        _updateSnow_yp, _updateSnow_yv, _updateSnow_yp                                                                           ; yp = yp + yv
 
-                                  LDWI                         -15104
-                                  SUBW                         _yr
-                                  BGT                          _if_0x0010
-                                  CALLI                        _clearParticle               ; if yr &&>= -59*256 then gosub clearParticle
+                                  LDWI                         15104
+                                  SUBW                         _updateSnow_yp
+                                  JumpLT                       _endif_0x000f                ; if yp &> 59*256
 
-_if_0x0010                        CALLI                        _nextParticle                ; goto nextParticle
+                                  CMPI                         _rxy + 1, 127
+                                  BGE                          _if_0x0010
+                                  LDW                          _rxy
+                                  POKEI                        63                           ; if rxy.hi &&< 127 then poke rxy, &h3F
 
-_endif_0x000f                     LDWI                         15104
-                                  SUBW                         _updateFireworks_yp
-                                  JumpLT                       _endif_0x0011                ; if yp &> 59*256
+_if_0x0010                        MOVWA                        _updateSnow_i, 0xc4
+                                  CALLI                        _respawnSnowParticle         ; call respawnSnowParticle, i
 
-                                  MOVQW                        _updateFireworks_lf, 0       ; lf = 0
+                                  CALLI                        _nextParticle                ; goto nextParticle
 
-                                  CALLI                        _clearParticle               ; gosub clearParticle
+_endif_0x000f                     ADDBI                        _updateSnow_yp + 1, _updateSnow_pxy + 1, 68                                                                              ; pxy.hi = yp.hi + SNOW_ORG_Y
 
-                                  CALLI                        _skipParticle                ; goto skipParticle
+                                  LD                           _updateSnow_pxy + 1
+                                  SUBBA                        _rxy + 1
+                                  JumpGT                       _endif_0x0011                ; if pxy.hi &> rxy.hi
 
-_endif_0x0011                     LDW                          _updateFireworks_xp
+                                  ANDBK                        _rxy + 1, 0x07
+                                  ARRW                         0x7dc0
+                                  DEEK                         
+                                  ADDBA                        _updateSnow_xp + 1
+                                  ST                           _updateSnow_xp + 1           ; xp.hi = xp.hi + jitterOffset(rxy.hi AND 7)
+
+_endif_0x0011                     ADDBI                        _updateSnow_xp + 1, _updateSnow_pxy, 80                                                                                  ; pxy.lo = xp.hi + SNOW_ORG_X
+
+                                  PEEKV                        _updateSnow_pxy
+                                  STW                          _pixel                       ; pixel = peek(pxy)
+
+                                  LDW                          _pixel
+                                  JumpFalse                    _endif_0x0012                ; if (pixel)
+
+                                  LDW                          _pixel
+                                  NOTW                         giga_vAC
+                                  ANDI                         0x80
+                                  JumpFalse                    _endif_0x0013                ; if (NOT pixel AND &h80)
+
+                                  LDW                          _rxy
+                                  ADDWI                        256
+                                  PEEK                         
+                                  BEQ                          _else_0x0014                 ; if &(peek(rxy + &h0100))
+
+                                  LDW                          _rxy
+                                  POKEI                        63                           ; poke rxy, &h3F
+
+                                  MOVWA                        _updateSnow_i, 0xc4
+                                  CALLI                        _respawnSnowParticle         ; call respawnSnowParticle, i
+
+                                  CALLI                        _nextParticle                ; goto nextParticle
+
+                                  CALLI                        _endif_0x0015                ; else
+
+_else_0x0014                      ANDBK                        _rxy + 1, 0x07
+                                  ARRW                         0x7dc0
+                                  DEEKA                        0xea
+                                  LD                           _updateSnow_xp + 1
+                                  SUBW                         0xea
+                                  ST                           _updateSnow_xp + 1           ; xp.hi = xp.hi - jitterOffset(rxy.hi AND 7)
+
+                                  ADDBI                        _updateSnow_xp + 1, _updateSnow_pxy, 80                                                                                  ; pxy.lo = xp.hi + SNOW_ORG_X
+
+_endif_0x0012                     LDW                          _updateSnow_xp
                                   ABSW                         
-                                  SUBIW                        20224
-                                  BGE                          _endif_0x0012                ; if abs(xp) &&> 79*256
+                                  SUBIW                        19968
+                                  BGE                          _endif_0x0016                ; if abs(xp) &&> 78*256
 
-                                  MOVQW                        _updateFireworks_lf, 0       ; lf = 0
+                                  MOVWA                        _updateSnow_i, 0xc4
+                                  CALLI                        _respawnSnowParticle         ; call respawnSnowParticle, i
 
-                                  CALLI                        _clearParticle               ; gosub clearParticle
+                                  CALLI                        _nextParticle                ; goto nextParticle
 
-                                  CALLI                        _skipParticle                ; goto skipParticle
+_endif_0x0016                     LDARRB                       _updateSnow_i, 0x7cb0
+                                  POKE                         _updateSnow_pxy              ; poke pxy, colour(i)
 
-_endif_0x0012                     CALLI                        _clearParticle               ; gosub clearParticle
+                                  LDW                          _updateSnow_xp
+                                  STARRW                       _updateSnow_i, 0x0660
+                                  LDW                          _updateSnow_yp
+                                  STARRW                       _updateSnow_i, 0x05c0        ; xPos(i) = xp : yPos(i) = yp
 
-                                  ADDBI                        _updateFireworks_xp + 1, _updateFireworks_pxy, 80                                                                        ; pxy.lo = xp.hi + FIREWORKS_ORG_X
+                                  LDW                          _updateSnow_yv
+                                  STARRW                       _updateSnow_i, 0x0520        ; yVel(i) = yv
 
-                                  ADDBI                        _updateFireworks_yp + 1, _updateFireworks_pxy + 1, 68                                                                    ; pxy.hi = yp.hi + FIREWORKS_ORG_Y
+_nextParticle                     ForNextInc                   _updateSnow_i _next_0x000d 79                                                                                            ; next i
 
-                                  PEEKV                        _updateFireworks_pxy
-                                  JumpEQ                       _endif_0x0013                ; if peek(pxy) &= 0
+                                  ADDVI                        _snowTimer, _snowTimer, 1    ; snowTimer = snowTimer + 1
 
-                                  LDARRB                       _updateFireworks_i, 0x7dc4
-                                  POKE                         _updateFireworks_pxy         ; poke pxy, colour(i)
+                                  Return                                                    ; endproc
 
-_nextParticle                     SUBVI                        _updateFireworks_lf, _updateFireworks_lf, 1                                                                              ; lf = lf - 1
+_respawnSnowParticle              PUSH                                                      ; proc respawnSnowParticle, i
 
-                                  LDW                          _updateFireworks_lf
-                                  JumpEQ                       _endif_0x0014                ; if lf &= 0
+                                  LDI                          0x90
+                                  RandFastMod                  
+                                  SUBI                         72
+                                  STW                          memValue
+                                  ARRVW                        _respawnSnowParticle_i, 0x0660
+                                  ADDI                         1
+                                  POKEA                        memValue                     ; xPos(i).hi = rnd(144) - 72
 
-                                  PEEKV                        _updateFireworks_pxy
-                                  ANDI                         0x80
-                                  BEQ                          _endif_0x0015                ; if &(peek(pxy) AND &h80)
-
-                                  LDW                          _updateFireworks_pxy
-                                  POKEI                        0                            ; poke pxy, 0
-
-_endif_0x0014                     LDW                          _updateFireworks_xp
-                                  STARRW                       _updateFireworks_i, 0x0688
-                                  LDW                          _updateFireworks_yp
-                                  STARRW                       _updateFireworks_i, 0x0610   ; xPos(i) = xp : yPos(i) = yp
-
-                                  LDW                          _yv
-                                  STARRW                       _updateFireworks_i, 0x0520   ; yVel(i) = yv
-
-_skipParticle                     LDW                          _updateFireworks_lf
-                                  STARRB                       _updateFireworks_i, 0x7ec4   ; life(i) = lf
-
-                                  ForNextInc                   _updateFireworks_i _next_0x000d 59                                                                                       ; next i
-
-                                  INC                          _fireworkTimer               ; inc fireworkTimer.lo
-
-                                  LDW                          _fireworkTimer
-                                  SUBI                         20
-                                  JumpGT                       _endif_0x0016                ; if fireworkTimer &> 20
-
-                                  MOVQW                        _fireworkTimer, 0            ; fireworkTimer = 0
-
-                                  Rand                         
-                                  ANDI                         0x7f
-                                  SUBI                         64
-                                  STW                          _centerX                     ; centerX = (rnd(0) AND 127) - 64
-
-                                  Rand                         
-                                  ANDI                         0x3f
-                                  SUBI                         48
-                                  STW                          _centerY                     ; centerY = (rnd(0) AND 63) - 48
-
-                                  MOVWA                        _centerX, 0xc4
-                                  MOVWA                        _centerY, 0xc6
-                                  CALLI                        _createFirework              ; call createFirework, centerX, centerY
-
-_endif_0x0016                     Return                                                    ; endproc
-
-_clearParticle                    PUSH                         
-                                  ADDBI                        _xr + 1, _pxy, 80            ; pxy.lo = xr.hi + FIREWORKS_ORG_X
-
-                                  ADDBI                        _yr + 1, _pxy + 1, 68        ; pxy.hi = yr.hi + FIREWORKS_ORG_Y
-
-                                  PEEKV                        _pxy
-                                  ANDI                         0x80
-                                  BEQ                          _endif_0x0017                ; if &(peek(pxy) AND &h80)
-
-                                  LDW                          _pxy
-                                  POKEI                        0                            ; poke pxy, 0
-
-_endif_0x0017                     Return                                                    ; return
-
-_createFirework                   PUSH                                                      ; proc createFirework, centerX, centerY
+                                  LDNI                         1
+                                  XORW                         _snowTimer
+                                  JNE                          _else_0x0017                 ; if snowTimer = -1
 
                                   CALLI                        _page_0x0500
-_page_0x0500                      MOVQW                        _createFirework_count, 0     ; count = 0
+_page_0x0500                      LDI                          0x14
+                                  RandFastMod                  
+                                  NEGW                         giga_vAC
+                                  SUBI                         39
+                                  ST                           _respawnSnowParticle_y + 1   ; y.hi = -rnd(20) - 39
+
+                                  CALLI                        _endif_0x0018                ; else
+
+_else_0x0017                      LDNI                         59
+                                  ST                           _respawnSnowParticle_y + 1   ; y.hi = -59
+
+_endif_0x0018                     LDW                          _respawnSnowParticle_y
+                                  STARRW                       _respawnSnowParticle_i, 0x05c0                                                                                           ; yPos(i) = y
 
                                   Rand                         
-                                  ANDI                         0x3f
-                                  ORI                          0x80
-                                  STW                          _createFirework_c            ; c = rnd(0) AND &h3f OR &h80
-
-                                  MOVQW                        _createFirework_i, 0         ; for i=0 to NUM_FIREWORKS-1
-
-_next_0x0018                      LDARRB                       _createFirework_i, 0x7ec4
-                                  JumpEQ                       _endif_0x0019                ; if life(i) &= 0
-
-                                  Rand                         
-                                  ANDWI                        0x03ff
                                   CALLI                        _page_0x08a0
-_page_0x08a0                      SUBWI                        512
-                                  STW                          _xv                          ; xv = (rnd(0) AND 1023) - 512
+_page_0x08a0                      ANDI                         0x7f
+                                  ADDI                         128
+                                  STARRW                       _respawnSnowParticle_i, 0x0520                                                                                           ; yVel(i) = (rnd(0) AND 127) + 128
 
                                   Rand                         
-                                  ANDWI                        0x03ff
-                                  SUBWI                        768
-                                  STW                          _yv                          ; yv = (rnd(0) AND 1023) - 768
-
-                                  MOVWA                        _createFirework_centerX, memValue
-                                  ARRVW                        _createFirework_i, 0x0688
-                                  ADDI                         1
-                                  POKEA                        memValue                     ; xPos(i).hi = centerX
-
-                                  MOVWA                        _createFirework_centerY, memValue
-                                  ARRVW                        _createFirework_i, 0x0610
-                                  ADDI                         1
-                                  POKEA                        memValue                     ; yPos(i).hi = centerY
-
-                                  LDW                          _xv
-                                  STARRW                       _createFirework_i, 0x0598    ; xVel(i) = xv
-
-                                  LDW                          _yv
-                                  STARRW                       _createFirework_i, 0x0520    ; yVel(i) = yv
-
-                                  Rand                         
-                                  ANDI                         0x1f
-                                  ADDI                         64
-                                  STARRB                       _createFirework_i, 0x7ec4    ; life(i) = 64 + (rnd(0) AND 31)
-
-                                  LDW                          _createFirework_c
-                                  STARRB                       _createFirework_i, 0x7dc4    ; colour(i) = c
-
-                                  INC                          _createFirework_count        ; inc count.lo
-
-                                  CMPI                         _createFirework_count, 20
-                                  BNE                          _if_0x001a
-                                  Return                                                    ; if count &&= 20 then return
-
-_endif_0x0019                     ForNextInc                   _createFirework_i _next_0x0018 59                                                                                        ; next i
+                                  ANDI                         0x03
+                                  STW                          memIndex0
+                                  LDARRB                       memIndex0, 0x7fa5
+                                  STARRB                       _respawnSnowParticle_i, 0x7cb0                                                                                           ; colour(i) = snowColour(rnd(0) AND 3)
 
                                   Return                                                    ; endproc
 
@@ -1054,34 +1037,36 @@ _endif_0x0019                     ForNextInc                   _createFirework_i
 ;*************************************************************************************************************
 ;*************************************************************************************************************
 
-romExec                           EQU     0x73e8
-gosubNumericLabel                 EQU     0x79ce
-scanlineMode                      EQU     0x74a9
-waitVBlanks                       EQU     0x73f7
-resetVideoFlags                   EQU     0x7fa0
-initClearFuncs                    EQU     0x75be
-clearVertBlinds                   EQU     0x78d5
-clearCursorRow                    EQU     0x7ea1
-clearCursorRow4x6                 EQU     0x7da1
-resetAudio                        EQU     0x78a0
-resetMusic                        EQU     0x73e2
-playMusic                         EQU     0x7ac7
-soundAllOff                       EQU     0x7ba3
-soundOn                           EQU     0x73ef
-printInit                         EQU     0x74ea
-printInit4x6                      EQU     0x74a0
-printLeft                         EQU     0x75cc
-printChr                          EQU     0x74cb
-printChar                         EQU     0x75e4
-printChar6x8                      EQU     0x79a0
-printChar4x6                      EQU     0x78b4
-printClip                         EQU     0x74bf
-printClip4x6                      EQU     0x74b3
-newLineScroll                     EQU     0x74d8
-newLineScroll6x8                  EQU     0x7cbe
-newLineScroll4x6                  EQU     0x7bbe
-atTextCursor                      EQU     0x7aa4
-atTextCursor4x6                   EQU     0x7ca2
+romExec                           EQU     0x7ea0
+randFastMod16bit                  EQU     0x74a0
+fastMod168bit                     EQU     0x73a0
+gosubNumericLabel                 EQU     0x78ce
+scanlineMode                      EQU     0x7da0
+waitVBlanks                       EQU     0x71ee
+resetVideoFlags                   EQU     0x7ca2
+initClearFuncs                    EQU     0x72cb
+clearVertBlinds                   EQU     0x75d5
+clearCursorRow                    EQU     0x79a4
+clearCursorRow4x6                 EQU     0x74dc
+resetAudio                        EQU     0x72eb
+resetMusic                        EQU     0x72a0
+playMusic                         EQU     0x79c7
+soundAllOff                       EQU     0x7aa3
+soundOn                           EQU     0x71e6
+printInit                         EQU     0x75c0
+printInit4x6                      EQU     0x71f6
+printLeft                         EQU     0x73ab
+printChr                          EQU     0x72be
+printChar                         EQU     0x73c3
+printChar6x8                      EQU     0x78a0
+printChar4x6                      EQU     0x73de
+printClip                         EQU     0x72b2
+printClip4x6                      EQU     0x72a6
+newLineScroll                     EQU     0x72d9
+newLineScroll6x8                  EQU     0x7bbe
+newLineScroll4x6                  EQU     0x7abe
+atTextCursor                      EQU     0x74b9
+atTextCursor4x6                   EQU     0x7ba2
 
 
 
@@ -1107,6 +1092,42 @@ romErrAddr          DW      vramErrAddr
 romExec             STW     giga_vLR
                     MOVQW   giga_sysFn, SYS_Exec_88             
                     SYS     88                                  
+
+
+
+
+mathX               EQU     giga_sysArg0
+mathY               EQU     giga_sysArg2
+mathSum             EQU     register12
+mathRem             EQU     register12
+mathMask            EQU     register13
+mathSign            EQU     register14
+mathQuot            EQU     register15
+mathShift           EQU     register15
+mathBase            EQU     register10
+mathPow             EQU     register11
+mathResult          EQU     register14
+
+
+randFastMod16bit    PUSH
+                    LDWI    SYS_Random_34
+                    STW     giga_sysFn
+                    SYS     34
+                    STW     giga_sysArg0                        
+                    LD      giga_sysArg1
+                    SUBW    giga_sysArg2                        
+                    BLT     randfm16_mod
+                    MOVB    giga_sysArg3, giga_sysArg1          
+randfm16_mod        CALLI   fastMod168bit
+                    POP
+                    RET
+
+
+fastMod168bit       MOVQB   giga_sysArg4, 8
+                    MOVQW   giga_sysFn, SYS_Divide_u168_vX_56
+                    SYS     56
+                    LD      giga_sysArg1
+                    RET
 
 
                     

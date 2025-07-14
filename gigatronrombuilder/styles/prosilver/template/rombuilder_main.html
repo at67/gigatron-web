@@ -451,6 +451,7 @@ function showPhase2Modal(apps, buildResponse) {
 
     // Create two-panel layout
     contentElement.innerHTML = createPhase2LayoutHTML(apps, romVersion);
+    initializeMainmenuPreview();
 
     // Phase 2 buttons
     buttonContainer.innerHTML = `
@@ -539,19 +540,338 @@ function setupModuleEventListeners() {
     const graphicsRadios = document.querySelectorAll('input[name="graphics"]');
 }
 
+// Global state for menu configuration
+var menuConfig = menuConfig || {
+    items: [],
+    cursor: { x: 2, y: 52, color: '#CCCC00' },
+    backgroundColor: '#000000'
+};
+
 function createMainmenuPreviewHTML(apps) {
+    menuConfig.originalApps = apps;
+
+    // Initialize menu config with app data (160x120 coordinates)
+    menuConfig.items = menuConfig.originalApps.map((app, i) => ({
+        text: app.alias || app.filename.replace(/\.(gt1|gcl)$/i, ''),
+        x: 2 + (i % 2) * 80,           // 8 items per row
+        y: 0 + Math.floor(i / 2) * 10,
+        color: '#00CC00',
+        visible: true
+    }));
+
+    // Reset cursor to original position
+    menuConfig.cursor.x = 2;
+    menuConfig.cursor.y = 52;
+
     return `
-        <div style="width: 480px; height: 360px; background: #000; border: 2px solid #444; margin: 0 auto; font-family: monospace; color: #0f0; padding: 20px; box-sizing: border-box;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; height: 100%;">
-                <div>
-                    ${apps.slice(0, 5).map(app => `<div>${app.alias || app.filename.replace(/\.(gt1|gcl)$/i, '')}</div>`).join('')}
+        <div style="width: 480px; height: 360px; background: #000; border: 2px solid #444; margin: 0 auto; position: relative;">
+            <!-- Main Canvas -->
+            <canvas id="preview-canvas" width="480" height="360"
+                    style="width: 480px; height: 360px; image-rendering: pixelated; cursor: crosshair;"></canvas>
+
+            <!-- Top Properties Panel - positioned in title bar -->
+            <div id="properties-panel" style="position: absolute; top: -53px; right: 15px; background: transparent; border: none; padding: 0; display: none;">
+                <div style="color: #e0e0e0; font-size: 12px; display: flex; align-items: center; gap: 10px;">
+                    <input type="text" id="selected-text" placeholder="Text" style="background: #1a1a1a; color: #e0e0e0; border: 1px solid #444; padding: 2px; width: 120px;">
+                    <label>
+                        X: <input type="number" id="selected-x" min="0" max="154" style="width: 40px; background: #1a1a1a; color: #e0e0e0; border: 1px solid #444;">
+                    </label>
+                    <label>
+                        Y: <input type="number" id="selected-y" min="0" max="112" style="width: 40px; background: #1a1a1a; color: #e0e0e0; border: 1px solid #444;">
+                    </label>
+                    <button id="delete-item-btn" style="background: #dc3545; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer;">
+                        Delete
+                    </button>
                 </div>
-                <div>
-                    ${apps.slice(5, 10).map(app => `<div>${app.alias || app.filename.replace(/\.(gt1|gcl)$/i, '')}</div>`).join('')}
+            </div>
+
+            <!-- Bottom Controls Panel -->
+            <div style="position: absolute; top: 365px; left: 0; right: 0; background: #1a1a1a; border: 1px solid #444; border-radius: 4px; padding: 8px;">
+                <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap; color: #e0e0e0; font-size: 12px;">
+                    <label>
+                        Text: <input type="color" id="text-color" value="#00cc00" style="width: 30px; height: 20px;">
+                    </label>
+                    <label>
+                        Background: <input type="color" id="bg-color" value="#000000" style="width: 30px; height: 20px;">
+                    </label>
+                    <label>
+                        Cursor: <input type="color" id="cursor-color" value="#cccc00" style="width: 30px; height: 20px;">
+                    </label>
+                    <button id="add-text-btn" style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer;">
+                        Add Text
+                    </button>
+                    <button id="reset-layout-btn" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer;">
+                        Reset Layout
+                    </button>
                 </div>
             </div>
         </div>
     `;
+}
+
+function setupMainmenuPreview() {
+    const canvas = document.getElementById('preview-canvas');
+    const ctx = canvas.getContext('2d');
+    let selectedItemIndex = -1;
+    let isDragging = false;
+    let dragOffset = { x: 0, y: 0 };
+
+    // Setup canvas
+    ctx.imageSmoothingEnabled = false;
+
+    // Event listeners
+    setupControlEvents();
+    setupCanvasEvents();
+
+    // Initial render
+    renderPreview();
+
+    function setupControlEvents() {
+        // Color controls
+        document.getElementById('text-color').addEventListener('change', (e) => {
+            if (selectedItemIndex >= 0) {
+                menuConfig.items[selectedItemIndex].color = e.target.value;
+                renderPreview();
+            }
+        });
+
+        document.getElementById('bg-color').addEventListener('change', (e) => {
+            menuConfig.backgroundColor = e.target.value;
+            renderPreview();
+        });
+
+        document.getElementById('cursor-color').addEventListener('change', (e) => {
+            menuConfig.cursor.color = e.target.value;
+            renderPreview();
+        });
+
+        // Add text button
+        document.getElementById('add-text-btn').addEventListener('click', () => {
+            menuConfig.items.push({
+                text: 'New Item',
+                x: 80,
+                y: 60,
+                color: '#00CC00',
+                visible: true
+            });
+            renderPreview();
+        });
+
+        // Reset layout button
+        document.getElementById('reset-layout-btn').addEventListener('click', () => {
+            resetToDefaultLayout();
+        });
+
+        // Properties panel
+        document.getElementById('selected-text').addEventListener('input', (e) => {
+            if (selectedItemIndex >= 0) {
+                menuConfig.items[selectedItemIndex].text = e.target.value;
+                renderPreview();
+            }
+        });
+
+        document.getElementById('selected-x').addEventListener('input', (e) => {
+            if (selectedItemIndex >= 0) {
+                menuConfig.items[selectedItemIndex].x = parseInt(e.target.value);
+                renderPreview();
+            }
+        });
+
+        document.getElementById('selected-y').addEventListener('input', (e) => {
+            if (selectedItemIndex >= 0) {
+                menuConfig.items[selectedItemIndex].y = parseInt(e.target.value);
+                renderPreview();
+            }
+        });
+
+        document.getElementById('delete-item-btn').addEventListener('click', () => {
+            if (selectedItemIndex >= 0) {
+                menuConfig.items.splice(selectedItemIndex, 1);
+                selectedItemIndex = -1;
+                hidePropertiesPanel();
+                renderPreview();
+            }
+        });
+    }
+
+    function setupCanvasEvents() {
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor((e.clientX - rect.left) / 3);
+            const y = Math.floor((e.clientY - rect.top) / 3);
+
+            selectedItemIndex = findItemAtPosition(x, y);
+
+            if (selectedItemIndex >= 0) {
+                isDragging = true;
+                const item = menuConfig.items[selectedItemIndex];
+                dragOffset.x = x - item.x;
+                dragOffset.y = y - item.y;
+                showPropertiesPanel(selectedItemIndex);
+            } else {
+                hidePropertiesPanel();
+            }
+
+            renderPreview();
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDragging && selectedItemIndex >= 0) {
+                const rect = canvas.getBoundingClientRect();
+                const x = Math.floor((e.clientX - rect.left) / 3);
+                const y = Math.floor((e.clientY - rect.top) / 3);
+
+                menuConfig.items[selectedItemIndex].x = Math.max(0, Math.min(154, x - dragOffset.x));
+                menuConfig.items[selectedItemIndex].y = Math.max(0, Math.min(112, y - dragOffset.y));
+
+                updatePropertiesPanel();
+                renderPreview();
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+    }
+
+    function findItemAtPosition(x, y) {
+        for (let i = menuConfig.items.length - 1; i >= 0; i--) {
+            const item = menuConfig.items[i];
+            if (item.visible &&
+                x >= item.x && x < item.x + item.text.length * 6 &&
+                y >= item.y && y < item.y + 8) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    function showPropertiesPanel(index) {
+        const panel = document.getElementById('properties-panel');
+        const item = menuConfig.items[index];
+
+        document.getElementById('selected-text').value = item.text;
+        document.getElementById('selected-x').value = item.x;
+        document.getElementById('selected-y').value = item.y;
+        document.getElementById('text-color').value = item.color;
+
+        panel.style.display = 'block';
+    }
+
+    function hidePropertiesPanel() {
+        document.getElementById('properties-panel').style.display = 'none';
+        selectedItemIndex = -1;
+    }
+
+    function updatePropertiesPanel() {
+        if (selectedItemIndex >= 0) {
+            const item = menuConfig.items[selectedItemIndex];
+            document.getElementById('selected-x').value = item.x;
+            document.getElementById('selected-y').value = item.y;
+        }
+    }
+
+    function resetToDefaultLayout() {
+        // Recreate items from original apps data
+        menuConfig.items = menuConfig.originalApps.map((app, i) => ({
+            text: app.alias || app.filename.replace(/\.(gt1|gcl)$/i, ''),
+            x: 2 + (i % 2) * 80,           // 2 items per row
+            y: 0 + Math.floor(i / 2) * 10,
+            color: '#00CC00',
+            visible: true
+        }));
+
+        menuConfig.cursor.x = 2;
+        menuConfig.cursor.y = 52;
+
+        hidePropertiesPanel();
+        renderPreview();
+    }
+
+    function renderPreview() {
+        // Clear canvas (480x360)
+        ctx.fillStyle = menuConfig.backgroundColor;
+        ctx.fillRect(0, 0, 480, 360);
+
+        // Draw menu items with 24px font, scaled coordinates
+        ctx.font = '24px monospace';
+        ctx.textBaseline = 'top';
+
+        menuConfig.items.forEach((item, index) => {
+            if (item.visible) {
+                // Highlight selected item (scale coordinates by 3)
+                if (index === selectedItemIndex) {
+                    ctx.fillStyle = '#333333';
+                    const textWidth = ctx.measureText(item.text).width;
+                    ctx.fillRect((item.x - 1) * 3, (item.y - 1) * 3, textWidth + 6, 30);
+                }
+
+                // Draw text (scale coordinates by 3)
+                ctx.fillStyle = item.color;
+                ctx.fillText(item.text, item.x * 3, item.y * 3);
+            }
+        });
+
+        // Draw cursor (scale coordinates by 3)
+        ctx.fillStyle = menuConfig.cursor.color;
+        ctx.fillText('>', menuConfig.cursor.x * 3, menuConfig.cursor.y * 3);
+
+        // Draw grid (optional)
+        if (document.getElementById('show-grid')?.checked) {
+            drawGrid();
+        }
+    }
+
+    function drawGrid() {
+        ctx.strokeStyle = '#222222';
+        ctx.lineWidth = 1;
+
+        // Vertical lines every 18 pixels (6 * 3 = character width at 3x scale)
+        for (let x = 0; x < 480; x += 18) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, 360);
+            ctx.stroke();
+        }
+
+        // Horizontal lines every 24 pixels (8 * 3 = character height at 3x scale)
+        for (let y = 0; y < 360; y += 24) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(480, y);
+            ctx.stroke();
+        }
+    }
+}
+
+// Export function to get menu configuration for GBAS generation
+function getMenuConfiguration() {
+    return {
+        items: menuConfig.items.map(item => ({
+            text: item.text,
+            x: item.x,  // Keep 160x120 pixel coordinates
+            y: item.y,  // Keep 160x120 pixel coordinates
+            color: item.color
+        })),
+        cursor: {
+            x: menuConfig.cursor.x,  // Keep 160x120 pixel coordinates
+            y: menuConfig.cursor.y,  // Keep 160x120 pixel coordinates
+            color: menuConfig.cursor.color
+        },
+        backgroundColor: menuConfig.backgroundColor
+    };
+}
+
+// Call this when Phase 2 modal is shown
+function initializeMainmenuPreview() {
+    // Wait for DOM to be ready
+    setTimeout(() => {
+        if (document.getElementById('preview-canvas')) {
+            setupMainmenuPreview();
+        }
+    }, 100);
 }
 
 function buildROM(apps, buildResponse) {
