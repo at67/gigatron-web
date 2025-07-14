@@ -1,0 +1,614 @@
+_startAddress_                    EQU                          0x0200
+
+; Internal Variables
+serialRawPrev                     EQU                          0x0081
+frameCountPrev                    EQU                          0x00d6
+register0                         EQU                          0x0082
+register1                         EQU                          register0 + 0x02
+register2                         EQU                          register0 + 0x04
+register3                         EQU                          register0 + 0x06
+register4                         EQU                          register0 + 0x08
+register5                         EQU                          register0 + 0x0A
+register6                         EQU                          register0 + 0x0C
+register7                         EQU                          register0 + 0x0E
+register8                         EQU                          register0 + 0x10
+register9                         EQU                          register0 + 0x12
+register10                        EQU                          register0 + 0x14
+register11                        EQU                          register0 + 0x16
+register12                        EQU                          register0 + 0x18
+register13                        EQU                          register0 + 0x1A
+register14                        EQU                          register0 + 0x1C
+register15                        EQU                          register0 + 0x1E
+fgbgColour                        EQU                          register0 + 0x20
+cursorXY                          EQU                          register0 + 0x22
+midiStream                        EQU                          register0 + 0x24
+midiDelay                         EQU                          register0 + 0x26
+miscFlags                         EQU                          register0 + 0x28
+register16                        EQU                          register0 + 0x2A
+timerTick                         EQU                          register0 + 0x2C
+timerJiff                         EQU                          register0 + 0x2E
+
+; Internal Constants
+MISC_WAIT_VBLANK_BIT              EQU                          0x01
+MISC_ENABLE_SCROLL_BIT            EQU                          0x02
+MISC_ON_BOTTOM_ROW_BIT            EQU                          0x04
+MISC_DISABLE_CLIP_BIT             EQU                          0x08
+MISC_ENABLE_FNT4X6_BIT            EQU                          0x10
+MISC_WAIT_VBLANK_MSK              EQU                          0xfe
+MISC_ENABLE_SCROLL_MSK            EQU                          0xfd
+MISC_ON_BOTTOM_ROW_MSK            EQU                          0xfb
+MISC_DISABLE_CLIP_MSK             EQU                          0xf7
+MISC_ENABLE_FNT4X6_MSK            EQU                          0xef
+
+; Internal Buffers
+regsWorkArea                      EQU                          0x0000
+textWorkArea                      EQU                          0x77a0
+
+; Includes
+%includePath                      "runtime"
+%include                          util.i
+%include                          gigatron.i
+%include                          macros_ROMv5a.i
+
+; Labels
+_entryPoint_                      EQU                          0x0200
+_repeat_0x0000                    EQU                          0x0236
+_initStars                        EQU                          0x023c
+_next_0x0001                      EQU                          0x0241
+_newStar                          EQU                          0x0256
+_repeat_0x0002                    EQU                          0x027c
+_drawStars                        EQU                          0x02e0
+_next_0x0003                      EQU                          0x02e5
+_endif_0x0004                     EQU                          0x032e
+_endif_0x0005                     EQU                          0x0350
+_endif_0x0006                     EQU                          0x0366
+_endif_0x0007                     EQU                          0x03a7
+_page_0x0300                      EQU                          0x0300
+
+; Constants
+_NUM_STARS                        EQU                          0x0030
+_STARS_ORG_X                      EQU                          0x0050
+_STARS_ORG_Y                      EQU                          0x0044
+
+; Global Variables
+_xv                               EQU                          0x0030
+_yv                               EQU                          0x0032
+_xp                               EQU                          0x0034
+_yp                               EQU                          0x0036
+
+; Local Variables
+_initStars_i                      EQU                          0x00c4
+_newStar_i                        EQU                          0x00c4
+_drawStars_i                      EQU                          0x00c4
+_drawStars_ss                     EQU                          0x00c6
+_drawStars_pxy                    EQU                          0x00c8
+
+; Arrays
+_xPos                             EQU                          0x7fa0
+_xPos                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
+_yPos                             EQU                          0x7ea0
+_yPos                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
+_xVel                             EQU                          0x7da0
+_xVel                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
+_yVel                             EQU                          0x7ca0
+_yVel                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
+_star                             EQU                          0x7bd0
+_star                             DB                           0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 
+_colour                           EQU                          0x7bb0
+_colour                           DB                           0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x95 0x95 0x95 0x95 0x95 0x95 0x95 0x95 0xaa 0xaa 0xaa 0xaa 0xaa 0xaa 0xaa 0xaa 0xbf 0xbf 0xbf 0xbf 0xbf 0xbf 0xbf 
+
+; Strings
+
+; Constant Strings
+
+; Data
+
+; Time
+
+; Define Bytes
+
+; Define Words
+
+; Define Images
+
+; Define Loader Image Chunks
+
+; Define Midis
+
+; Define Blits
+
+; Define Fonts
+
+; Define Sprites
+
+; Define Patterns
+
+; Lookup Tables
+
+; Lazy Constants
+
+; Code
+_entryPoint_                      InitialiseOn                 
+%define FONT_BOTH
+%define TEXT_SCROLL                                                                         ; INIT
+
+                                  LD                           miscFlags
+                                  ANDI                         0xfd
+                                  ST                           miscFlags                    ; tscroll off
+
+                                  LDI                          0
+                                  ST                           fgbgColour
+                                  LDI                          2
+                                  STW                          graphicsMode
+                                  ScanlineMode                 
+                                  ClearVertBlinds                                           ; set BG_COLOUR, 0 : mode 2 : cls
+
+                                  LDWI                         3072
+                                  STW                          fgbgColour                   ; set FGBG_COLOUR, &h0C00
+
+                                  CALLI                        _initStars                   ; call initStars
+
+_repeat_0x0000                    CALLI                        _drawStars                   ; call drawStars
+
+                                  CALLI                        _repeat_0x0000               ; forever
+
+_initStars                        PUSH                                                      ; proc initStars
+
+                                  LDI                          0
+                                  STW                          _initStars_i                 ; for i=0 to NUM_STARS-1
+
+_next_0x0001                      LDW                          _initStars_i
+                                  STW                          0xc4
+                                  CALLI                        _newStar                     ; call newStar, i
+
+                                  ForNextFarInc                _initStars_i _next_0x0001 47 ; next i
+
+                                  Return                                                    ; endproc
+
+_newStar                          PUSH                                                      ; proc newStar, i
+
+                                  LDWI                         0x7bd0
+                                  ADDW                         _newStar_i
+                                  STW                          memAddr
+                                  LDI                          0
+                                  POKE                         memAddr                      ; star(i) = 0
+
+                                  LDWI                         0x7fa0
+                                  ADDW                         _newStar_i
+                                  ADDW                         _newStar_i
+                                  STW                          memAddr
+                                  LDI                          0
+                                  DOKE                         memAddr                      ; xPos(i) = 0
+
+                                  LDWI                         0x7ea0
+                                  ADDW                         _newStar_i
+                                  ADDW                         _newStar_i
+                                  STW                          memAddr
+                                  LDI                          0
+                                  DOKE                         memAddr                      ; yPos(i) = 0
+
+_repeat_0x0002                    Rand                         
+                                  STW                          0xe8
+                                  LDWI                         0x07ff
+                                  ANDW                         0xe8
+                                  STW                          0xe8
+                                  LDWI                         -1024
+                                  ADDW                         0xe8
+                                  STW                          _xv                          ; xv = (rnd(0) AND 2047) - 1024
+
+                                  Rand                         
+                                  STW                          0xe8
+                                  LDWI                         0x07ff
+                                  ANDW                         0xe8
+                                  STW                          0xe8
+                                  LDWI                         -1024
+                                  ADDW                         0xe8
+                                  STW                          _yv                          ; yv = (rnd(0) AND 2047) - 1024
+
+                                  LDW                          _xv
+                                  Absolute                     
+                                  SUBI                         200
+                                  CALLI                        convertGtOp
+                                  STW                          0xe8
+                                  LDW                          _yv
+                                  Absolute                     
+                                  SUBI                         200
+                                  CALLI                        convertGtOp
+                                  ORW                          0xe8
+                                  JumpFalse                    _repeat_0x0002 0             ; until abs(xv) > 200  OR  abs(yv) > 200
+
+                                  LDWI                         0x7da0
+                                  ADDW                         _newStar_i
+                                  ADDW                         _newStar_i
+                                  STW                          memAddr
+                                  LDW                          _xv
+                                  DOKE                         memAddr
+                                  STW                          _xp                          ; xVel(i) = xv : xp = xv
+
+                                  LDWI                         0x7ca0
+                                  ADDW                         _newStar_i
+                                  ADDW                         _newStar_i
+                                  STW                          memAddr
+                                  LDW                          _yv
+                                  DOKE                         memAddr
+                                  STW                          _yp                          ; yVel(i) = yv : yp = yv
+
+                                  Return                                                    ; endproc
+
+_drawStars                        PUSH                                                      ; proc drawStars
+
+                                  LDI                          0
+                                  STW                          _drawStars_i                 ; for i=0 to NUM_STARS-1
+
+_next_0x0003                      LDWI                         0x7fa0
+                                  ADDW                         _drawStars_i
+                                  ADDW                         _drawStars_i
+                                  DEEK                         
+                                  STW                          _xp
+                                  LDWI                         0x7da0
+                                  ADDW                         _drawStars_i
+                                  ADDW                         _drawStars_i
+                                  DEEK                         
+                                  CALLI                        _page_0x0300
+_page_0x0300                      STW                          _xv                          ; xp = xPos(i) : xv = xVel(i)
+
+                                  LDWI                         0x7ea0
+                                  ADDW                         _drawStars_i
+                                  ADDW                         _drawStars_i
+                                  DEEK                         
+                                  STW                          _yp
+                                  LDWI                         0x7ca0
+                                  ADDW                         _drawStars_i
+                                  ADDW                         _drawStars_i
+                                  DEEK                         
+                                  STW                          _yv                          ; yp = yPos(i) : yv = yVel(i)
+
+                                  LD                           _xp + 1
+                                  ADDI                         80
+                                  ST                           _drawStars_pxy               ; pxy.lo = xp.hi + STARS_ORG_X
+
+                                  LD                           _yp + 1
+                                  ADDI                         68
+                                  ST                           _drawStars_pxy + 1           ; pxy.hi = yp.hi + STARS_ORG_Y
+
+                                  LDW                          _drawStars_pxy
+                                  PEEK                         
+                                  ANDI                         0x80
+                                  BEQ                          _endif_0x0004                ; if &(peek(pxy) AND &h80)
+
+                                  LDI                          0
+                                  POKE                         _drawStars_pxy               ; poke pxy, 0
+
+_endif_0x0004                     LDW                          _xp
+                                  ADDW                         _xv
+                                  STW                          _xp                          ; xp = xp + xv
+
+                                  LDW                          _yp
+                                  ADDW                         _yv
+                                  STW                          _yp                          ; yp = yp + yv
+
+                                  LDW                          _yp
+                                  Absolute                     
+                                  STW                          0xe8
+                                  LDWI                         15104
+                                  SUBW                         0xe8
+                                  BGE                          _endif_0x0005                ; if abs(yp) &&> 59*256
+
+                                  LDW                          _drawStars_i
+                                  STW                          0xc4
+                                  CALLI                        _newStar                     ; call newStar, i
+
+_endif_0x0005                     LDW                          _xp
+                                  Absolute                     
+                                  STW                          0xe8
+                                  LDWI                         20224
+                                  SUBW                         0xe8
+                                  BGE                          _endif_0x0006                ; if abs(xp) &&> 79*256
+
+                                  LDW                          _drawStars_i
+                                  STW                          0xc4
+                                  CALLI                        _newStar                     ; call newStar, i
+
+_endif_0x0006                     LDWI                         0x7bd0
+                                  ADDW                         _drawStars_i
+                                  PEEK                         
+                                  STW                          _drawStars_ss                ; ss = star(i)
+
+                                  LD                           _xp + 1
+                                  ADDI                         80
+                                  ST                           _drawStars_pxy               ; pxy.lo = xp.hi + STARS_ORG_X
+
+                                  LD                           _yp + 1
+                                  ADDI                         68
+                                  ST                           _drawStars_pxy + 1           ; pxy.hi = yp.hi + STARS_ORG_Y
+
+                                  LDW                          _drawStars_pxy
+                                  PEEK                         
+                                  CALLI                        convertEqOp
+                                  BEQ                          _endif_0x0007                ; if &(peek(pxy) = 0)
+
+                                  LDW                          _drawStars_ss
+                                  STW                          intSrcA
+                                  LDI                          31
+                                  IntMin                       
+                                  STW                          memIndex0
+                                  LDWI                         0x7bb0
+                                  ADDW                         memIndex0
+                                  PEEK                         
+                                  POKE                         _drawStars_pxy               ; poke pxy, colour(min(ss, 31))
+
+                                  LDW                          _drawStars_ss
+                                  ADDI                         1
+                                  STW                          memValue
+                                  LDWI                         0x7bd0
+                                  ADDW                         _drawStars_i
+                                  STW                          memAddr
+                                  LDW                          memValue
+                                  POKE                         memAddr                      ; star(i) = ss + 1
+
+_endif_0x0007                     LDWI                         0x7fa0
+                                  ADDW                         _drawStars_i
+                                  ADDW                         _drawStars_i
+                                  STW                          memAddr
+                                  LDW                          _xp
+                                  DOKE                         memAddr
+                                  LDWI                         0x7ea0
+                                  ADDW                         _drawStars_i
+                                  ADDW                         _drawStars_i
+                                  STW                          memAddr
+                                  LDW                          _yp
+                                  DOKE                         memAddr                      ; xPos(i) = xp : yPos(i) = yp
+
+                                  ForNextFarInc                _drawStars_i _next_0x0003 47 ; next i
+
+                                  Return                                                    ; endproc
+
+                                  HALT                                                      ; END
+
+
+
+;*************************************************************************************************************
+;*************************************************************************************************************
+;* Internal runtime, DO NOT MODIFY PAST THIS POINT, modifications must be made in the original include files *
+;*************************************************************************************************************
+;*************************************************************************************************************
+
+convertEqOp                       EQU     0x7aa0
+convertGtOp                       EQU     0x79ec
+absolute                          EQU     0x7aa9
+integerMin                        EQU     0x7ba1
+rand16bit                         EQU     0x79e4
+scanlineMode                      EQU     0x79f5
+resetVideoFlags                   EQU     0x7ab3
+initClearFuncs                    EQU     0x7abe
+clearVertBlinds                   EQU     0x7acd
+
+
+                    
+convertEqOp         BEQ     convertEq_1
+                    LDI     0
+                    RET
+convertEq_1         LDI     1
+                    RET
+
+
+                    
+convertGtOp         BGT     convertGt_1
+                    LDI     0
+                    RET
+convertGt_1         LDI     1
+                    RET
+
+
+
+mathX               EQU     register8
+mathY               EQU     register9
+mathSum             EQU     register12
+mathRem             EQU     register12
+mathMask            EQU     register13
+mathSign            EQU     register14
+mathQuot            EQU     register15
+mathShift           EQU     register15
+mathBase            EQU     register10
+mathPow             EQU     register11
+mathResult          EQU     register14
+
+
+absolute            BGE     abs_exit
+                    STW     mathX
+                    LDI     0
+                    SUBW    mathX
+abs_exit            RET
+
+
+
+intSrcA             EQU     register0
+intSrcB             EQU     register1
+intSrcX             EQU     register2
+intSwap             EQU     register3
+intSrcAddr          EQU     register8
+intDigit            EQU     register9
+intResult           EQU     register10
+intNegative         EQU     register11
+bcdLength           EQU     register8
+bcdSrcAddr          EQU     register9
+bcdDstAddr          EQU     register10
+bcdSrcData          EQU     register11
+bcdDstData          EQU     register11          
+bcdCarry            EQU     register12
+bcdBorrow           EQU     register12          
+bcdValue            EQU     register0
+bcdDigit            EQU     register1
+bcdMult             EQU     register2
+
+
+integerMin          STW     intSrcB
+                    LDW     intSrcA
+                    SUBW    intSrcB
+                    BLE     integerMi_A
+                    LDW     intSrcB
+                    RET
+
+integerMi_A         LDW     intSrcA
+                    RET
+
+
+rand16bit           LDWI    SYS_Random_34
+                    STW     giga_sysFn
+                    SYS     34
+                    RET
+
+
+
+graphicsMode        EQU     register0
+waitVBlankNum       EQU     register0
+
+drawHLine_x1        EQU     register0
+drawHLine_y1        EQU     register1
+drawHLine_x2        EQU     register2
+
+drawVLine_x1        EQU     register0
+drawVLine_y1        EQU     register1
+drawVLine_y2        EQU     register2
+drawVLine_y8        EQU     register3
+
+drawLine_x1         EQU     register0
+drawLine_y1         EQU     register1
+drawLine_x2         EQU     register2
+drawLine_y2         EQU     register3
+drawLine_xy1        EQU     register0
+drawLine_xy2        EQU     register1
+drawLine_dxy1       EQU     register2
+drawLine_dxy2       EQU     register3
+drawLine_dx1        EQU     register8
+drawLine_dy1        EQU     register9
+drawLine_dx2        EQU     register10
+drawLine_dy2        EQU     register11
+drawLine_sx         EQU     register12
+drawLine_sy         EQU     register13
+drawLine_h          EQU     register14
+drawLine_num        EQU     register15
+drawLine_count      EQU     register14
+drawLine_tmp        EQU     register15
+drawLine_dx         EQU     register2
+drawLine_dy         EQU     register3
+drawLine_u          EQU     register8
+drawLine_v          EQU     register9
+drawLine_addr       EQU     register10
+drawLine_ddx        EQU     register11
+drawLine_cnt        EQU     register12
+drawLine_swp        EQU     register13
+drawLine_xy         EQU     register7
+
+readPixel_xy        EQU     register0
+drawPixel_xy        EQU     register0
+
+drawCircle_cycx     EQU     register0
+drawCircle_r        EQU     register2
+drawCircle_a        EQU     register3
+drawCircle_d        EQU     register8
+drawCircle_x        EQU     register9
+drawCircle_y        EQU     register10
+drawCircle_ch0      EQU     register11
+drawCircle_ch1      EQU     register12
+drawCircle_ch2      EQU     register13
+drawCircle_ch3      EQU     register14
+
+drawCircleF_x1      EQU     register0
+drawCircleF_y1      EQU     register1
+drawCircleF_x2      EQU     register2
+drawCircleF_cx      EQU     register15
+drawCircleF_cy      EQU     register10
+drawCircleF_r       EQU     register11
+drawCircleF_v       EQU     register8
+drawCircleF_w       EQU     register9
+
+drawRect_x1         EQU     register7
+drawRect_y1         EQU     register10
+drawRect_x2         EQU     register11
+drawRect_y2         EQU     register16
+
+drawRectF_x1        EQU     register0
+drawRectF_y1        EQU     register1
+drawRectF_x2        EQU     register2
+drawRectF_y2        EQU     register8
+
+drawPoly_addr       EQU     register7
+drawPoly_mode       EQU     register14
+
+    
+scanlineMode        LDWI    SYS_SetMode_v2_80
+                    STW     giga_sysFn
+                    LDW     graphicsMode
+                    SYS     80
+                    RET
+
+
+
+xreset              EQU     register0
+xcount              EQU     register1
+ycount              EQU     register2
+treset              EQU     register3
+breset              EQU     register8
+top                 EQU     register9
+bot                 EQU     register10
+vramAddr            EQU     register11
+evenAddr            EQU     register12
+clsAddress          EQU     register13
+clsLines            EQU     register14
+varAddress          EQU     register13
+clrAddress          EQU     register13
+clrLines            EQU     register14
+clrWidth            EQU     register15
+ramAddr0            EQU     register14
+ramAddr1            EQU     register15
+
+
+resetVideoFlags     LDI     giga_CursorX                    
+                    STW     cursorXY
+                    LD      miscFlags
+                    ANDI    MISC_ON_BOTTOM_ROW_MSK
+                    ST      miscFlags                       
+                    RET
+
+
+
+initClearFuncs      PUSH
+                    CALLI   resetVideoFlags
+                    LDWI    SYS_SetMemory_v2_54             
+                    STW     giga_sysFn
+                    LD      fgbgColour
+                    ST      giga_sysArg1                    
+                    POP
+                    RET
+
+
+                    
+clearVertBlinds     PUSH
+                    CALLI   initClearFuncs
+                    LDI     giga_vram >> 8
+                    STW     top  
+                    
+clearVB_loopy       LDI     giga_xres
+                    ST      giga_sysArg0
+                    LDI     0
+                    ST      giga_sysArg2                    
+                    LD      top
+                    ST      giga_sysArg3                    
+                    SYS     54                              
+    
+                    LDI     giga_xres
+                    ST      giga_sysArg0
+                    LDI     0
+                    ST      giga_sysArg2                    
+                    LDWI    giga_yres - 1 + 16
+                    SUBW    top
+                    ST      giga_sysArg3                    
+                    SYS     54                              
+                    INC     top                             
+                    LD      top
+                    SUBI    giga_yres / 2 + 8
+                    BLT     clearVB_loopy
+                    POP
+                    RET
+

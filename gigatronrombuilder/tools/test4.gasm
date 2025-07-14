@@ -1,0 +1,943 @@
+_startAddress_                    EQU                          0x0200
+
+; Internal Variables
+serialRawPrev                     EQU                          0x0081
+frameCountPrev                    EQU                          0x00d6
+register0                         EQU                          0x0082
+register1                         EQU                          register0 + 0x02
+register2                         EQU                          register0 + 0x04
+register3                         EQU                          register0 + 0x06
+register4                         EQU                          register0 + 0x08
+register5                         EQU                          register0 + 0x0A
+register6                         EQU                          register0 + 0x0C
+register7                         EQU                          register0 + 0x0E
+register8                         EQU                          register0 + 0x10
+register9                         EQU                          register0 + 0x12
+register10                        EQU                          register0 + 0x14
+register11                        EQU                          register0 + 0x16
+register12                        EQU                          register0 + 0x18
+register13                        EQU                          register0 + 0x1A
+register14                        EQU                          register0 + 0x1C
+register15                        EQU                          register0 + 0x1E
+fgbgColour                        EQU                          register0 + 0x20
+cursorXY                          EQU                          register0 + 0x22
+midiStream                        EQU                          register0 + 0x24
+midiDelay                         EQU                          register0 + 0x26
+miscFlags                         EQU                          register0 + 0x28
+register16                        EQU                          register0 + 0x2A
+timerTick                         EQU                          register0 + 0x2C
+timerJiff                         EQU                          register0 + 0x2E
+
+; Internal Constants
+MISC_WAIT_VBLANK_BIT              EQU                          0x01
+MISC_ENABLE_SCROLL_BIT            EQU                          0x02
+MISC_ON_BOTTOM_ROW_BIT            EQU                          0x04
+MISC_DISABLE_CLIP_BIT             EQU                          0x08
+MISC_ENABLE_FNT4X6_BIT            EQU                          0x10
+MISC_WAIT_VBLANK_MSK              EQU                          0xfe
+MISC_ENABLE_SCROLL_MSK            EQU                          0xfd
+MISC_ON_BOTTOM_ROW_MSK            EQU                          0xfb
+MISC_DISABLE_CLIP_MSK             EQU                          0xf7
+MISC_ENABLE_FNT4X6_MSK            EQU                          0xef
+
+; Internal Buffers
+regsWorkArea                      EQU                          0x0000
+textWorkArea                      EQU                          0x77a0
+
+; Includes
+%includePath                      "runtime"
+%include                          util.i
+%include                          gigatron.i
+%include                          macros_ROMv5a.i
+
+; Labels
+_entryPoint_                      EQU                          0x0200
+_nextParticle                     EQU                          0x0420
+_repeat_0x0000                    EQU                          0x0236
+_initFire                         EQU                          0x023c
+_next_0x0001                      EQU                          0x0241
+_respawnParticle                  EQU                          0x0256
+_updateFire                       EQU                          0x02f3
+_next_0x0002                      EQU                          0x0302
+_endif_0x0004                     EQU                          0x034e
+_endif_0x0005                     EQU                          0x0381
+_endif_0x0006                     EQU                          0x03a0
+_endif_0x0007                     EQU                          0x03bf
+_endif_0x0008                     EQU                          0x03e5
+_endif_0x0003                     EQU                          0x0420
+_page_0x0300                      EQU                          0x0300
+_page_0x0400                      EQU                          0x0400
+
+; Constants
+_SYS_Reset_88                     EQU                          0x005e
+_SYS_Exec_88                      EQU                          0x00ad
+_SYS_LoadBytes_DEVROM_XXX         EQU                          0x00ec
+_SYS_ReadRomDir_v5_80             EQU                          0x00ef
+_SYS_Out_22                       EQU                          0x00f4
+_SYS_In_24                        EQU                          0x00f9
+_videoZ                           EQU                          0x0100
+_startVideo                       EQU                          0x0103
+_vBlankStart                      EQU                          0x0104
+_sound1                           EQU                          0x0166
+_vBlankNormal                     EQU                          0x019f
+_vBlankSample                     EQU                          0x01a6
+_videoA                           EQU                          0x0201
+_pixels                           EQU                          0x020a
+_sound3                           EQU                          0x02ae
+_sound2                           EQU                          0x02b1
+_videoB                           EQU                          0x02ca
+_videoC                           EQU                          0x02d3
+_videoD                           EQU                          0x02dc
+_videoE                           EQU                          0x02e9
+_videoF                           EQU                          0x02ec
+_nopixels                         EQU                          0x02f6
+_ENTER                            EQU                          0x02ff
+_NEXTY                            EQU                          0x0300
+_NEXT                             EQU                          0x0301
+_EXIT                             EQU                          0x030b
+_RESYNC                           EQU                          0x030c
+_LDWI                             EQU                          0x0311
+_LD                               EQU                          0x031a
+_CMPHS_v5                         EQU                          0x031f
+_LDW                              EQU                          0x0321
+_STW                              EQU                          0x032b
+_BCC                              EQU                          0x0335
+_EQ                               EQU                          0x033f
+_GT                               EQU                          0x034d
+_LT                               EQU                          0x0350
+_GE                               EQU                          0x0353
+_LE                               EQU                          0x0356
+_LDI                              EQU                          0x0359
+_ST                               EQU                          0x035e
+_POP                              EQU                          0x0363
+_NE                               EQU                          0x0372
+_PUSH                             EQU                          0x0375
+_LUP                              EQU                          0x037f
+_ANDI                             EQU                          0x0382
+_CALLI_v5                         EQU                          0x0385
+_ORI                              EQU                          0x0388
+_XORI                             EQU                          0x038c
+_BRA                              EQU                          0x0390
+_INC                              EQU                          0x0393
+_CMPHU_v5                         EQU                          0x0397
+_ADDW                             EQU                          0x0399
+_PEEK                             EQU                          0x03ad
+_SYS                              EQU                          0x03b4
+_SUBW                             EQU                          0x03b8
+_REENTER_28                       EQU                          0x03ca
+_REENTER                          EQU                          0x03cb
+_DEF                              EQU                          0x03cd
+_CALL                             EQU                          0x03cf
+_ALLOC                            EQU                          0x03df
+_ADDI                             EQU                          0x03e3
+_SUBI                             EQU                          0x03e6
+_LSLW                             EQU                          0x03e9
+_STLW                             EQU                          0x03ec
+_LDLW                             EQU                          0x03ee
+_POKE                             EQU                          0x03f0
+_DOKE                             EQU                          0x03f3
+_DEEK                             EQU                          0x03f6
+_ANDW                             EQU                          0x03f8
+_ORW                              EQU                          0x03fa
+_XORW                             EQU                          0x03fc
+_RET                              EQU                          0x03ff
+_addi                             EQU                          0x0418
+_subi                             EQU                          0x0426
+_lslw                             EQU                          0x0435
+_stlw                             EQU                          0x0441
+_ldlw                             EQU                          0x044c
+_poke                             EQU                          0x0457
+_peek                             EQU                          0x0462
+_doke                             EQU                          0x046d
+_deek                             EQU                          0x047a
+_andw                             EQU                          0x0486
+_orw                              EQU                          0x0491
+_xorw                             EQU                          0x049c
+_SYS_Random_34                    EQU                          0x04a7
+_SYS_LSRW7_30                     EQU                          0x04b9
+_SYS_LSRW8_24                     EQU                          0x04c6
+_SYS_LSLW8_24                     EQU                          0x04cd
+_SYS_Draw4_30                     EQU                          0x04d4
+_SYS_VDrawBits_134                EQU                          0x04e1
+_shiftTable                       EQU                          0x0500
+_SYS_LSRW1_48                     EQU                          0x0600
+_SYS_LSRW2_52                     EQU                          0x0619
+_SYS_LSRW3_52                     EQU                          0x0636
+_SYS_LSRW4_50                     EQU                          0x0652
+_SYS_LSRW5_50                     EQU                          0x066d
+_SYS_LSRW6_48                     EQU                          0x0687
+_SYS_LSLW4_46                     EQU                          0x06a0
+_SYS_Read3_40                     EQU                          0x06b9
+_txReturn                         EQU                          0x06bc
+_SYS_Unpack_56                    EQU                          0x06c0
+_font32up                         EQU                          0x0700
+_font82up                         EQU                          0x0800
+_notesTable                       EQU                          0x0900
+_invTable                         EQU                          0x0a00
+_SYS_SetMode_v2_80                EQU                          0x0b00
+_SYS_SetMemory_v2_54              EQU                          0x0b03
+_SYS_SendSerial1_v3_80            EQU                          0x0b06
+_SYS_ExpanderControl_v4_40        EQU                          0x0b09
+_SYS_Run6502_v4_80                EQU                          0x0b0c
+_SYS_ResetWaveforms_v4_50         EQU                          0x0b0f
+_SYS_ShuffleNoise_v4_46           EQU                          0x0b12
+_SYS_SpiExchangeBytes_v4_134      EQU                          0x0b15
+_sys_SetMode                      EQU                          0x0b54
+_sys_SendSerial1                  EQU                          0x0b83
+_SYS_Sprite6_v3_64                EQU                          0x0c00
+_SYS_Sprite6x_v3_64               EQU                          0x0c40
+_SYS_Sprite6y_v3_64               EQU                          0x0c80
+_SYS_Sprite6xy_v3_64              EQU                          0x0cc0
+_sys_ExpanderControl              EQU                          0x0cfb
+_sys_SpiExchangeBytes             EQU                          0x0d09
+_sys_v6502                        EQU                          0x0d7f
+_v6502_ror                        EQU                          0x0d83
+_v6502_lsr                        EQU                          0x0d9d
+_v6502_rol                        EQU                          0x0dac
+_v6502_asl                        EQU                          0x0dbf
+_v6502_jmp1                       EQU                          0x0dc5
+_v6502_jmp2                       EQU                          0x0dcd
+_v6502_pla                        EQU                          0x0dd7
+_v6502_pha                        EQU                          0x0de2
+_v6502_brk                        EQU                          0x0dea
+_v6502_ENTER                      EQU                          0x0dff
+_v6502_next                       EQU                          0x0e20
+_v6502_next2                      EQU                          0x0e22
+_v6502_mode0                      EQU                          0x0e35
+_v6502_exitBefore                 EQU                          0x0e3a
+_v6502_modeIMM                    EQU                          0x0e42
+_v6502_modeACC                    EQU                          0x0e52
+_v6502_modeILL                    EQU                          0x0e58
+_v6502_modeIMP                    EQU                          0x0e58
+_v6502_modeZPX                    EQU                          0x0e5b
+_v6502_modeZP                     EQU                          0x0e5d
+_v6502_modeABS                    EQU                          0x0e78
+_v6502_modeABX                    EQU                          0x0e7a
+_v6502_modeABY                    EQU                          0x0e7b
+_v6502_modeIZY                    EQU                          0x0eab
+_v6502_modeREL                    EQU                          0x0ecf
+_v6502_modeIZX                    EQU                          0x0ee0
+_v6502_check                      EQU                          0x0ef2
+_v6502_exitAfter                  EQU                          0x0ef8
+_v6502_execute                    EQU                          0x0f00
+_v6502_ADC                        EQU                          0x1001
+_v6502_SBC                        EQU                          0x1029
+_v6502_CLC                        EQU                          0x1036
+_v6502_SEC                        EQU                          0x1038
+_v6502_BPL                        EQU                          0x103f
+_v6502_BMI                        EQU                          0x1042
+_v6502_BVC                        EQU                          0x1045
+_v6502_BVS                        EQU                          0x1049
+_v6502_BCC                        EQU                          0x104d
+_v6502_BCS                        EQU                          0x1051
+_v6502_BNE                        EQU                          0x1055
+_v6502_BEQ                        EQU                          0x1058
+_v6502_INX                        EQU                          0x106c
+_v6502_DEX                        EQU                          0x1077
+_v6502_INY                        EQU                          0x107b
+_v6502_DEY                        EQU                          0x107f
+_v6502_NOP                        EQU                          0x1083
+_v6502_AND                        EQU                          0x1085
+_v6502_ORA                        EQU                          0x1089
+_v6502_EOR                        EQU                          0x108c
+_v6502_JMP1                       EQU                          0x1096
+_v6502_JMP2                       EQU                          0x1098
+_v6502_JSR                        EQU                          0x109a
+_v6502_INC                        EQU                          0x10b7
+_v6502_LDA                        EQU                          0x10b9
+_v6502_LDX                        EQU                          0x10bb
+_v6502_LDX2                       EQU                          0x10bd
+_v6502_LDY                        EQU                          0x10bf
+_v6502_STA                        EQU                          0x10c1
+_v6502_STX                        EQU                          0x10c3
+_v6502_STX2                       EQU                          0x10c5
+_v6502_STY                        EQU                          0x10c7
+_v6502_TAX                        EQU                          0x10c9
+_v6502_TAY                        EQU                          0x10cb
+_v6502_TXA                        EQU                          0x10cd
+_v6502_TYA                        EQU                          0x10cf
+_v6502_CLV                        EQU                          0x10d1
+_v6502_RTI                        EQU                          0x10d3
+_v6502_ROR                        EQU                          0x10d5
+_v6502_LSR                        EQU                          0x10d7
+_v6502_PHA                        EQU                          0x10d9
+_v6502_CLI                        EQU                          0x10db
+_v6502_RTS                        EQU                          0x10dd
+_v6502_PLA                        EQU                          0x10df
+_v6502_SEI                        EQU                          0x10e1
+_v6502_TXS                        EQU                          0x10e3
+_v6502_TSX                        EQU                          0x10e5
+_v6502_CPY                        EQU                          0x10e7
+_v6502_CMP                        EQU                          0x10e9
+_v6502_DEC                        EQU                          0x10eb
+_v6502_CLD                        EQU                          0x10ed
+_v6502_CPX                        EQU                          0x10ef
+_v6502_ASL                        EQU                          0x10f1
+_v6502_PHP                        EQU                          0x10f3
+_v6502_BIT                        EQU                          0x10f5
+_v6502_ROL                        EQU                          0x10f7
+_v6502_PLP                        EQU                          0x10f9
+_v6502_SED                        EQU                          0x10fb
+_v6502_ILL                        EQU                          0x10fd
+_v6502_BRK                        EQU                          0x10fd
+_v6502_RESUME                     EQU                          0x10ff
+_v6502_dec                        EQU                          0x1105
+_v6502_inc                        EQU                          0x110e
+_v6502_lda                        EQU                          0x1118
+_v6502_ldx                        EQU                          0x1122
+_v6502_ldy                        EQU                          0x1126
+_v6502_ldx2                       EQU                          0x112a
+_v6502_sta                        EQU                          0x1134
+_v6502_stx                        EQU                          0x113a
+_v6502_stx2                       EQU                          0x1140
+_v6502_sty                        EQU                          0x1148
+_v6502_tax                        EQU                          0x114d
+_v6502_tsx                        EQU                          0x1154
+_v6502_txs                        EQU                          0x115e
+_v6502_tay                        EQU                          0x1162
+_v6502_txa                        EQU                          0x1165
+_v6502_tya                        EQU                          0x1168
+_v6502_cli                        EQU                          0x116b
+_v6502_sei                        EQU                          0x116e
+_v6502_cld                        EQU                          0x1171
+_v6502_sed                        EQU                          0x1174
+_v6502_clv                        EQU                          0x1176
+_v6502_bit                        EQU                          0x117d
+_v6502_rts                        EQU                          0x118f
+_v6502_php                        EQU                          0x11a2
+_v6502_cpx                        EQU                          0x11bb
+_v6502_cpy                        EQU                          0x11bd
+_v6502_cmp                        EQU                          0x11be
+_v6502_plp                        EQU                          0x11d4
+_v6502_rti                        EQU                          0x11e4
+_sys_Exec                         EQU                          0x124b
+_sys_VDrawBits                    EQU                          0x128f
+_sys_ResetWaveforms               EQU                          0x12ae
+_sys_ShuffleNoise                 EQU                          0x12cf
+_sys_LoadBytes                    EQU                          0x12e9
+_memSize                          EQU                          0x0001
+_entropy0                         EQU                          0x0006
+_entropy1                         EQU                          0x0007
+_entropy2                         EQU                          0x0008
+_videoY                           EQU                          0x0009
+_frameCount                       EQU                          0x000e
+_serialRaw                        EQU                          0x000f
+_buttonState                      EQU                          0x0011
+_xoutMask                         EQU                          0x0014
+_vPC                              EQU                          0x0016
+_vAC                              EQU                          0x0018
+_vACH                             EQU                          0x0019
+_vLR                              EQU                          0x001a
+_vSP                              EQU                          0x001c
+_vTmp                             EQU                          0x001d
+_romType                          EQU                          0x0021
+_sysFn                            EQU                          0x0022
+_sysArgs0                         EQU                          0x0024
+_sysArgs1                         EQU                          0x0025
+_sysArgs2                         EQU                          0x0026
+_sysArgs3                         EQU                          0x0027
+_sysArgs4                         EQU                          0x0028
+_sysArgs5                         EQU                          0x0029
+_sysArgs6                         EQU                          0x002a
+_sysArgs7                         EQU                          0x002b
+_soundTimer                       EQU                          0x002c
+_ledTimer                         EQU                          0x002d
+_ledState_v2                      EQU                          0x002e
+_ledTempo                         EQU                          0x002f
+_userVars                         EQU                          0x0030
+_videoTable                       EQU                          0x0100
+_vIRQ_v5                          EQU                          0x01f6
+_videoTop_v5                      EQU                          0x01f9
+_userCode                         EQU                          0x0200
+_soundTable                       EQU                          0x0700
+_screenMemory                     EQU                          0x0800
+_vReset                           EQU                          0x01f0
+_wavA                             EQU                          0x00fa
+_wavX                             EQU                          0x00fb
+_keyL                             EQU                          0x00fc
+_keyH                             EQU                          0x00fd
+_oscL                             EQU                          0x00fe
+_oscH                             EQU                          0x00ff
+_maxTicks                         EQU                          0x000e
+_v6502_PC                         EQU                          0x001a
+_v6502_PCL                        EQU                          0x001a
+_v6502_PCH                        EQU                          0x001b
+_v6502_A                          EQU                          0x0018
+_v6502_X                          EQU                          0x002a
+_v6502_Y                          EQU                          0x002b
+_qqVgaWidth                       EQU                          0x00a0
+_qqVgaHeight                      EQU                          0x0078
+_buttonRight                      EQU                          0x0001
+_buttonLeft                       EQU                          0x0002
+_buttonDown                       EQU                          0x0004
+_buttonUp                         EQU                          0x0008
+_buttonStart                      EQU                          0x0010
+_buttonSelect                     EQU                          0x0020
+_buttonB                          EQU                          0x0040
+_buttonA                          EQU                          0x0080
+_Reset                            EQU                          0x130e
+_Invader                          EQU                          0x1365
+_Main                             EQU                          0x3d0e
+_sys_ReadRomDir                   EQU                          0x4600
+_NUM_FIRE_PARTICLES               EQU                          0x0040
+_FIRE_ORG_X                       EQU                          0x0050
+_FIRE_ORG_Y                       EQU                          0x0044
+_FIRE_WIDTH                       EQU                          0x0050
+
+; Global Variables
+
+; Local Variables
+_initFire_i                       EQU                          0x00c4
+_respawnParticle_i                EQU                          0x00c4
+_updateFire_i                     EQU                          0x00c4
+_updateFire_xp                    EQU                          0x00c6
+_updateFire_yp                    EQU                          0x00c8
+_updateFire_yv                    EQU                          0x00ca
+_updateFire_lf                    EQU                          0x00cc
+_updateFire_pxy                   EQU                          0x00ce
+
+; Arrays
+_xPos                             EQU                          0x0680
+_xPos                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
+_yPos                             EQU                          0x0600
+_yPos                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
+_xVel                             EQU                          0x0580
+_xVel                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
+_yVel                             EQU                          0x0500
+_yVel                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
+_life                             EQU                          0x7fc0
+_life                             DB                           0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 
+_colour                           EQU                          0x7ec0
+_colour                           DB                           0x95 0x95 0x95 0x95 0x95 0x95 0x95 0x95 0x95 0x95 0x95 0x95 0x95 0x95 0x95 0x95 0x86 0x86 0x86 0x86 0x86 0x86 0x86 0x86 0x86 0x86 0x86 0x86 0x86 0x86 0x86 0x83 0x83 0x83 0x83 0x83 0x83 0x83 0x83 0x83 0x83 0x87 0x87 0x87 0x87 0x87 0x87 0x87 0x87 0x87 0x87 0x8f 0x8f 0x8f 0x8f 0x8b 0x8b 0x8b 0x8b 0x8b 0x8b 0x8b 0x8b 0x8b 
+
+; Strings
+
+; Constant Strings
+
+; Data
+
+; Time
+
+; Define Bytes
+
+; Define Words
+
+; Define Images
+
+; Define Loader Image Chunks
+
+; Define Midis
+
+; Define Blits
+
+; Define Fonts
+
+; Define Sprites
+
+; Define Patterns
+
+; Lookup Tables
+
+; Lazy Constants
+
+; Code
+_entryPoint_                      InitialiseOn                 
+%define FONT_BOTH
+%define TEXT_SCROLL                                                                         ; INIT
+
+                                  LD                           miscFlags
+                                  ANDI                         0xfd
+                                  ST                           miscFlags                    ; tscroll off
+
+                                  LDI                          0
+                                  ST                           fgbgColour
+                                  LDI                          2
+                                  STW                          graphicsMode
+                                  ScanlineMode                 
+                                  ClearVertBlinds                                           ; set BG_COLOUR, 0 : mode 2 : cls
+
+                                  LDWI                         3072
+                                  STW                          fgbgColour                   ; set FGBG_COLOUR, &h0C00
+
+                                  CALLI                        _initFire                    ; call initFire
+
+_repeat_0x0000                    CALLI                        _updateFire                  ; call updateFire
+
+                                  CALLI                        _repeat_0x0000               ; forever
+
+_initFire                         PUSH                                                      ; proc initFire
+
+                                  LDI                          0
+                                  STW                          _initFire_i                  ; for i=0 to NUM_FIRE_PARTICLES-1
+
+_next_0x0001                      LDW                          _initFire_i
+                                  STW                          0xc4
+                                  CALLI                        _respawnParticle             ; call respawnParticle, i
+
+                                  ForNextFarInc                _initFire_i _next_0x0001 63  ; next i
+
+                                  Return                                                    ; endproc
+
+_respawnParticle                  PUSH                                                      ; proc respawnParticle, i
+
+                                  Rand                         
+                                  ANDI                         0x3f
+                                  SUBI                         32
+                                  STW                          memValue
+                                  LDW                          _respawnParticle_i
+                                  STW                          memIndex0
+                                  LDWI                         0x0680
+                                  ADDW                         memIndex0
+                                  ADDW                         memIndex0
+                                  STW                          memAddr
+                                  LDW                          memValue
+                                  INC                          memAddr
+                                  POKE                         memAddr                      ; xPos(i).hi = (rnd(0) AND 63) - 32
+
+                                  LDI                          59
+                                  STW                          memValue
+                                  LDW                          _respawnParticle_i
+                                  STW                          memIndex0
+                                  LDWI                         0x0600
+                                  ADDW                         memIndex0
+                                  ADDW                         memIndex0
+                                  STW                          memAddr
+                                  LDW                          memValue
+                                  INC                          memAddr
+                                  POKE                         memAddr                      ; yPos(i).hi = 59
+
+                                  LDWI                         0x0600
+                                  ADDW                         _respawnParticle_i
+                                  ADDW                         _respawnParticle_i
+                                  STW                          memAddr
+                                  LDI                          0
+                                  POKE                         memAddr                      ; yPos(i).lo = 0
+
+                                  Rand                         
+                                  STW                          0xe8
+                                  LDWI                         0x01ff
+                                  ANDW                         0xe8
+                                  STW                          0xe8
+                                  LDWI                         -256
+                                  ADDW                         0xe8
+                                  STW                          memValue
+                                  LDWI                         0x0580
+                                  ADDW                         _respawnParticle_i
+                                  ADDW                         _respawnParticle_i
+                                  STW                          memAddr
+                                  LDW                          memValue
+                                  DOKE                         memAddr                      ; xVel(i) = (rnd(0) AND 511) - 256
+
+                                  Rand                         
+                                  STW                          0xe8
+                                  LDWI                         0x01ff
+                                  ANDW                         0xe8
+                                  STW                          0xe8
+                                  LDWI                         256
+                                  ADDW                         0xe8
+                                  STW                          0xe8
+                                  LDI                          0
+                                  SUBW                         0xe8
+                                  STW                          memValue
+                                  LDWI                         0x0500
+                                  ADDW                         _respawnParticle_i
+                                  ADDW                         _respawnParticle_i
+                                  STW                          memAddr
+                                  LDW                          memValue
+                                  DOKE                         memAddr                      ; yVel(i) = -((rnd(0) AND 511) + 256)
+
+                                  Rand                         
+                                  ANDI                         0x1f
+                                  ADDI                         40
+                                  STW                          memValue
+                                  LDWI                         0x7fc0
+                                  ADDW                         _respawnParticle_i
+                                  STW                          memAddr
+                                  LDW                          memValue
+                                  POKE                         memAddr                      ; life(i) = (rnd(0) AND 31) + 40
+
+                                  Return                                                    ; endproc
+
+_updateFire                       PUSH                                                      ; proc updateFire
+
+                                  LDI                          0
+                                  CALLI                        _page_0x0300
+_page_0x0300                      STW                          _updateFire_i                ; for i=0 to NUM_FIRE_PARTICLES-1
+
+_next_0x0002                      LDWI                         0x7fc0
+                                  ADDW                         _updateFire_i
+                                  PEEK                         
+                                  STW                          _updateFire_lf               ; lf = life(i)
+
+                                  LDW                          _updateFire_lf
+                                  CALLI                        convertGtOp
+                                  JumpFalse                    _endif_0x0003 0              ; if lf > 0
+
+                                  LDWI                         0x0680
+                                  ADDW                         _updateFire_i
+                                  ADDW                         _updateFire_i
+                                  DEEK                         
+                                  STW                          _updateFire_xp               ; xp = xPos(i)
+
+                                  LDWI                         0x0600
+                                  ADDW                         _updateFire_i
+                                  ADDW                         _updateFire_i
+                                  DEEK                         
+                                  STW                          _updateFire_yp               ; yp = yPos(i)
+
+                                  LDWI                         0x0500
+                                  ADDW                         _updateFire_i
+                                  ADDW                         _updateFire_i
+                                  DEEK                         
+                                  STW                          _updateFire_yv               ; yv = yVel(i)
+
+                                  LD                           _updateFire_xp + 1
+                                  ADDI                         80
+                                  ST                           _updateFire_pxy              ; pxy.lo = xp.hi + FIRE_ORG_X
+
+                                  LD                           _updateFire_yp + 1
+                                  ADDI                         68
+                                  ST                           _updateFire_pxy + 1          ; pxy.hi = yp.hi + FIRE_ORG_Y
+
+                                  LDW                          _updateFire_pxy
+                                  PEEK                         
+                                  ANDI                         0x80
+                                  JumpFalse                    _endif_0x0004 1              ; if peek(pxy) AND &h80
+
+                                  LDI                          0
+                                  POKE                         _updateFire_pxy              ; poke pxy, 0
+
+_endif_0x0004                     LDWI                         0x0580
+                                  ADDW                         _updateFire_i
+                                  ADDW                         _updateFire_i
+                                  DEEK                         
+                                  ADDW                         _updateFire_xp
+                                  STW                          _updateFire_xp               ; xp = xp + xVel(i)
+
+                                  LDW                          _updateFire_yp
+                                  ADDW                         _updateFire_yv
+                                  STW                          _updateFire_yp               ; yp = yp + yv
+
+                                  LDW                          _updateFire_yv
+                                  ADDI                         8
+                                  STW                          _updateFire_yv               ; yv = yv + 8
+
+                                  LDW                          _updateFire_lf
+                                  SUBI                         1
+                                  STW                          _updateFire_lf               ; lf = lf - 1
+
+                                  LDW                          _updateFire_lf
+                                  CALLI                        convertEqOp
+                                  JumpFalse                    _endif_0x0005 2              ; if lf = 0
+
+                                  LDW                          _updateFire_i
+                                  STW                          0xc4
+                                  CALLI                        _respawnParticle             ; call respawnParticle, i
+
+                                  CALLI                        _nextParticle                ; goto nextParticle
+
+_endif_0x0005                     LDW                          _updateFire_yp
+                                  Absolute                     
+                                  STW                          0xe8
+                                  LDWI                         15104
+                                  SUBW                         0xe8
+                                  CALLI                        convertLtOp
+                                  JumpFalse                    _endif_0x0006 3              ; if abs(yp) > 59*256
+
+                                  LDW                          _updateFire_i
+                                  STW                          0xc4
+                                  CALLI                        _respawnParticle             ; call respawnParticle, i
+
+                                  CALLI                        _nextParticle                ; goto nextParticle
+
+_endif_0x0006                     LDW                          _updateFire_xp
+                                  Absolute                     
+                                  STW                          0xe8
+                                  LDWI                         20224
+                                  SUBW                         0xe8
+                                  CALLI                        convertLtOp
+                                  JumpFalse                    _endif_0x0007 4              ; if abs(xp) > 79*256
+
+                                  LDW                          _updateFire_i
+                                  STW                          0xc4
+                                  CALLI                        _respawnParticle             ; call respawnParticle, i
+
+                                  CALLI                        _nextParticle                ; goto nextParticle
+
+_endif_0x0007                     LD                           _updateFire_xp + 1
+                                  ADDI                         80
+                                  ST                           _updateFire_pxy              ; pxy.lo = xp.hi + FIRE_ORG_X
+
+                                  LD                           _updateFire_yp + 1
+                                  ADDI                         68
+                                  ST                           _updateFire_pxy + 1          ; pxy.hi = yp.hi + FIRE_ORG_Y
+
+                                  LDW                          _updateFire_pxy
+                                  PEEK                         
+                                  CALLI                        convertEqOp
+                                  JumpFalse                    _endif_0x0008 5              ; if peek(pxy) = 0
+
+                                  LDW                          _updateFire_lf
+                                  ANDI                         0x3f
+                                  STW                          memIndex0
+                                  LDWI                         0x7ec0
+                                  ADDW                         memIndex0
+                                  PEEK                         
+                                  POKE                         _updateFire_pxy              ; poke pxy, colour(lf AND 63)
+
+_endif_0x0008                     LDWI                         0x0680
+                                  ADDW                         _updateFire_i
+                                  ADDW                         _updateFire_i
+                                  STW                          memAddr
+                                  LDW                          _updateFire_xp
+                                  DOKE                         memAddr
+                                  LDWI                         0x0600
+                                  ADDW                         _updateFire_i
+                                  CALLI                        _page_0x0400
+_page_0x0400                      ADDW                         _updateFire_i
+                                  STW                          memAddr
+                                  LDW                          _updateFire_yp
+                                  DOKE                         memAddr                      ; xPos(i) = xp : yPos(i) = yp
+
+                                  LDWI                         0x0500
+                                  ADDW                         _updateFire_i
+                                  ADDW                         _updateFire_i
+                                  STW                          memAddr
+                                  LDW                          _updateFire_yv
+                                  DOKE                         memAddr                      ; yVel(i) = yv
+
+                                  LDWI                         0x7fc0
+                                  ADDW                         _updateFire_i
+                                  STW                          memAddr
+                                  LDW                          _updateFire_lf
+                                  POKE                         memAddr                      ; life(i) = lf
+
+_nextParticle                     ForNextFarInc                _updateFire_i _next_0x0002 63                                                                                            ; next i
+
+                                  Return                                                    ; endproc
+
+                                  HALT                                                      ; END
+
+
+
+;*************************************************************************************************************
+;*************************************************************************************************************
+;* Internal runtime, DO NOT MODIFY PAST THIS POINT, modifications must be made in the original include files *
+;*************************************************************************************************************
+;*************************************************************************************************************
+
+convertEqOp                       EQU     0x7ea3
+convertLtOp                       EQU     0x7dc4
+convertGtOp                       EQU     0x7dbb
+absolute                          EQU     0x7eb6
+rand16bit                         EQU     0x7db3
+scanlineMode                      EQU     0x7eac
+resetVideoFlags                   EQU     0x7fa6
+initClearFuncs                    EQU     0x7fb1
+clearVertBlinds                   EQU     0x7dcd
+
+
+                    
+convertEqOp         BEQ     convertEq_1
+                    LDI     0
+                    RET
+convertEq_1         LDI     1
+                    RET
+
+
+                    
+convertLtOp         BLT     convertLt_1
+                    LDI     0
+                    RET
+convertLt_1         LDI     1
+                    RET
+
+
+                    
+convertGtOp         BGT     convertGt_1
+                    LDI     0
+                    RET
+convertGt_1         LDI     1
+                    RET
+
+
+
+mathX               EQU     register8
+mathY               EQU     register9
+mathSum             EQU     register12
+mathRem             EQU     register12
+mathMask            EQU     register13
+mathSign            EQU     register14
+mathQuot            EQU     register15
+mathShift           EQU     register15
+mathBase            EQU     register10
+mathPow             EQU     register11
+mathResult          EQU     register14
+
+
+absolute            BGE     abs_exit
+                    STW     mathX
+                    LDI     0
+                    SUBW    mathX
+abs_exit            RET
+
+
+rand16bit           LDWI    SYS_Random_34
+                    STW     giga_sysFn
+                    SYS     34
+                    RET
+
+
+
+graphicsMode        EQU     register0
+waitVBlankNum       EQU     register0
+
+drawHLine_x1        EQU     register0
+drawHLine_y1        EQU     register1
+drawHLine_x2        EQU     register2
+
+drawVLine_x1        EQU     register0
+drawVLine_y1        EQU     register1
+drawVLine_y2        EQU     register2
+drawVLine_y8        EQU     register3
+
+drawLine_x1         EQU     register0
+drawLine_y1         EQU     register1
+drawLine_x2         EQU     register2
+drawLine_y2         EQU     register3
+drawLine_xy1        EQU     register0
+drawLine_xy2        EQU     register1
+drawLine_dxy1       EQU     register2
+drawLine_dxy2       EQU     register3
+drawLine_dx1        EQU     register8
+drawLine_dy1        EQU     register9
+drawLine_dx2        EQU     register10
+drawLine_dy2        EQU     register11
+drawLine_sx         EQU     register12
+drawLine_sy         EQU     register13
+drawLine_h          EQU     register14
+drawLine_num        EQU     register15
+drawLine_count      EQU     register14
+drawLine_tmp        EQU     register15
+drawLine_dx         EQU     register2
+drawLine_dy         EQU     register3
+drawLine_u          EQU     register8
+drawLine_v          EQU     register9
+drawLine_addr       EQU     register10
+drawLine_ddx        EQU     register11
+drawLine_cnt        EQU     register12
+drawLine_swp        EQU     register13
+drawLine_xy         EQU     register7
+
+readPixel_xy        EQU     register0
+drawPixel_xy        EQU     register0
+
+drawCircle_cycx     EQU     register0
+drawCircle_r        EQU     register2
+drawCircle_a        EQU     register3
+drawCircle_d        EQU     register8
+drawCircle_x        EQU     register9
+drawCircle_y        EQU     register10
+drawCircle_ch0      EQU     register11
+drawCircle_ch1      EQU     register12
+drawCircle_ch2      EQU     register13
+drawCircle_ch3      EQU     register14
+
+drawCircleF_x1      EQU     register0
+drawCircleF_y1      EQU     register1
+drawCircleF_x2      EQU     register2
+drawCircleF_cx      EQU     register15
+drawCircleF_cy      EQU     register10
+drawCircleF_r       EQU     register11
+drawCircleF_v       EQU     register8
+drawCircleF_w       EQU     register9
+
+drawRect_x1         EQU     register7
+drawRect_y1         EQU     register10
+drawRect_x2         EQU     register11
+drawRect_y2         EQU     register16
+
+drawRectF_x1        EQU     register0
+drawRectF_y1        EQU     register1
+drawRectF_x2        EQU     register2
+drawRectF_y2        EQU     register8
+
+drawPoly_addr       EQU     register7
+drawPoly_mode       EQU     register14
+
+    
+scanlineMode        LDWI    SYS_SetMode_v2_80
+                    STW     giga_sysFn
+                    LDW     graphicsMode
+                    SYS     80
+                    RET
+
+
+
+xreset              EQU     register0
+xcount              EQU     register1
+ycount              EQU     register2
+treset              EQU     register3
+breset              EQU     register8
+top                 EQU     register9
+bot                 EQU     register10
+vramAddr            EQU     register11
+evenAddr            EQU     register12
+clsAddress          EQU     register13
+clsLines            EQU     register14
+varAddress          EQU     register13
+clrAddress          EQU     register13
+clrLines            EQU     register14
+clrWidth            EQU     register15
+ramAddr0            EQU     register14
+ramAddr1            EQU     register15
+
+
+resetVideoFlags     LDI     giga_CursorX                    
+                    STW     cursorXY
+                    LD      miscFlags
+                    ANDI    MISC_ON_BOTTOM_ROW_MSK
+                    ST      miscFlags                       
+                    RET
+
+
+
+initClearFuncs      PUSH
+                    CALLI   resetVideoFlags
+                    LDWI    SYS_SetMemory_v2_54             
+                    STW     giga_sysFn
+                    LD      fgbgColour
+                    ST      giga_sysArg1                    
+                    POP
+                    RET
+
+
+                    
+clearVertBlinds     PUSH
+                    CALLI   initClearFuncs
+                    LDI     giga_vram >> 8
+                    STW     top  
+                    
+clearVB_loopy       LDI     giga_xres
+                    ST      giga_sysArg0
+                    LDI     0
+                    ST      giga_sysArg2                    
+                    LD      top
+                    ST      giga_sysArg3                    
+                    SYS     54                              
+    
+                    LDI     giga_xres
+                    ST      giga_sysArg0
+                    LDI     0
+                    ST      giga_sysArg2                    
+                    LDWI    giga_yres - 1 + 16
+                    SUBW    top
+                    ST      giga_sysArg3                    
+                    SYS     54                              
+                    INC     top                             
+                    LD      top
+                    SUBI    giga_yres / 2 + 8
+                    BLT     clearVB_loopy
+                    POP
+                    RET
+

@@ -52,28 +52,49 @@ textWorkArea                      EQU                          0x77a0
 
 ; Labels
 _entryPoint_                      EQU                          0x0200
-_execApp                          EQU                          0x02ec
-_127                              EQU                          0x030b
-_254                              EQU                          0x0314
-_253                              EQU                          0x0343
-_251                              EQU                          0x0372
-_247                              EQU                          0x03df
-_resetAudio                       EQU                          0x0454
-_beep                             EQU                          0x045e
+_execApp                          EQU                          0x02f1
+_127                              EQU                          0x0312
+_254                              EQU                          0x031b
+_253                              EQU                          0x034a
+_251                              EQU                          0x0379
+_247                              EQU                          0x03e6
+_resetAudio                       EQU                          0x045a
+_beep                             EQU                          0x0464
+_nextParticle                     EQU                          0x0aa0
 _next_0x0000                      EQU                          0x023b
 _if_0x0001                        EQU                          0x0267
-_if_0x0002                        EQU                          0x029a
-_repeat_0x0003                    EQU                          0x02ca
-_if_0x0004                        EQU                          0x0334
-_if_0x0005                        EQU                          0x0363
-_endif_0x0006                     EQU                          0x039c
-_if_0x0007                        EQU                          0x03c1
-_if_0x0008                        EQU                          0x03dd
-_endif_0x0009                     EQU                          0x0413
-_if_0x000a                        EQU                          0x0436
-_if_0x000b                        EQU                          0x0452
+_if_0x0002                        EQU                          0x0299
+_repeat_0x0003                    EQU                          0x02cc
+_if_0x0004                        EQU                          0x033b
+_if_0x0005                        EQU                          0x036a
+_endif_0x0006                     EQU                          0x03a3
+_if_0x0007                        EQU                          0x03c8
+_if_0x0008                        EQU                          0x03e4
+_endif_0x0009                     EQU                          0x0419
+_if_0x000a                        EQU                          0x043c
+_if_0x000b                        EQU                          0x0458
+_initSnow                         EQU                          0x047b
+_next_0x000c                      EQU                          0x0485
+_updateSnow                       EQU                          0x049a
+_next_0x000d                      EQU                          0x049f
+_endif_0x000e                     EQU                          0x04d5
+_if_0x0010                        EQU                          0x04f1
+_endif_0x000f                     EQU                          0x0506
+_endif_0x0011                     EQU                          0x08b4
+_else_0x0014                      EQU                          0x08ee
+_endif_0x0015                     EQU                          0x09ae
+_endif_0x0013                     EQU                          0x09ae
+_endif_0x0012                     EQU                          0x09ae
+_endif_0x0016                     EQU                          0x09c7
+_respawnSnowParticle              EQU                          0x0ab4
+_else_0x0017                      EQU                          0x0af4
+_endif_0x0018                     EQU                          0x0af9
 _page_0x0300                      EQU                          0x0300
 _page_0x0400                      EQU                          0x0400
+_page_0x0500                      EQU                          0x0500
+_page_0x08a0                      EQU                          0x08a0
+_page_0x09a0                      EQU                          0x09a0
+_page_0x0ba0                      EQU                          0x0ba0
 
 ; Constants
 _SYS_Reset_88                     EQU                          0x005e
@@ -383,9 +404,14 @@ _buttonSelect                     EQU                          0x0020
 _buttonB                          EQU                          0x0040
 _buttonA                          EQU                          0x0080
 _Reset                            EQU                          0x130e
-_Invader                          EQU                          0x1348
-_sys_ReadRomDir                   EQU                          0x3cdc
-_NUM_APPS                         EQU                          0x0001
+_Invader                          EQU                          0x1365
+_PucMon_ROMv5a                    EQU                          0x3d0e
+_tetronis                         EQU                          0x6c50
+_Craps                            EQU                          0x937d
+_VideoPoker                       EQU                          0xafc9
+_bricks                           EQU                          0xdceb
+_sys_ReadRomDir                   EQU                          0xe336
+_NUM_APPS                         EQU                          0x0006
 _LIST_X0                          EQU                          0x000a
 _LIST_X1                          EQU                          0x0058
 _LIST_Y                           EQU                          0x0022
@@ -393,24 +419,62 @@ _LIST_DY                          EQU                          0x0009
 _CURS_DX                          EQU                          0x0008
 _CURS_X                           EQU                          0x0002
 _CURS_Y                           EQU                          0x0022
+_NUM_SNOW_PARTICLES               EQU                          0x0050
+_SNOW_ORG_X                       EQU                          0x0050
+_SNOW_ORG_Y                       EQU                          0x0044
+_GROUND_Y                         EQU                          0x003b
 
 ; Global Variables
 _y                                EQU                          0x0030
 _i                                EQU                          0x0032
 _x                                EQU                          0x0034
 _index                            EQU                          0x0036
+_snowTimer                        EQU                          0x0038
+_rxy                              EQU                          0x003a
+_pixel                            EQU                          0x003c
 
 ; Local Variables
+_initSnow_i                       EQU                          0x00c4
+_updateSnow_i                     EQU                          0x00c4
+_updateSnow_xp                    EQU                          0x00c6
+_updateSnow_yp                    EQU                          0x00c8
+_updateSnow_yv                    EQU                          0x00ca
+_updateSnow_col                   EQU                          0x00cc
+_updateSnow_pxy                   EQU                          0x00ce
+_respawnSnowParticle_i            EQU                          0x00c4
+_respawnSnowParticle_y            EQU                          0x00c6
 
 ; Arrays
-_execs                            EQU                          0x7ff2
-_execs                            DW                           0x1348 
+_execs                            EQU                          0x7faa
+_execs                            DW                           0x1365 0x3d0e 0x6c50 0x937d 0xafc9 0xdceb 
+_snowColour                       EQU                          0x7fa6
+_snowColour                       DB                           0x95 0xaa 0xbf 0xbf 
+_jitterOffset                     EQU                          0x7ef0
+_jitterOffset                     DW                           0x0000 0x0001 0x0000 0xffff 0x0000 0xffff 0x0000 0x0001 
+_xPos                             EQU                          0x0660
+_xPos                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
+_yPos                             EQU                          0x05c0
+_yPos                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
+_yVel                             EQU                          0x0520
+_yVel                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
+_colour                           EQU                          0x7ea0
+_colour                           DB                           0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 
 
 ; Strings
-_apps$                            EQU                          0x7ff4
-_apps$                            DW                           0x7ff7 
+_apps$                            EQU                          0x7fb6
+_apps$                            DW                           0x7ff7 0x7fe8 0x7fde 0x7fd7 0x7fcb 0x7fc3 
 _apps$_0x7ff7                     EQU                          0x7ff7
 _apps$_0x7ff7                     DB                           7 'Invader' 0
+_apps$_0x7fe8                     EQU                          0x7fe8
+_apps$_0x7fe8                     DB                           13 'PucMon_ROMv5a' 0
+_apps$_0x7fde                     EQU                          0x7fde
+_apps$_0x7fde                     DB                           8 'tetronis' 0
+_apps$_0x7fd7                     EQU                          0x7fd7
+_apps$_0x7fd7                     DB                           5 'Craps' 0
+_apps$_0x7fcb                     EQU                          0x7fcb
+_apps$_0x7fcb                     DB                           10 'VideoPoker' 0
+_apps$_0x7fc3                     EQU                          0x7fc3
+_apps$_0x7fc3                     DB                           6 'bricks' 0
 
 ; Constant Strings
 
@@ -441,10 +505,10 @@ def_bytes_0x75b0                  DB                           145 64 146 67 147
 ; Define Patterns
 
 ; Lookup Tables
-_lut_numericLabs                  EQU                          0x7fe6
+_lut_numericLabs                  EQU                          0x7df4
 _lut_numericLabs                  DW                           127 254 253 251 247 0x0000
-_lut_numericAddrs                 EQU                          0x7fdc
-_lut_numericAddrs                 DW                           0x030b 0x0314 0x0343 0x0372 0x03df 
+_lut_numericAddrs                 EQU                          0x7dea
+_lut_numericAddrs                 DW                           0x0312 0x031b 0x034a 0x0379 0x03e6 
 
 ; Lazy Constants
 
@@ -474,7 +538,7 @@ _entryPoint_                      InitialiseOn
                                   STW                          _i                           ; for i=0 to 4
 
 _next_0x0000                      LDW                          _i
-                                  SUBI                         1
+                                  SUBI                         6
                                   CALLI                        convertLtOp
                                   JumpFalse                    _if_0x0001 0
                                   LDI                          10
@@ -482,7 +546,7 @@ _next_0x0000                      LDW                          _i
                                   LDW                          _y
                                   ST                           cursorXY + 1
                                   AtTextCursor                 
-                                  LDWI                         0x7ff4
+                                  LDWI                         0x7fb6
                                   ADDW                         _i
                                   ADDW                         _i
                                   DEEK                         
@@ -492,9 +556,9 @@ _next_0x0000                      LDW                          _i
                                   PrintAcLeft                  
                                   NewLine                                                   ; if i < NUM_APPS   then at LIST_X0, y : print left$(apps$(i), 11)
 
-_if_0x0001                        LDWI                         -4
-                                  SUBW                         _i
-                                  CALLI                        convertGtOp
+_if_0x0001                        LDW                          _i
+                                  SUBI                         1
+                                  CALLI                        convertLtOp
                                   JumpFalse                    _if_0x0002 1
                                   LDI                          88
                                   ST                           cursorXY
@@ -504,7 +568,7 @@ _if_0x0001                        LDWI                         -4
                                   LDW                          _i
                                   ADDI                         5
                                   STW                          memIndex0
-                                  LDWI                         0x7ff4
+                                  LDWI                         0x7fb6
                                   ADDW                         memIndex0
                                   ADDW                         memIndex0
                                   DEEK                         
@@ -535,6 +599,8 @@ _if_0x0002                        LDW                          _y
 
                                   CALLI                        _resetAudio                  ; gosub resetAudio
 
+                                  CALLI                        _initSnow                    ; call initSnow
+
 _repeat_0x0003                    LD                           giga_buttonState
                                   STW                          numericLabel
                                   LDI                          0
@@ -552,16 +618,18 @@ _repeat_0x0003                    LD                           giga_buttonState
                                   LDI                          62
                                   PrintAcChr                                                ; at x, y : put 62
 
+                                  CALLI                        _updateSnow                  ; call updateSnow
+
                                   CALLI                        _repeat_0x0003               ; forever
 
 _execApp                          PUSH                         
                                   ClearVertBlinds                                           ; cls
 
-                                  LDWI                         0x7ff2
-                                  ADDW                         _index
-                                  ADDW                         _index
                                   CALLI                        _page_0x0300
-_page_0x0300                      DEEK                         
+_page_0x0300                      LDWI                         0x7faa
+                                  ADDW                         _index
+                                  ADDW                         _index
+                                  DEEK                         
                                   STW                          giga_sysArg0
                                   LDWI                         512
                                   RomExec                                                   ; exec execs(index), &h0200
@@ -691,12 +759,12 @@ _247                              PUSH
                                   LDI                          32
                                   PrintAcChr                                                ; at x, y : put 32
 
-                                  LDW                          _y
+                                  CALLI                        _page_0x0400
+_page_0x0400                      LDW                          _y
                                   SUBI                         9
                                   STW                          _y                           ; y = y - LIST_DY
 
-                                  CALLI                        _page_0x0400
-_page_0x0400                      LDW                          _y
+                                  LDW                          _y
                                   SUBI                         34
                                   CALLI                        convertLtOp
                                   JumpFalse                    _endif_0x0009 7              ; if y < LIST_Y
@@ -760,6 +828,268 @@ _beep                             PUSH
 
                                   Return                                                    ; return
 
+_initSnow                         PUSH                                                      ; proc initSnow
+
+                                  LDWI                         -1
+                                  STW                          _snowTimer                   ; snowTimer = -1
+
+                                  LDI                          0
+                                  STW                          _initSnow_i                  ; for i=0 to NUM_SNOW_PARTICLES-1
+
+_next_0x000c                      LDW                          _initSnow_i
+                                  STW                          0xc4
+                                  CALLI                        _respawnSnowParticle         ; call respawnSnowParticle, i
+
+                                  ForNextFarInc                _initSnow_i _next_0x000c 79  ; next i
+
+                                  Return                                                    ; endproc
+
+_updateSnow                       PUSH                                                      ; proc updateSnow
+
+                                  LDI                          0
+                                  STW                          _updateSnow_i                ; for i=0 to NUM_SNOW_PARTICLES-1
+
+_next_0x000d                      LDWI                         0x0660
+                                  ADDW                         _updateSnow_i
+                                  ADDW                         _updateSnow_i
+                                  DEEK                         
+                                  STW                          _updateSnow_xp               ; xp = xPos(i)
+
+                                  LDWI                         0x05c0
+                                  ADDW                         _updateSnow_i
+                                  ADDW                         _updateSnow_i
+                                  DEEK                         
+                                  STW                          _updateSnow_yp               ; yp = yPos(i)
+
+                                  LDWI                         0x0520
+                                  ADDW                         _updateSnow_i
+                                  ADDW                         _updateSnow_i
+                                  DEEK                         
+                                  STW                          _updateSnow_yv               ; yv = yVel(i)
+
+                                  LD                           _updateSnow_xp + 1
+                                  ADDI                         80
+                                  ST                           _rxy                         ; rxy.lo = xp.hi + SNOW_ORG_X
+
+                                  LD                           _updateSnow_yp + 1
+                                  ADDI                         68
+                                  ST                           _rxy + 1                     ; rxy.hi = yp.hi + SNOW_ORG_Y
+
+                                  LDW                          _rxy
+                                  PEEK                         
+                                  ANDI                         0x80
+                                  BEQ                          _endif_0x000e                ; if &(peek(rxy) AND &h80)
+
+                                  LDI                          0
+                                  POKE                         _rxy                         ; poke rxy, 0
+
+_endif_0x000e                     LDW                          _updateSnow_yp
+                                  ADDW                         _updateSnow_yv
+                                  STW                          _updateSnow_yp               ; yp = yp + yv
+
+                                  LDWI                         15104
+                                  SUBW                         _updateSnow_yp
+                                  JumpLT                       _endif_0x000f 11             ; if yp &> 59*256
+
+                                  LD                           _rxy + 1
+                                  SUBI                         127
+                                  BGE                          _if_0x0010
+                                  LDI                          63
+                                  POKE                         _rxy                         ; if rxy.hi &&< 127 then poke rxy, &h3F
+
+_if_0x0010                        LDW                          _updateSnow_i
+                                  STW                          0xc4
+                                  CALLI                        _page_0x0500
+_page_0x0500                      CALLI                        _respawnSnowParticle         ; call respawnSnowParticle, i
+
+                                  CALLI                        _nextParticle                ; goto nextParticle
+
+_endif_0x000f                     LD                           _updateSnow_yp + 1
+                                  ADDI                         68
+                                  ST                           _updateSnow_pxy + 1          ; pxy.hi = yp.hi + SNOW_ORG_Y
+
+                                  LD                           _rxy + 1
+                                  STW                          register15
+                                  LD                           _updateSnow_pxy + 1
+                                  SUBW                         register15
+                                  JumpGT                       _endif_0x0011 13             ; if pxy.hi &> rxy.hi
+
+                                  LD                           _rxy + 1
+                                  CALLI                        _page_0x08a0
+_page_0x08a0                      ANDI                         0x07
+                                  STW                          memIndex0
+                                  LDWI                         0x7ef0
+                                  ADDW                         memIndex0
+                                  ADDW                         memIndex0
+                                  DEEK                         
+                                  STW                          0xea
+                                  LD                           _updateSnow_xp + 1
+                                  ADDW                         0xea
+                                  ST                           _updateSnow_xp + 1           ; xp.hi = xp.hi + jitterOffset(rxy.hi AND 7)
+
+_endif_0x0011                     LD                           _updateSnow_xp + 1
+                                  ADDI                         80
+                                  ST                           _updateSnow_pxy              ; pxy.lo = xp.hi + SNOW_ORG_X
+
+                                  LDW                          _updateSnow_pxy
+                                  PEEK                         
+                                  STW                          _pixel                       ; pixel = peek(pxy)
+
+                                  LDW                          _pixel
+                                  JumpFalse                    _endif_0x0012 14             ; if (pixel)
+
+                                  LDWI                         -1
+                                  XORW                         _pixel
+                                  ANDI                         0x80
+                                  JumpFalse                    _endif_0x0013 15             ; if (NOT pixel AND &h80)
+
+                                  LDWI                         256
+                                  ADDW                         _rxy
+                                  PEEK                         
+                                  BEQ                          _else_0x0014                 ; if &(peek(rxy + &h0100))
+
+                                  LDI                          63
+                                  POKE                         _rxy                         ; poke rxy, &h3F
+
+                                  LDW                          _updateSnow_i
+                                  STW                          0xc4
+                                  CALLI                        _respawnSnowParticle         ; call respawnSnowParticle, i
+
+                                  CALLI                        _nextParticle                ; goto nextParticle
+
+                                  CALLI                        _endif_0x0015                ; else
+
+_else_0x0014                      LD                           _rxy + 1
+                                  ANDI                         0x07
+                                  STW                          memIndex0
+                                  LDWI                         0x7ef0
+                                  ADDW                         memIndex0
+                                  ADDW                         memIndex0
+                                  DEEK                         
+                                  CALLI                        _page_0x09a0
+_page_0x09a0                      STW                          0xea
+                                  LD                           _updateSnow_xp + 1
+                                  SUBW                         0xea
+                                  ST                           _updateSnow_xp + 1           ; xp.hi = xp.hi - jitterOffset(rxy.hi AND 7)
+
+                                  LD                           _updateSnow_xp + 1
+                                  ADDI                         80
+                                  ST                           _updateSnow_pxy              ; pxy.lo = xp.hi + SNOW_ORG_X
+
+_endif_0x0012                     LDW                          _updateSnow_xp
+                                  Absolute                     
+                                  STW                          0xe8
+                                  LDWI                         19968
+                                  SUBW                         0xe8
+                                  BGE                          _endif_0x0016                ; if abs(xp) &&> 78*256
+
+                                  LDW                          _updateSnow_i
+                                  STW                          0xc4
+                                  CALLI                        _respawnSnowParticle         ; call respawnSnowParticle, i
+
+                                  CALLI                        _nextParticle                ; goto nextParticle
+
+_endif_0x0016                     LDWI                         0x7ea0
+                                  ADDW                         _updateSnow_i
+                                  PEEK                         
+                                  POKE                         _updateSnow_pxy              ; poke pxy, colour(i)
+
+                                  LDWI                         0x0660
+                                  ADDW                         _updateSnow_i
+                                  ADDW                         _updateSnow_i
+                                  STW                          memAddr
+                                  LDW                          _updateSnow_xp
+                                  DOKE                         memAddr
+                                  LDWI                         0x05c0
+                                  ADDW                         _updateSnow_i
+                                  ADDW                         _updateSnow_i
+                                  STW                          memAddr
+                                  LDW                          _updateSnow_yp
+                                  DOKE                         memAddr                      ; xPos(i) = xp : yPos(i) = yp
+
+                                  LDWI                         0x0520
+                                  ADDW                         _updateSnow_i
+                                  ADDW                         _updateSnow_i
+                                  STW                          memAddr
+                                  LDW                          _updateSnow_yv
+                                  DOKE                         memAddr                      ; yVel(i) = yv
+
+                                  CALLI                        _nextParticle
+_nextParticle                     ForNextFarInc                _updateSnow_i _next_0x000d 79                                                                                            ; next i
+
+                                  LDW                          _snowTimer
+                                  ADDI                         1
+                                  STW                          _snowTimer                   ; snowTimer = snowTimer + 1
+
+                                  Return                                                    ; endproc
+
+_respawnSnowParticle              PUSH                                                      ; proc respawnSnowParticle, i
+
+                                  LDI                          0x90
+                                  RandMod                      
+                                  SUBI                         72
+                                  STW                          memValue
+                                  LDW                          _respawnSnowParticle_i
+                                  STW                          memIndex0
+                                  LDWI                         0x0660
+                                  ADDW                         memIndex0
+                                  ADDW                         memIndex0
+                                  STW                          memAddr
+                                  LDW                          memValue
+                                  INC                          memAddr
+                                  POKE                         memAddr                      ; xPos(i).hi = rnd(144) - 72
+
+                                  LDWI                         -1
+                                  XORW                         _snowTimer
+                                  CALLI                        convertEqOp
+                                  JumpFalse                    _else_0x0017 19              ; if snowTimer = -1
+
+                                  LDI                          0x14
+                                  RandMod                      
+                                  STW                          0xe8
+                                  LDWI                         -39
+                                  SUBW                         0xe8
+                                  ST                           _respawnSnowParticle_y + 1   ; y.hi = -rnd(20) - 39
+
+                                  CALLI                        _endif_0x0018                ; else
+
+_else_0x0017                      LDWI                         -59
+                                  ST                           _respawnSnowParticle_y + 1   ; y.hi = -59
+
+_endif_0x0018                     LDWI                         0x05c0
+                                  CALLI                        _page_0x0ba0
+_page_0x0ba0                      ADDW                         _respawnSnowParticle_i
+                                  ADDW                         _respawnSnowParticle_i
+                                  STW                          memAddr
+                                  LDW                          _respawnSnowParticle_y
+                                  DOKE                         memAddr                      ; yPos(i) = y
+
+                                  Rand                         
+                                  ANDI                         0x7f
+                                  ADDI                         128
+                                  STW                          memValue
+                                  LDWI                         0x0520
+                                  ADDW                         _respawnSnowParticle_i
+                                  ADDW                         _respawnSnowParticle_i
+                                  STW                          memAddr
+                                  LDW                          memValue
+                                  DOKE                         memAddr                      ; yVel(i) = (rnd(0) AND 127) + 128
+
+                                  Rand                         
+                                  ANDI                         0x03
+                                  STW                          memIndex0
+                                  LDWI                         0x7fa6
+                                  ADDW                         memIndex0
+                                  PEEK                         
+                                  STW                          memValue
+                                  LDWI                         0x7ea0
+                                  ADDW                         _respawnSnowParticle_i
+                                  STW                          memAddr
+                                  LDW                          memValue
+                                  POKE                         memAddr                      ; colour(i) = snowColour(rnd(0) AND 3)
+
+                                  Return                                                    ; endproc
+
                                   HALT                                                      ; END
 
 
@@ -770,31 +1100,35 @@ _beep                             PUSH
 ;*************************************************************************************************************
 ;*************************************************************************************************************
 
-romExec                           EQU     0x78ac
-convertEqOp                       EQU     0x78c6
-convertLtOp                       EQU     0x78bd
-convertGtOp                       EQU     0x78b4
-gosubNumericLabel                 EQU     0x7faa
-scanlineMode                      EQU     0x7fa0
-waitVBlank                        EQU     0x79a2
-waitVBlanks                       EQU     0x7da2
-resetVideoFlags                   EQU     0x7ea1
-initClearFuncs                    EQU     0x78dc
-clearVertBlinds                   EQU     0x7bcd
-clearCursorRow                    EQU     0x7ba1
-resetAudio                        EQU     0x7ad7
-resetMusic                        EQU     0x78a6
-midiGetNote                       EQU     0x7ca0
-playMusic                         EQU     0x7cb9
-musicPlayNote                     EQU     0x7aa2
-soundOn                           EQU     0x78eb
-printInit                         EQU     0x79b2
-printLeft                         EQU     0x79e0
-printChr                          EQU     0x78cf
-printChar                         EQU     0x7db3
-printClip                         EQU     0x79c8
-newLineScroll                     EQU     0x7eac
-atTextCursor                      EQU     0x7ab3
+romExec                           EQU     0x72dc
+convertEqOp                       EQU     0x72f6
+convertLtOp                       EQU     0x72ed
+convertGtOp                       EQU     0x72e4
+absolute                          EQU     0x7ba2
+divide16bit                       EQU     0x7cac
+rand16bit                         EQU     0x72d4
+randMod16bit                      EQU     0x7aa2
+gosubNumericLabel                 EQU     0x79cd
+scanlineMode                      EQU     0x73a4
+waitVBlank                        EQU     0x73ca
+waitVBlanks                       EQU     0x74a1
+resetVideoFlags                   EQU     0x7ca1
+initClearFuncs                    EQU     0x73bb
+clearVertBlinds                   EQU     0x78cd
+clearCursorRow                    EQU     0x79a1
+resetAudio                        EQU     0x78a5
+resetMusic                        EQU     0x7fa0
+midiGetNote                       EQU     0x75c2
+playMusic                         EQU     0x7da4
+musicPlayNote                     EQU     0x73da
+soundOn                           EQU     0x73eb
+printInit                         EQU     0x74b2
+printLeft                         EQU     0x74e0
+printChr                          EQU     0x73ae
+printChar                         EQU     0x7ab3
+printClip                         EQU     0x74c8
+newLineScroll                     EQU     0x7bac
+atTextCursor                      EQU     0x75db
 
 
 
@@ -844,6 +1178,95 @@ convertGtOp         BGT     convertGt_1
                     LDI     0
                     RET
 convertGt_1         LDI     1
+                    RET
+
+
+
+mathX               EQU     register8
+mathY               EQU     register9
+mathSum             EQU     register12
+mathRem             EQU     register12
+mathMask            EQU     register13
+mathSign            EQU     register14
+mathQuot            EQU     register15
+mathShift           EQU     register15
+mathBase            EQU     register10
+mathPow             EQU     register11
+mathResult          EQU     register14
+
+
+absolute            BGE     abs_exit
+                    STW     mathX
+                    LDI     0
+                    SUBW    mathX
+abs_exit            RET
+
+
+rand16bit           LDWI    SYS_Random_34
+                    STW     giga_sysFn
+                    SYS     34
+                    RET
+
+
+
+                    
+divide16bit         LDW     mathX
+                    XORW    mathY
+                    STW     mathSign
+                    LDW     mathX
+                    BGE     divide16_pos0
+                    LDI     0
+                    SUBW    mathX
+                    STW     mathX
+                    
+divide16_pos0       LDW     mathY                     
+                    BGE     divide16_pos1
+                    LDI     0
+                    SUBW    mathY
+                    STW     mathY
+                    
+divide16_pos1       LDI     0
+                    STW     mathRem
+                    LDI     1
+    
+divide16_loop       STW     mathMask
+                    LDW     mathRem
+                    LSLW
+                    STW     mathRem
+                    LDW     mathX
+                    BGE     divide16_incr
+                    INC     mathRem
+                    
+divide16_incr       LDW     mathX
+                    LSLW
+                    STW     mathX
+                    LDW     mathRem
+                    SUBW    mathY
+                    BLT     divide16_incx
+                    STW     mathRem
+                    INC     mathX
+                    
+divide16_incx       LDW     mathMask
+                    LSLW
+                    BNE     divide16_loop
+                    LDW     mathSign
+                    BGE     divide16_exit
+                    LDI     0
+                    SUBW    mathX
+                    RET
+                    
+divide16_exit       LDW     mathX
+                    RET
+
+
+randMod16bit        PUSH
+                    LDWI    SYS_Random_34
+                    STW     giga_sysFn
+                    SYS     34
+                    STW     mathX
+                    CALLI   divide16bit
+                    LDW     mathRem
+                    POP
                     RET
 
 

@@ -1,0 +1,143 @@
+_runtimePath_ "runtime"
+_runtimeStart_ &h7FFE
+_codeRomType_ ROMv5a
+_enableRomCheck_ Off
+_stringWorkArea_ &h77A0
+
+const NUM_SAND_PARTICLES = 80
+const SAND_ORG_X = 80
+const SAND_ORG_Y = 60 + 8
+const GROUND_Y = 59
+const SPAWN_Y = -59
+
+dim xPos(NUM_SAND_PARTICLES-1) = 0
+dim yPos(NUM_SAND_PARTICLES-1) = 0
+dim xVel(NUM_SAND_PARTICLES-1) = 0
+dim yVel(NUM_SAND_PARTICLES-1) = 0
+dim colour%(NUM_SAND_PARTICLES-1) = 0
+
+tscroll off
+set BG_COLOUR, 0 : mode 2 : cls
+set FGBG_COLOUR, &h0C00
+
+' Draw some platforms for sand to land on
+set FG_COLOUR, &h15
+at 5, 65 : print "==============="
+at 25, 75 : print "=========="
+
+oscillatorCounter = 0
+spawnX = 0
+
+call initSand
+
+repeat
+    call updateSand
+    inc oscillatorCounter.lo
+forever
+
+proc initSand
+    local i
+    for i=0 to NUM_SAND_PARTICLES-1
+        call respawnSandParticle, i
+    next i
+endproc
+
+proc updateSand
+    local i, xp, yp, xv, yv, col, pxy, rxy, pixel
+    
+    ' Update oscillating spawn position
+    ' Simple sine-ish wave using counter
+    if oscillatorCounter AND 1
+        if oscillatorCounter AND 64
+            spawnX = spawnX + 1
+            if spawnX > 30 then spawnX = 30
+        else
+            spawnX = spawnX - 1
+            if spawnX < -30 then spawnX = -30
+        endif
+    endif
+    
+    for i=0 to NUM_SAND_PARTICLES-1
+        xp = xPos(i)
+        yp = yPos(i)
+        xv = xVel(i)
+        yv = yVel(i)
+        col = colour(i)
+        
+        ' Clear old position
+        rxy.lo = xp.hi + SAND_ORG_X
+        rxy.hi = yp.hi + SAND_ORG_Y
+        if peek(rxy) AND &h80
+            poke rxy, 0
+        endif
+        
+        ' Update physics - sand falls fast and straight
+        xp = xp + xv
+        yp = yp + yv
+        
+        ' Sand settles quickly (less bouncing around)
+        if abs(xv) > 32
+            if xv > 0
+                xv = xv - 8
+            else
+                xv = xv + 8
+            endif
+        endif
+        
+        pxy.lo = xp.hi + SAND_ORG_X
+        pxy.hi = yp.hi + SAND_ORG_Y
+        
+        ' Check if pixel is occupied (collision detection)
+        pixel = peek(pxy)
+        if pixel > 0
+            if NOT (pixel AND &h80)
+                ' Hit something solid - deposit sand
+                poke pxy, &h06  ' Brown sand colour
+                call respawnSandParticle, i
+                goto nextParticle
+            endif
+        endif
+        
+        ' Ground collision
+        if yp >= GROUND_Y*256
+            poke pxy, &h06
+            call respawnSandParticle, i
+            goto nextParticle
+        endif
+        
+        ' Side bounds - sand can spread wider
+        if abs(xp) > 79*256
+            call respawnSandParticle, i
+            goto nextParticle
+        endif
+        
+        ' Draw sand particle with depth buffer bit
+        if col = 0
+            poke pxy, &h01 OR &h80  ' Dark brown
+        elseif col = 1
+            poke pxy, &h05 OR &h80  ' Medium brown  
+        else
+            poke pxy, &h06 OR &h80  ' Light brown
+        endif
+        
+        ' Update arrays
+        xPos(i) = xp : yPos(i) = yp
+        xVel(i) = xv : yVel(i) = yv
+        
+nextParticle:
+    next i
+endproc
+
+proc respawnSandParticle, i
+    ' Spawn in oscillating column at top
+    xPos(i).hi = spawnX + ((rnd(0) AND 7) - 4)  ' Tight column with slight spread
+    yPos(i).hi = SPAWN_Y
+    yPos(i).lo = 0
+    
+    ' Fast downward velocity, minimal horizontal
+    xVel(i) = (rnd(0) AND 63) - 32  ' Small horizontal component
+    yVel(i) = (rnd(0) AND 127) + 300  ' Fast fall speed
+    
+    ' Sandy colours
+    colour(i) = rnd(0) AND 2  ' 0, 1, or 2
+endproc

@@ -162,5 +162,30 @@ class main
             return $response;
         }
     }
+
+    public function serveRom($filename)
+    {
+        try {
+            require_once(__DIR__ . '/../tools/php/rom_builder.php');
+            $builder = new \RomBuilder();
+
+            $build_dir = $builder->getBuildDir();
+            $rom_file = $build_dir . '/' . $filename;
+
+            if (!file_exists($rom_file)) {
+                throw new \Exception("ROM file not found: $filename");
+            }
+
+            $response = new \Symfony\Component\HttpFoundation\BinaryFileResponse($rom_file);
+            $response->headers->set('Content-Type', 'application/octet-stream');
+
+            return $response;
+
+        } catch (\Exception $e) {
+            $result = ['success' => false, 'error' => $e->getMessage()];
+            $response = new \Symfony\Component\HttpFoundation\JsonResponse($result);
+            return $response;
+        }
+    }
 }
 

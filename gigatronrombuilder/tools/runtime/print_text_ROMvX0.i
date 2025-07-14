@@ -16,7 +16,18 @@ clearLoop           EQU     register14
     
 
 %SUB                printInit
-printInit           MOVWA   fgbgColour, giga_sysArg0
+printInit           ANDBK   miscFlags, MISC_ENABLE_FNT4X6_BIT
+                    JNE     printInit4x6                        ; is fnt4x6 enabled flag?
+                    LDWI    SYS_VDrawBits_134
+                    STW     giga_sysFn
+                    MOVWA   fgbgColour, giga_sysArg0
+                    LDW     cursorXY
+                    VTBL    giga_sysArg4                        ; convert xy to vtable address
+                    RET
+%ENDS
+
+%SUB                printInit4x6
+printInit4x6        MOVWA   fgbgColour, giga_sysArg0
                     LDW     cursorXY
                     VTBL    giga_sysArg4                        ; convert xy to vtable address
                     RET
@@ -263,12 +274,14 @@ printChar6x8        FNT6X8  textFont, textChr
 
 printC_slice        LDW     textFont                            ; text font slice base address
                     LUP     0x00                                ; get ROM slice
-                    VSL6X8                                      ; draw vertical slice
+                    ST      giga_sysArg2
+                    SYS     134                                 ; draw vertical slice, SYS_VDrawBits_134, 270 - 134/2 = 0xCB
                     INC     textFont                            ; next vertical slice
                     INC     giga_sysArg4                        ; next x
                     DBNE    textSlice, printC_slice
-                    LDI     0
-                    VSL6X8                                      ; draw last blank slice
+                    
+                    MOVQB   giga_sysArg2, 0
+                    SYS     134                                 ; draw last blank slice
                     INC     giga_sysArg4                        ; using sysArg4 as a temporary cursor address for multiple char prints
                     ADDBI   cursorXY, cursorXY, giga_xfont
                     ANDBK   miscFlags, MISC_DISABLE_CLIP_BIT
@@ -393,11 +406,15 @@ newLS68_cont0       ANDBK   miscFlags, MISC_ON_BOTTOM_ROW_BIT
                     CMPI    cursorXY + 1, giga_yres
                     BLT     newLS68_exit
                     MOVQB   cursorXY + 1, giga_yres - giga_yfont
-
+                    
 newLS68_cont1       CALLI   clearCursorRow
-                    MOVQB   giga_sysArg1, giga_yres             ; scanline count
                     LDWI    giga_videoTable
-                    SCRLV   giga_yfont
+                    STW     giga_sysArg2                        ; VTable
+                    MOVQB   giga_sysArg0, giga_yfont            ; scroll offset
+                    MOVQB   giga_sysArg1, giga_yres             ; scanline count
+                    LDWI    SYS_ScrollVTableY_vX_38
+                    STW     giga_sysFn
+                    SYS     38
                     ORBI    miscFlags, MISC_ON_BOTTOM_ROW_BIT   ; set on bottom row flag
 
 newLS68_exit        CALLI   printInit                           ; re-initialise the SYS registers
@@ -424,12 +441,16 @@ newLS46_cont0       ANDBK   miscFlags, MISC_ON_BOTTOM_ROW_BIT
                     MOVQB   cursorXY + 1, giga_yres - 6
 
 newLS46_cont1       CALLI   clearCursorRow4x6
-                    MOVQB   giga_sysArg1, giga_yres             ; scanline count
                     LDWI    giga_videoTable
-                    SCRLV   6
+                    STW     giga_sysArg2                        ; VTable
+                    MOVQB   giga_sysArg0, 6                     ; scroll offset
+                    MOVQB   giga_sysArg1, giga_yres             ; scanline count
+                    LDWI    SYS_ScrollVTableY_vX_38
+                    STW     giga_sysFn
+                    SYS     38
                     ORBI    miscFlags, MISC_ON_BOTTOM_ROW_BIT   ; set on bottom row flag
 
-newLS46_exit        CALLI   printInit                           ; re-initialise print
+newLS46_exit        CALLI   printInit4x6                        ; re-initialise print
                     POP
                     RET
 %ENDS
@@ -437,62 +458,98 @@ newLS46_exit        CALLI   printInit                           ; re-initialise 
 
 %SUB                clearCursorRow
                     ; clears the top giga_yfont lines of pixels in preparation of text scrolling
-clearCursorRow      XCHGB   fgbgColour, fgbgColour + 1          ; HLINE uses FG_COLOUR
-                    MOVQB   giga_sysArg2, 0                     ; low start address
+clearCursorRow      PUSH
+                    LDWI    SYS_SetMemory_v2_54
+                    STW     giga_sysFn                          ; setup fill memory SYS routine
+                    MOVB    fgbgColour, giga_sysArg1            ; fill value
                     LDWI    giga_videoTable
                     PEEKA   giga_sysArg3                        ; row0 high byte address
-                    MOVQB   clearLoop, giga_yfont
-                    MOVQB   giga_sysArg0, giga_xres
+                    MOVQW   clearLoop, giga_yfont
 
-clearCR_loopy       LDW     giga_sysArg2
-                    HLINE   giga_sysArg0                        ; fill memory
+clearCR_loopy       MOVQB   giga_sysArg0, giga_xres
+                    MOVQB   giga_sysArg2, 0                     ; low start address
+                    SYS     54                                  ; fill memory
                     INC     giga_sysArg3                        ; next line
                     DBNE    clearLoop, clearCR_loopy
-                    XCHGB   fgbgColour, fgbgColour + 1
-                    PUSH
                     CALLI   printInit                           ; re-initialise the SYS registers
                     POP
                     RET
 %ENDS
-
 
 %SUB                clearCursorRow4x6
                     ; clears the top giga_yfont lines of pixels in preparation of text scrolling
-clearCursorRow4x6   XCHGB   fgbgColour, fgbgColour + 1          ; HLINE uses FG_COLOUR
-                    MOVQB   giga_sysArg2, 0                     ; low start address
+clearCursorRow4x6   PUSH
+                    LDWI    SYS_SetMemory_v2_54
+                    STW     giga_sysFn                          ; setup fill memory SYS routine
+                    MOVB    fgbgColour, giga_sysArg1            ; fill value
                     LDWI    giga_videoTable
                     PEEKA   giga_sysArg3                        ; row0 high byte address
                     MOVQW   clearLoop, 6
-                    MOVQB   giga_sysArg0, giga_xres
 
-clearCR46_loopy     LDW     giga_sysArg2
-                    HLINE   giga_sysArg0                        ; fill memory
+clearCR46_loopy     MOVQB   giga_sysArg0, giga_xres
+                    MOVQB   giga_sysArg2, 0                     ; low start address
+                    SYS     54                                  ; fill memory
                     INC     giga_sysArg3                        ; next line
                     DBNE    clearLoop, clearCR46_loopy
-                    XCHGB   fgbgColour, fgbgColour + 1
-                    PUSH                    
                     CALLI   printInit                           ; re-initialise the SYS registers
                     POP
                     RET
 %ENDS
 
 
+%SUB                atTextCursor
+atTextCursor        ANDBK   miscFlags, MISC_ENABLE_FNT4X6_BIT
+                    JNE     atTextCursor4x6                     ; is fnt4x6 enabled flag?
+                    CMPI    cursorXY, giga_xres - giga_xfont
+                    BLE     atTC_checkY
+                    MOVQB   cursorXY, 0
+                    
+atTC_checkY         CMPI    cursorXY + 1, giga_yres - giga_yfont
+                    BLT     atTC_resbot
+                    MOVQB   cursorXY + 1, giga_yres - giga_yfont
+                    ORBI    miscFlags, MISC_ON_BOTTOM_ROW_BIT   ; set on bottom row flag
+                    RET
+                    
+atTC_resbot         ANDBI   miscFlags, MISC_ON_BOTTOM_ROW_MSK   ; reset on bottom row flag
+                    RET
+%ENDS
+
+%SUB                atTextCursor4x6
+atTextCursor4x6     CMPI    cursorXY, giga_xres - 4
+                    BLE     atTC46_checkY
+                    MOVQB   cursorXY, 0
+                    
+atTC46_checkY       CMPI    cursorXY + 1, giga_yres - 6
+                    BLT     atTC46_resbot
+                    MOVQB   cursorXY + 1, giga_yres - 6
+                    ORBI    miscFlags, MISC_ON_BOTTOM_ROW_BIT   ; set on bottom row flag
+                    RET
+                    
+atTC46_resbot       ANDBI   miscFlags, MISC_ON_BOTTOM_ROW_MSK   ; reset on bottom row flag
+                    RET
+%ENDS
+
 %SUB                textWidth
-%if FONT_BOTH
 textWidth           ANDBK   miscFlags, MISC_ENABLE_FNT4X6_BIT
-                    BEQ     textW6x8                          ; is fnt4x6 enabled flag?
-                    TLEN4   textLen
+                    JNE     textWidth4x6                        ; is fnt4x6 enabled flag?
+                    CMPI    textLen, 26
+                    BLE     textW_mul6
+                    LDI     26*6
                     RET
 
-textW6x8            TLEN6   textLen
+textW_mul6          LD      textLen
+                    MULB6
                     RET
-%endif
-%if FONT_6X8
-textWidth           TLEN6   textLen
+%ENDS
+
+%SUB                textWidth4x6
+textWidth4x6        CMPI    textLen, 40
+                    BLE     textW46_mul4
+                    LDI     40*4
                     RET
-%endif
-%if FONT_4X6
-textWidth           TLEN4   textLen
+
+textW46_mul4        LD      textLen
+                    LSLW
+                    LSLW
                     RET
-%endif
 %ENDS

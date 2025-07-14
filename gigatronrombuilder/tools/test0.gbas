@@ -1,0 +1,86 @@
+_runtimePath_ "runtime"
+_runtimeStart_ &h7FFE
+_codeRomType_ ROMv5a
+_enableRomCheck_ Off
+_stringWorkArea_ &h77A0
+
+tscroll off
+set BG_COLOUR, 0 : mode 2 : cls
+set FGBG_COLOUR, &h0C00
+
+call initStars
+
+repeat
+    call drawStars
+forever
+
+const NUM_STARS = 48
+const STARS_ORG_X = 80
+const STARS_ORG_Y = 60 + 8
+
+dim xPos(NUM_STARS-1) = 0
+dim yPos(NUM_STARS-1) = 0
+dim xVel(NUM_STARS-1) = 0
+dim yVel(NUM_STARS-1) = 0
+dim star%(NUM_STARS-1) = 0
+dim colour%(31) = {&h00, &h00, &h00, &h00, &h00, &h00, &h00, &h00, &h00, 	' 0  to 8
+				   &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95, 			' 9  to 16
+				   &hAA, &hAA, &hAA, &hAA, &hAA, &hAA, &hAA, &hAA,			' 17 to 24
+				   &hBF, &hBF, &hBF, &hBF, &hBF, &hBF, &hBF}				' 25 to 31
+			
+proc initStars
+    local i
+    for i=0 to NUM_STARS-1
+        call newStar, i
+    next i
+endproc
+
+proc newStar, i
+    star(i) = 0
+    xPos(i) = 0
+    yPos(i) = 0
+    repeat
+        xv = (rnd(0) AND 2047) - 1024
+        yv = (rnd(0) AND 2047) - 1024
+    until abs(xv) > 200  OR  abs(yv) > 200
+	xVel(i) = xv : xp = xv
+	yVel(i) = yv : yp = yv
+endproc
+
+proc drawStars
+    local i, ss, pxy
+
+	' xp, yp, xv, yv are all globals so we get fast return values from newStar
+    for i=0 to NUM_STARS-1
+        xp = xPos(i) : xv = xVel(i)
+        yp = yPos(i) : yv = yVel(i)
+
+		' clear old star
+        pxy.lo = xp.hi + STARS_ORG_X
+        pxy.hi = yp.hi + STARS_ORG_Y
+        if &(peek(pxy) AND &h80)
+            poke pxy, 0
+        endif
+		
+		' update
+        xp = xp + xv
+        yp = yp + yv
+        if abs(yp) &&> 59*256
+            call newStar, i
+        endif
+        if abs(xp) &&> 79*256
+            call newStar, i
+        endif
+		
+		' star colour
+		ss = star(i)
+        pxy.lo = xp.hi + STARS_ORG_X
+        pxy.hi = yp.hi + STARS_ORG_Y
+        if &(peek(pxy) = 0)
+			poke pxy, colour(min(ss, 31))
+            star(i) = ss + 1
+        endif
+
+        xPos(i) = xp : yPos(i) = yp
+    next i
+endproc

@@ -9,12 +9,11 @@ const STARFIELD_ORG_Y = 60 + 8
 dim xPos(NUM_STARS-1) = 0
 dim yPos(NUM_STARS-1) = 0
 dim speed%(NUM_STARS-1) = 0
-dim brightness%(NUM_STARS-1) = 0
 dim twinkle%(NUM_STARS-1) = 0
 
 set FGBG_COLOUR, &h0C00
 mode 2 : cls
-at 40, 50 : print "YO MOFO!!!!!!!!!!!"
+at 40, 50 : print "TEST TEXT!!!!!!"
 
 call initStarfield
 
@@ -23,11 +22,12 @@ repeat
 forever
 
 proc updateStarfield
-    local i, xp, yp, spd, brt, twk, pxy, color
+    local i, xp, yp, spd, twk, pxy, colour
     
     for i=0 to NUM_STARS-1
         xp = xPos(i) : yp = yPos(i)
-        spd = speed(i) : brt = brightness(i) : twk = twinkle(i)
+        spd = speed(i)
+		twk = twinkle(i)
         
         ' Clear old position
         pxy.lo = xp.hi + STARFIELD_ORG_X
@@ -53,55 +53,45 @@ proc updateStarfield
         if twk &&> 63 then twk = 0
         twinkle(i) = twk
         
-        ' Calculate brightness - only use valid white values
+        ' Calculate brightness
         if twk &< 21
-            color = &h15  ' dim white
+            colour = &h15  ' dim white
         elseif twk &&< 42
-            color = &h2A  ' medium white
+            colour = &h2A  ' medium white
         else
-            color = &h3F  ' bright white
+            colour = &h3F  ' bright white
         endif
         
         ' Draw new position
         pxy.lo = xp.hi + STARFIELD_ORG_X
         pxy.hi = yp.hi + STARFIELD_ORG_Y
         if &(peek(pxy) = 0)
-            poke pxy, color OR &h80
+            poke pxy, colour OR &h80
         endif
     next i
 endproc
 
 proc initStarfield
-    local i, layer
+    local i, spd
     
     for i=0 to NUM_STARS-1
         ' Random position relative to center
         xPos(i).hi = rnd(160) - 80
-        xPos(i).lo = 0
         yPos(i).hi = rnd(120) - 60
-        yPos(i).lo = 0
         
-        ' Assign to one of 3 speed/brightness layers
+        ' Assign to one of 4 layers
         layer = i AND 3
-        
         if layer = 0
-            ' Background layer - slow, dim
-            speed(i) = (rnd(0) AND 15) + 48
-            brightness(i) = &h15
+            spd = (rnd(0) AND 15) + 48
         elseif layer = 1
-            ' Mid layer - medium speed and brightness  
-            speed(i) = (rnd(0) AND 31) + 64
-            brightness(i) = &h2A
+            spd = (rnd(0) AND 31) + 64
         elseif layer = 2
-            ' Foreground layer - fast, bright
-            speed(i) = (rnd(0) AND 63) + 128
-            brightness(i) = &h3F
+            spd = (rnd(0) AND 63) + 128
         else
-            ' Foreground layer - fast, bright
-            speed(i) = (rnd(0) AND 63) + 192
-            brightness(i) = &h3F
+            spd = (rnd(0) AND 63) + 192
         endif
-        
+        speed(i) = spd
+
         ' Random twinkle phase
         twinkle(i) = rnd(0) AND 63
     next i

@@ -11,8 +11,13 @@ function handleBackButton() {
     const screenshotMode = urlParams.get('screenshot_mode');
     const referrer = document.referrer;
     const cameFromShowcase = referrer.includes('gigatronshowcase');
+    const cameFromRomBuilder = referrer.includes('gigatronrombuilder');
 
-    if (cameFromShowcase) {
+    console.log('Referrer:', document.referrer);
+    console.log('Came from ROM builder:', referrer.includes('gigatronrombuilder'));
+    console.log('Tab container found:', document.querySelector('.file-type-tabs'));
+
+    if (cameFromShowcase || cameFromRomBuilder) {
         const tabContainer = document.querySelector('.file-type-tabs');
         if (tabContainer) {
             const backTab = document.createElement('button');
@@ -43,8 +48,16 @@ function handleAutoLoading() {
         console.log('Auto-loading files from URL parameters');
 
         function waitForManagers() {
+            console.log('Checking managers:');
+            console.log('  window.uiManager exists:', !!window.uiManager);
+            console.log('  window.uiManager.emulatorReady:', window.uiManager?.emulatorReady);
+            console.log('  window.fileBrowser exists:', !!window.fileBrowser);
+            console.log('  window.fileBrowser.files exists:', !!window.fileBrowser?.files);
+            console.log('  loadRomFromUrl exists:', typeof window.uiManager?.loadRomFromUrl);
+
             if (window.uiManager && window.uiManager.emulatorReady &&
-                window.fileBrowser && window.fileBrowser.files) {
+                window.fileBrowser && window.fileBrowser.files &&
+                typeof window.uiManager.loadRomFromUrl === 'function') {
                 autoLoadFiles();
             } else {
                 setTimeout(waitForManagers, 100);
@@ -54,10 +67,20 @@ function handleAutoLoading() {
         function autoLoadFiles() {
             if (autoloadRom) {
                 console.log('Auto-loading ROM:', autoloadRom);
-                const romFile = window.fileBrowser.files.rom.find(f => f.filename === autoloadRom);
-                if (romFile) {
-                    window.fileBrowser.switchFileType('rom');
-                    window.fileBrowser.selectFile(romFile);
+                const source = urlParams.get('source');
+
+                if (source === 'rombuilder') {
+                    // Load custom ROM from ROM builder
+                    console.log('Loading custom ROM from ROM builder:', autoloadRom);
+                    const romUrl = '/app.php/gigatronrombuilder/serve_rom/' + encodeURIComponent(autoloadRom);
+                    window.uiManager.loadRomFromUrl(romUrl, autoloadRom);
+                } else {
+                    // Load official ROM from file browser
+                    const romFile = window.fileBrowser.files.rom.find(f => f.filename === autoloadRom);
+                    if (romFile) {
+                        window.fileBrowser.switchFileType('rom');
+                        window.fileBrowser.selectFile(romFile);
+                    }
                 }
 
                 if (autoloadGt1) {

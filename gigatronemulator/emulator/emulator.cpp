@@ -47,7 +47,7 @@ private:
     int _audioWriteIndex=0;
 
     uint64_t _lastVCPUDispatch = 0;
-    static const uint64_t WATCHDOG_TIMEOUT_CYCLES = CLOCK_FREQUENCY * 3;
+    static const uint64_t WATCHDOG_TIMEOUT_CYCLES = uint64_t(CLOCK_FREQUENCY * 3);
 
 public:
     Emulator();
@@ -267,23 +267,20 @@ void Emulator::resetVcpu(void)
 
     switch(_romType)
     {
-    case ROMv1: // fallthrough
-    case ROMv2: // fallthrough
-    case ROMv3: _stateS._PC = ROM_OLD_INTERPRETER; break;
+        case ROMv1: // fallthrough
+        case ROMv2: // fallthrough
+        case ROMv3: _stateS._PC = ROM_OLD_INTERPRETER; break;
 
-    case ROMv4:  // fallthrough
-    case ROMv5a: // fallthrough
-    case DEVROM: // fallthrough
-    case ROMv6:  // fallthrough
-    case SDCARD: _stateS._PC = ROM_ACTIVE_INTERPRETER; break;
+        case ROMv4:  // fallthrough
+        case ROMv5a: // fallthrough
+        case DEVROM: // fallthrough
+        case SDCARD: _stateS._PC = ROM_ACTIVE_INTERPRETER; break;
+        case ROMv6:  _stateS._PC = ROM_ROMv6_INTERPRETER;  break;
+        case ROMv7:  _stateS._PC = ROM_ROMv7_INTERPRETER;  break;
+        case ROMvX0: _stateS._PC = ROM_ROMvX0_INTERPRETER; break;
+        case ROMvX1: _stateS._PC = ROM_ROMvX1_INTERPRETER; break;
 
-    case ROMv7:  _stateS._PC = ROM_ROMv7_INTERPRETER;  break;
-
-    case ROMvX0: _stateS._PC = ROM_ROMvX0_INTERPRETER; break;
-
-    case ROMvX1: _stateS._PC = ROM_ROMvX1_INTERPRETER; break;
-
-    default: break;
+        default: break;
     }
 
     _stateT = _stateS;
@@ -307,6 +304,7 @@ void Emulator::reset()
     memset(_RAM, 0, sizeof(_RAM));
     memset(_framebuffer, 0, sizeof(_framebuffer));
 
+    resetVTable();
     for(int i=0; i<COLOUR_PALETTE; i++)
     {
         uint8_t b = uint8_t(double((i & 0x03) >>0) / 3.0 * 255.0);

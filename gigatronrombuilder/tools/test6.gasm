@@ -1,0 +1,965 @@
+_startAddress_                    EQU                          0x0200
+
+; Internal Variables
+serialRawPrev                     EQU                          0x0081
+frameCountPrev                    EQU                          0x00d6
+register0                         EQU                          0x0082
+register1                         EQU                          register0 + 0x02
+register2                         EQU                          register0 + 0x04
+register3                         EQU                          register0 + 0x06
+register4                         EQU                          register0 + 0x08
+register5                         EQU                          register0 + 0x0A
+register6                         EQU                          register0 + 0x0C
+register7                         EQU                          register0 + 0x0E
+register8                         EQU                          register0 + 0x10
+register9                         EQU                          register0 + 0x12
+register10                        EQU                          register0 + 0x14
+register11                        EQU                          register0 + 0x16
+register12                        EQU                          register0 + 0x18
+register13                        EQU                          register0 + 0x1A
+register14                        EQU                          register0 + 0x1C
+register15                        EQU                          register0 + 0x1E
+fgbgColour                        EQU                          register0 + 0x20
+cursorXY                          EQU                          register0 + 0x22
+midiStream                        EQU                          register0 + 0x24
+midiDelay                         EQU                          register0 + 0x26
+miscFlags                         EQU                          register0 + 0x28
+register16                        EQU                          register0 + 0x2A
+timerTick                         EQU                          register0 + 0x2C
+timerJiff                         EQU                          register0 + 0x2E
+
+; Internal Constants
+MISC_WAIT_VBLANK_BIT              EQU                          0x01
+MISC_ENABLE_SCROLL_BIT            EQU                          0x02
+MISC_ON_BOTTOM_ROW_BIT            EQU                          0x04
+MISC_DISABLE_CLIP_BIT             EQU                          0x08
+MISC_ENABLE_FNT4X6_BIT            EQU                          0x10
+MISC_WAIT_VBLANK_MSK              EQU                          0xfe
+MISC_ENABLE_SCROLL_MSK            EQU                          0xfd
+MISC_ON_BOTTOM_ROW_MSK            EQU                          0xfb
+MISC_DISABLE_CLIP_MSK             EQU                          0xf7
+MISC_ENABLE_FNT4X6_MSK            EQU                          0xef
+
+; Internal Buffers
+regsWorkArea                      EQU                          0x0000
+textWorkArea                      EQU                          0x77a0
+
+; Includes
+%includePath                      "runtime"
+%include                          util.i
+%include                          gigatron.i
+%include                          macros_ROMv5a.i
+
+; Labels
+_entryPoint_                      EQU                          0x0200
+_nextParticle                     EQU                          0x0445
+_repeat_0x0000                    EQU                          0x026a
+_initSand                         EQU                          0x0272
+_next_0x0001                      EQU                          0x0277
+_updateSand                       EQU                          0x028c
+_if_0x0004                        EQU                          0x02b8
+_else_0x0003                      EQU                          0x02bb
+_if_0x0006                        EQU                          0x02d4
+_endif_0x0005                     EQU                          0x02d4
+_endif_0x0002                     EQU                          0x02d4
+_next_0x0007                      EQU                          0x02d8
+_endif_0x0008                     EQU                          0x032d
+_else_0x000a                      EQU                          0x035d
+_endif_0x000b                     EQU                          0x0363
+_endif_0x0009                     EQU                          0x0363
+_endif_0x000d                     EQU                          0x039e
+_endif_0x000c                     EQU                          0x039e
+_endif_0x000e                     EQU                          0x03ba
+_endif_0x000f                     EQU                          0x03d9
+_elseif_0x0010                    EQU                          0x03eb
+_else_0x0011                      EQU                          0x040d
+_endif_0x0012                     EQU                          0x0411
+_respawnSandParticle              EQU                          0x0453
+_page_0x0300                      EQU                          0x0300
+_page_0x0400                      EQU                          0x0400
+_page_0x0500                      EQU                          0x0500
+_page_0x08a0                      EQU                          0x08a0
+_page_0x09a0                      EQU                          0x09a0
+
+; Constants
+_NUM_SAND_PARTICLES               EQU                          0x0050
+_SAND_ORG_X                       EQU                          0x0050
+_SAND_ORG_Y                       EQU                          0x0044
+_GROUND_Y                         EQU                          0x003b
+_SPAWN_Y                          EQU                          0xffc5
+
+; Global Variables
+_oscillatorCounter                EQU                          0x0030
+_spawnX                           EQU                          0x0032
+
+; Local Variables
+_initSand_i                       EQU                          0x00c4
+_updateSand_i                     EQU                          0x00c4
+_updateSand_xp                    EQU                          0x00c6
+_updateSand_yp                    EQU                          0x00c8
+_updateSand_xv                    EQU                          0x00ca
+_updateSand_yv                    EQU                          0x00cc
+_updateSand_col                   EQU                          0x00ce
+_updateSand_pxy                   EQU                          0x00d0
+_updateSand_rxy                   EQU                          0x00d2
+_updateSand_pixel                 EQU                          0x00d4
+_respawnSandParticle_i            EQU                          0x00c4
+
+; Arrays
+_xPos                             EQU                          0x0660
+_xPos                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
+_yPos                             EQU                          0x05c0
+_yPos                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
+_xVel                             EQU                          0x0520
+_xVel                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
+_yVel                             EQU                          0x045a
+_yVel                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
+_color                            EQU                          0x7fb0
+_color                            DB                           0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 
+
+; Strings
+
+; Constant Strings
+_str_0x7eef                       EQU                          0x7eef
+_str_0x7eef                       DB                           15 '===============' 0
+_str_0x7fa4                       EQU                          0x7fa4
+_str_0x7fa4                       DB                           10 '==========' 0
+
+; Data
+
+; Time
+
+; Define Bytes
+
+; Define Words
+
+; Define Images
+
+; Define Loader Image Chunks
+
+; Define Midis
+
+; Define Blits
+
+; Define Fonts
+
+; Define Sprites
+
+; Define Patterns
+
+; Lookup Tables
+
+; Lazy Constants
+
+; Code
+_entryPoint_                      InitialiseOn                 
+%define FONT_BOTH
+%define TEXT_SCROLL                                                                         ; INIT
+
+                                  LD                           miscFlags
+                                  ANDI                         0xfd
+                                  ST                           miscFlags                    ; tscroll off
+
+                                  LDI                          0
+                                  ST                           fgbgColour
+                                  LDI                          2
+                                  STW                          graphicsMode
+                                  ScanlineMode                 
+                                  ClearVertBlinds                                           ; set BG_COLOUR, 0 : mode 2 : cls
+
+                                  LDWI                         3072
+                                  STW                          fgbgColour                   ; set FGBG_COLOUR, &h0C00
+
+                                  LDI                          21
+                                  ST                           fgbgColour + 1               ; set FG_COLOUR, &h15
+
+                                  LDI                          5
+                                  ST                           cursorXY
+                                  LDI                          65
+                                  ST                           cursorXY + 1
+                                  AtTextCursor                 
+                                  PrintString                  _str_0x7eef
+                                  NewLine                                                   ; at 5, 65 : print "==============="
+
+                                  LDI                          25
+                                  ST                           cursorXY
+                                  LDI                          75
+                                  ST                           cursorXY + 1
+                                  AtTextCursor                 
+                                  PrintString                  _str_0x7fa4
+                                  NewLine                                                   ; at 25, 75 : print "=========="
+
+                                  LDI                          0
+                                  STW                          _oscillatorCounter           ; oscillatorCounter = 0
+
+                                  LDI                          0
+                                  STW                          _spawnX                      ; spawnX = 0
+
+                                  CALLI                        _initSand                    ; call initSand
+
+_repeat_0x0000                    CALLI                        _updateSand                  ; call updateSand
+
+                                  INC                          _oscillatorCounter           ; inc oscillatorCounter.lo
+
+                                  CALLI                        _repeat_0x0000               ; forever
+
+_initSand                         PUSH                                                      ; proc initSand
+
+                                  LDI                          0
+                                  STW                          _initSand_i                  ; for i=0 to NUM_SAND_PARTICLES-1
+
+_next_0x0001                      LDW                          _initSand_i
+                                  STW                          0xc4
+                                  CALLI                        _respawnSandParticle         ; call respawnSandParticle, i
+
+                                  ForNextFarInc                _initSand_i _next_0x0001 79  ; next i
+
+                                  Return                                                    ; endproc
+
+_updateSand                       PUSH                                                      ; proc updateSand
+
+                                  LDW                          _oscillatorCounter
+                                  ANDI                         0x01
+                                  JumpFalse                    _endif_0x0002 0              ; if oscillatorCounter AND 1
+
+                                  LDW                          _oscillatorCounter
+                                  ANDI                         0x40
+                                  JumpFalse                    _else_0x0003 3               ; if oscillatorCounter AND 64
+
+                                  LDW                          _spawnX
+                                  ADDI                         1
+                                  STW                          _spawnX                      ; spawnX = spawnX + 1
+
+                                  LDW                          _spawnX
+                                  SUBI                         30
+                                  CALLI                        convertGtOp
+                                  JumpFalse                    _if_0x0004 2
+                                  LDI                          30
+                                  STW                          _spawnX                      ; if spawnX > 30 then spawnX = 30
+
+_if_0x0004                        CALLI                        _endif_0x0005                ; else
+
+_else_0x0003                      LDW                          _spawnX
+                                  SUBI                         1
+                                  STW                          _spawnX                      ; spawnX = spawnX - 1
+
+                                  LDWI                         -30
+                                  SUBW                         _spawnX
+                                  CALLI                        convertGtOp
+                                  JumpFalse                    _if_0x0006 4
+                                  LDWI                         -30
+                                  STW                          _spawnX                      ; if spawnX < -30 then spawnX = -30
+
+_endif_0x0002                     LDI                          0
+                                  STW                          _updateSand_i                ; for i=0 to NUM_SAND_PARTICLES-1
+
+_next_0x0007                      LDWI                         0x0660
+                                  ADDW                         _updateSand_i
+                                  ADDW                         _updateSand_i
+                                  DEEK                         
+                                  STW                          _updateSand_xp               ; xp = xPos(i)
+
+                                  LDWI                         0x05c0
+                                  ADDW                         _updateSand_i
+                                  ADDW                         _updateSand_i
+                                  DEEK                         
+                                  STW                          _updateSand_yp               ; yp = yPos(i)
+
+                                  LDWI                         0x0520
+                                  ADDW                         _updateSand_i
+                                  ADDW                         _updateSand_i
+                                  DEEK                         
+                                  STW                          _updateSand_xv               ; xv = xVel(i)
+
+                                  CALLI                        _page_0x0300
+_page_0x0300                      LDWI                         0x045a
+                                  ADDW                         _updateSand_i
+                                  ADDW                         _updateSand_i
+                                  DEEK                         
+                                  STW                          _updateSand_yv               ; yv = yVel(i)
+
+                                  LDWI                         0x7fb0
+                                  ADDW                         _updateSand_i
+                                  PEEK                         
+                                  STW                          _updateSand_col              ; col = color(i)
+
+                                  LD                           _updateSand_xp + 1
+                                  ADDI                         80
+                                  ST                           _updateSand_rxy              ; rxy.lo = xp.hi + SAND_ORG_X
+
+                                  LD                           _updateSand_yp + 1
+                                  ADDI                         68
+                                  ST                           _updateSand_rxy + 1          ; rxy.hi = yp.hi + SAND_ORG_Y
+
+                                  LDW                          _updateSand_rxy
+                                  PEEK                         
+                                  ANDI                         0x80
+                                  JumpFalse                    _endif_0x0008 5              ; if peek(rxy) AND &h80
+
+                                  LDI                          0
+                                  POKE                         _updateSand_rxy              ; poke rxy, 0
+
+_endif_0x0008                     LDW                          _updateSand_xp
+                                  ADDW                         _updateSand_xv
+                                  STW                          _updateSand_xp               ; xp = xp + xv
+
+                                  LDW                          _updateSand_yp
+                                  ADDW                         _updateSand_yv
+                                  STW                          _updateSand_yp               ; yp = yp + yv
+
+                                  LDW                          _updateSand_xv
+                                  Absolute                     
+                                  SUBI                         32
+                                  CALLI                        convertGtOp
+                                  JumpFalse                    _endif_0x0009 6              ; if abs(xv) > 32
+
+                                  LDW                          _updateSand_xv
+                                  CALLI                        convertGtOp
+                                  JumpFalse                    _else_0x000a 8               ; if xv > 0
+
+                                  LDW                          _updateSand_xv
+                                  SUBI                         8
+                                  STW                          _updateSand_xv               ; xv = xv - 8
+
+                                  CALLI                        _endif_0x000b                ; else
+
+_else_0x000a                      LDW                          _updateSand_xv
+                                  ADDI                         8
+                                  STW                          _updateSand_xv               ; xv = xv + 8
+
+_endif_0x0009                     LD                           _updateSand_xp + 1
+                                  ADDI                         80
+                                  ST                           _updateSand_pxy              ; pxy.lo = xp.hi + SAND_ORG_X
+
+                                  LD                           _updateSand_yp + 1
+                                  ADDI                         68
+                                  ST                           _updateSand_pxy + 1          ; pxy.hi = yp.hi + SAND_ORG_Y
+
+                                  LDW                          _updateSand_pxy
+                                  PEEK                         
+                                  STW                          _updateSand_pixel            ; pixel = peek(pxy)
+
+                                  LDW                          _updateSand_pixel
+                                  CALLI                        convertGtOp
+                                  JumpFalse                    _endif_0x000c 9              ; if pixel > 0
+
+                                  LDW                          _updateSand_pixel
+                                  ANDI                         0x80
+                                  STW                          0xe8
+                                  LDWI                         -1
+                                  XORW                         0xe8
+                                  JumpFalse                    _endif_0x000d 10             ; if NOT (pixel AND &h80)
+
+                                  LDI                          6
+                                  POKE                         _updateSand_pxy              ; poke pxy, &h06
+
+                                  LDW                          _updateSand_i
+                                  STW                          0xc4
+                                  CALLI                        _respawnSandParticle         ; call respawnSandParticle, i
+
+                                  CALLI                        _nextParticle                ; goto nextParticle
+
+_endif_0x000c                     LDWI                         15104
+                                  SUBW                         _updateSand_yp
+                                  CALLI                        convertLeOp
+                                  JumpFalse                    _endif_0x000e 11             ; if yp >= GROUND_Y*256
+
+                                  LDI                          6
+                                  POKE                         _updateSand_pxy              ; poke pxy, &h06
+
+                                  LDW                          _updateSand_i
+                                  STW                          0xc4
+                                  CALLI                        _respawnSandParticle         ; call respawnSandParticle, i
+
+                                  CALLI                        _nextParticle                ; goto nextParticle
+
+_endif_0x000e                     LDW                          _updateSand_xp
+                                  Absolute                     
+                                  STW                          0xe8
+                                  LDWI                         20224
+                                  SUBW                         0xe8
+                                  CALLI                        convertLtOp
+                                  JumpFalse                    _endif_0x000f 12             ; if abs(xp) > 79*256
+
+                                  LDW                          _updateSand_i
+                                  STW                          0xc4
+                                  CALLI                        _respawnSandParticle         ; call respawnSandParticle, i
+
+                                  CALLI                        _nextParticle                ; goto nextParticle
+
+_endif_0x000f                     LDW                          _updateSand_col
+                                  CALLI                        convertEqOp
+                                  JumpFalse                    _elseif_0x0010 14            ; if col = 0
+
+                                  LDI                          129
+                                  POKE                         _updateSand_pxy              ; poke pxy, &h01 OR &h80
+
+                                  CALLI                        _endif_0x0012
+_elseif_0x0010                    LDW                          _updateSand_col
+                                  XORI                         1
+                                  CALLI                        convertEqOp
+                                  CALLI                        _page_0x0400
+_page_0x0400                      JumpFalse                    _else_0x0011 16              ; elseif col = 1
+
+                                  LDI                          133
+                                  POKE                         _updateSand_pxy              ; poke pxy, &h05 OR &h80
+
+                                  CALLI                        _endif_0x0012                ; else
+
+_else_0x0011                      LDI                          134
+                                  POKE                         _updateSand_pxy              ; poke pxy, &h06 OR &h80
+
+_endif_0x0012                     LDWI                         0x0660
+                                  ADDW                         _updateSand_i
+                                  ADDW                         _updateSand_i
+                                  STW                          memAddr
+                                  LDW                          _updateSand_xp
+                                  DOKE                         memAddr
+                                  LDWI                         0x05c0
+                                  ADDW                         _updateSand_i
+                                  ADDW                         _updateSand_i
+                                  STW                          memAddr
+                                  LDW                          _updateSand_yp
+                                  DOKE                         memAddr                      ; xPos(i) = xp : yPos(i) = yp
+
+                                  LDWI                         0x0520
+                                  ADDW                         _updateSand_i
+                                  ADDW                         _updateSand_i
+                                  STW                          memAddr
+                                  LDW                          _updateSand_xv
+                                  DOKE                         memAddr
+                                  LDWI                         0x045a
+                                  ADDW                         _updateSand_i
+                                  ADDW                         _updateSand_i
+                                  STW                          memAddr
+                                  LDW                          _updateSand_yv
+                                  DOKE                         memAddr                      ; xVel(i) = xv : yVel(i) = yv
+
+_nextParticle                     ForNextFarInc                _updateSand_i _next_0x0007 79                                                                                            ; next i
+
+                                  Return                                                    ; endproc
+
+_respawnSandParticle              PUSH                                                      ; proc respawnSandParticle, i
+
+                                  Rand                         
+                                  CALLI                        _page_0x0500
+_page_0x0500                      ANDI                         0x07
+                                  SUBI                         4
+                                  ADDW                         _spawnX
+                                  STW                          memValue
+                                  LDW                          _respawnSandParticle_i
+                                  STW                          memIndex0
+                                  LDWI                         0x0660
+                                  ADDW                         memIndex0
+                                  ADDW                         memIndex0
+                                  STW                          memAddr
+                                  LDW                          memValue
+                                  INC                          memAddr
+                                  POKE                         memAddr                      ; xPos(i).hi = spawnX + ((rnd(0) AND 7) - 4)
+
+                                  CALLI                        _page_0x08a0
+_page_0x08a0                      LDWI                         -59
+                                  STW                          memValue
+                                  LDW                          _respawnSandParticle_i
+                                  STW                          memIndex0
+                                  LDWI                         0x05c0
+                                  ADDW                         memIndex0
+                                  ADDW                         memIndex0
+                                  STW                          memAddr
+                                  LDW                          memValue
+                                  INC                          memAddr
+                                  POKE                         memAddr                      ; yPos(i).hi = SPAWN_Y
+
+                                  LDWI                         0x05c0
+                                  ADDW                         _respawnSandParticle_i
+                                  ADDW                         _respawnSandParticle_i
+                                  STW                          memAddr
+                                  LDI                          0
+                                  POKE                         memAddr                      ; yPos(i).lo = 0
+
+                                  Rand                         
+                                  ANDI                         0x3f
+                                  SUBI                         32
+                                  STW                          memValue
+                                  LDWI                         0x0520
+                                  ADDW                         _respawnSandParticle_i
+                                  ADDW                         _respawnSandParticle_i
+                                  STW                          memAddr
+                                  LDW                          memValue
+                                  DOKE                         memAddr                      ; xVel(i) = (rnd(0) AND 63) - 32
+
+                                  Rand                         
+                                  ANDI                         0x7f
+                                  STW                          0xe8
+                                  LDWI                         300
+                                  ADDW                         0xe8
+                                  STW                          memValue
+                                  LDWI                         0x045a
+                                  ADDW                         _respawnSandParticle_i
+                                  ADDW                         _respawnSandParticle_i
+                                  STW                          memAddr
+                                  LDW                          memValue
+                                  DOKE                         memAddr                      ; yVel(i) = (rnd(0) AND 127) + 300
+
+                                  Rand                         
+                                  ANDI                         0x02
+                                  STW                          memValue
+                                  CALLI                        _page_0x09a0
+_page_0x09a0                      LDWI                         0x7fb0
+                                  ADDW                         _respawnSandParticle_i
+                                  STW                          memAddr
+                                  LDW                          memValue
+                                  POKE                         memAddr                      ; color(i) = rnd(0) AND 2
+
+                                  Return                                                    ; endproc
+
+                                  HALT                                                      ; END
+
+
+
+;*************************************************************************************************************
+;*************************************************************************************************************
+;* Internal runtime, DO NOT MODIFY PAST THIS POINT, modifications must be made in the original include files *
+;*************************************************************************************************************
+;*************************************************************************************************************
+
+convertEqOp                       EQU     0x7ac8
+convertLeOp                       EQU     0x7abf
+convertLtOp                       EQU     0x7ab6
+convertGtOp                       EQU     0x7aad
+absolute                          EQU     0x7ba3
+rand16bit                         EQU     0x7aa5
+scanlineMode                      EQU     0x7ad1
+resetVideoFlags                   EQU     0x7da1
+initClearFuncs                    EQU     0x7adb
+clearVertBlinds                   EQU     0x7ccd
+clearCursorRow                    EQU     0x7ca1
+printInit                         EQU     0x7bad
+printText                         EQU     0x7aea
+printChar                         EQU     0x7ea3
+printClip                         EQU     0x7bc3
+newLineScroll                     EQU     0x7dac
+atTextCursor                      EQU     0x7bdb
+
+
+                    
+convertEqOp         BEQ     convertEq_1
+                    LDI     0
+                    RET
+convertEq_1         LDI     1
+                    RET
+
+
+                    
+convertLeOp         BLE     convertLe_1
+                    LDI     0
+                    RET
+convertLe_1         LDI     1
+                    RET
+
+
+                    
+convertLtOp         BLT     convertLt_1
+                    LDI     0
+                    RET
+convertLt_1         LDI     1
+                    RET
+
+
+                    
+convertGtOp         BGT     convertGt_1
+                    LDI     0
+                    RET
+convertGt_1         LDI     1
+                    RET
+
+
+
+mathX               EQU     register8
+mathY               EQU     register9
+mathSum             EQU     register12
+mathRem             EQU     register12
+mathMask            EQU     register13
+mathSign            EQU     register14
+mathQuot            EQU     register15
+mathShift           EQU     register15
+mathBase            EQU     register10
+mathPow             EQU     register11
+mathResult          EQU     register14
+
+
+absolute            BGE     abs_exit
+                    STW     mathX
+                    LDI     0
+                    SUBW    mathX
+abs_exit            RET
+
+
+rand16bit           LDWI    SYS_Random_34
+                    STW     giga_sysFn
+                    SYS     34
+                    RET
+
+
+
+graphicsMode        EQU     register0
+waitVBlankNum       EQU     register0
+
+drawHLine_x1        EQU     register0
+drawHLine_y1        EQU     register1
+drawHLine_x2        EQU     register2
+
+drawVLine_x1        EQU     register0
+drawVLine_y1        EQU     register1
+drawVLine_y2        EQU     register2
+drawVLine_y8        EQU     register3
+
+drawLine_x1         EQU     register0
+drawLine_y1         EQU     register1
+drawLine_x2         EQU     register2
+drawLine_y2         EQU     register3
+drawLine_xy1        EQU     register0
+drawLine_xy2        EQU     register1
+drawLine_dxy1       EQU     register2
+drawLine_dxy2       EQU     register3
+drawLine_dx1        EQU     register8
+drawLine_dy1        EQU     register9
+drawLine_dx2        EQU     register10
+drawLine_dy2        EQU     register11
+drawLine_sx         EQU     register12
+drawLine_sy         EQU     register13
+drawLine_h          EQU     register14
+drawLine_num        EQU     register15
+drawLine_count      EQU     register14
+drawLine_tmp        EQU     register15
+drawLine_dx         EQU     register2
+drawLine_dy         EQU     register3
+drawLine_u          EQU     register8
+drawLine_v          EQU     register9
+drawLine_addr       EQU     register10
+drawLine_ddx        EQU     register11
+drawLine_cnt        EQU     register12
+drawLine_swp        EQU     register13
+drawLine_xy         EQU     register7
+
+readPixel_xy        EQU     register0
+drawPixel_xy        EQU     register0
+
+drawCircle_cycx     EQU     register0
+drawCircle_r        EQU     register2
+drawCircle_a        EQU     register3
+drawCircle_d        EQU     register8
+drawCircle_x        EQU     register9
+drawCircle_y        EQU     register10
+drawCircle_ch0      EQU     register11
+drawCircle_ch1      EQU     register12
+drawCircle_ch2      EQU     register13
+drawCircle_ch3      EQU     register14
+
+drawCircleF_x1      EQU     register0
+drawCircleF_y1      EQU     register1
+drawCircleF_x2      EQU     register2
+drawCircleF_cx      EQU     register15
+drawCircleF_cy      EQU     register10
+drawCircleF_r       EQU     register11
+drawCircleF_v       EQU     register8
+drawCircleF_w       EQU     register9
+
+drawRect_x1         EQU     register7
+drawRect_y1         EQU     register10
+drawRect_x2         EQU     register11
+drawRect_y2         EQU     register16
+
+drawRectF_x1        EQU     register0
+drawRectF_y1        EQU     register1
+drawRectF_x2        EQU     register2
+drawRectF_y2        EQU     register8
+
+drawPoly_addr       EQU     register7
+drawPoly_mode       EQU     register14
+
+    
+scanlineMode        LDWI    SYS_SetMode_v2_80
+                    STW     giga_sysFn
+                    LDW     graphicsMode
+                    SYS     80
+                    RET
+
+
+
+xreset              EQU     register0
+xcount              EQU     register1
+ycount              EQU     register2
+treset              EQU     register3
+breset              EQU     register8
+top                 EQU     register9
+bot                 EQU     register10
+vramAddr            EQU     register11
+evenAddr            EQU     register12
+clsAddress          EQU     register13
+clsLines            EQU     register14
+varAddress          EQU     register13
+clrAddress          EQU     register13
+clrLines            EQU     register14
+clrWidth            EQU     register15
+ramAddr0            EQU     register14
+ramAddr1            EQU     register15
+
+
+resetVideoFlags     LDI     giga_CursorX                    
+                    STW     cursorXY
+                    LD      miscFlags
+                    ANDI    MISC_ON_BOTTOM_ROW_MSK
+                    ST      miscFlags                       
+                    RET
+
+
+
+initClearFuncs      PUSH
+                    CALLI   resetVideoFlags
+                    LDWI    SYS_SetMemory_v2_54             
+                    STW     giga_sysFn
+                    LD      fgbgColour
+                    ST      giga_sysArg1                    
+                    POP
+                    RET
+
+
+                    
+clearVertBlinds     PUSH
+                    CALLI   initClearFuncs
+                    LDI     giga_vram >> 8
+                    STW     top  
+                    
+clearVB_loopy       LDI     giga_xres
+                    ST      giga_sysArg0
+                    LDI     0
+                    ST      giga_sysArg2                    
+                    LD      top
+                    ST      giga_sysArg3                    
+                    SYS     54                              
+    
+                    LDI     giga_xres
+                    ST      giga_sysArg0
+                    LDI     0
+                    ST      giga_sysArg2                    
+                    LDWI    giga_yres - 1 + 16
+                    SUBW    top
+                    ST      giga_sysArg3                    
+                    SYS     54                              
+                    INC     top                             
+                    LD      top
+                    SUBI    giga_yres / 2 + 8
+                    BLT     clearVB_loopy
+                    POP
+                    RET
+
+
+
+
+textStr             EQU     register0
+textNum             EQU     register0
+textBak             EQU     register0
+textHex             EQU     register1
+textSpc             EQU     register1
+textLen             EQU     register2
+textOfs             EQU     register3
+textChr             EQU     register8
+textFont            EQU     register9
+textSlice           EQU     register10
+scanLine            EQU     register11
+digitMult           EQU     register12
+digitIndex          EQU     register13
+clearLoop           EQU     register14
+    
+    
+printInit           LDWI    SYS_VDrawBits_134
+                    STW     giga_sysFn
+                    LDW     fgbgColour
+                    STW     giga_sysArg0
+                    LD      cursorXY + 1                        
+                    LSLW
+                    INC     giga_vAC + 1
+                    PEEK
+                    ST      giga_sysArg4 + 1
+                    LD      cursorXY
+                    ST      giga_sysArg4                        
+                    RET
+
+
+
+                    
+printText           PUSH
+                    STW     textStr
+                    CALLI   printInit
+
+                    
+printT_char         INC     textStr                             
+                    LDW     textStr             
+                    PEEK
+                    BEQ     printT_exit                         
+                    CALLI   printChar
+                    BRA     printT_char
+                    
+printT_exit         POP
+                    RET
+
+
+
+                    
+printChar           SUBI    130                                 
+                    BGT     printC_exit
+                    ADDI    130
+                    SUBI    82
+                    BGE     printC_text82
+                    ADDI    50
+                    BLT     printC_exit                         
+                    STW     textChr                             
+                    LDWI    giga_text32                         
+                    BRA     printC_font
+                    
+printC_text82       STW     textChr                             
+                    LDWI    giga_text82                         
+                    
+printC_font         STW     textFont
+                    LD      textChr
+                    LSLW    
+                    LSLW    
+                    ADDW    textChr
+                    ADDW    textFont
+                    STW     textFont                            
+                    LDI     0x05
+
+printC_slice        ST      textSlice
+                    LDW     textFont                            
+                    LUP     0x00                                
+                    ST      giga_sysArg2
+                    SYS     134                                 
+                    INC     textFont                            
+                    INC     giga_sysArg4                        
+                    LD      textSlice
+                    SUBI    1
+                    BNE     printC_slice
+                    
+                    ST      giga_sysArg2                        
+                    SYS     134                                 
+                    INC     giga_sysArg4                        
+                    
+                    PUSH
+                    CALLI   printClip
+                    POP
+                    
+printC_exit         RET
+
+
+printClip           LD      cursorXY
+                    ADDI    giga_xfont
+                    ST      cursorXY
+                    SUBI    giga_xres - giga_xfont              
+                    BLE     printCl_exit
+                    LD      miscFlags
+                    ANDI    MISC_DISABLE_CLIP_BIT
+                    BNE     printCl_exit                        
+                    PUSH
+                    CALLI   newLineScroll                       
+                    POP
+                    
+printCl_exit        RET
+
+
+
+                    
+clearCursorRow      PUSH
+                    LDWI    SYS_SetMemory_v2_54
+                    STW     giga_sysFn                          
+                    LD      fgbgColour
+                    ST      giga_sysArg1                        
+                    LDWI    giga_videoTable
+                    PEEK
+                    ST      giga_sysArg3                        
+                    LDI     giga_yfont
+
+clearCR_loopy       ST      clearLoop                    
+                    LDI     giga_xres
+                    ST      giga_sysArg0
+                    LDI     0
+                    ST      giga_sysArg2                        
+                    SYS     54                                  
+                    INC     giga_sysArg3                        
+                    LD      clearLoop
+                    SUBI    1
+                    BNE     clearCR_loopy
+                    CALLI   printInit                           
+                    POP
+                    RET
+
+
+                    
+newLineScroll       LDI     giga_CursorX                        
+                    ST      cursorXY
+                    ST      giga_sysArg4
+                    LD      miscFlags
+                    ANDI    MISC_ENABLE_SCROLL_BIT
+                    BNE     newLS_cont0                         
+                    RET
+                    
+newLS_cont0         PUSH
+                    LD      miscFlags
+                    ANDI    MISC_ON_BOTTOM_ROW_BIT
+                    BNE     newLS_cont1                         
+                    LD      cursorXY + 1
+                    ADDI    giga_yfont
+                    ST      cursorXY + 1
+                    SUBI    giga_yres
+                    BLT     newLS_exit
+                    LDI     giga_yres - giga_yfont
+                    ST      cursorXY + 1
+                    
+newLS_cont1         CALLI   clearCursorRow
+                    LDWI    giga_videoTable
+                    STW     scanLine
+    
+newLS_scroll        LDW     scanLine
+                    PEEK
+                    ADDI    giga_yfont
+                    SUBI    0x7F
+                    BLE     newLS_adjust
+                    ADDI    0x88
+                    
+newLS_adjust        ADDI    0x7F
+                    POKE    scanLine
+                    INC     scanLine                            
+                    INC     scanLine
+                    LD      scanLine
+                    SUBI    0xF0                                
+                    BLT     newLS_scroll
+                    LD      miscFlags
+                    ORI     MISC_ON_BOTTOM_ROW_BIT
+                    ST      miscFlags                           
+                    
+newLS_exit          CALLI   printInit                           
+                    POP
+                    RET
+
+
+atTextCursor        LD      cursorXY
+                    SUBI    giga_xres - giga_xfont
+                    BLE     atTC_checkY
+                    LDI     0
+                    ST      cursorXY
+                    
+atTC_checkY         LD      cursorXY + 1
+                    SUBI    giga_yres - giga_yfont
+                    BLT     atTC_resbot
+                    LDI     giga_yres - giga_yfont
+                    ST      cursorXY + 1
+                    LD      miscFlags
+                    ORI     MISC_ON_BOTTOM_ROW_BIT
+                    ST      miscFlags                           
+                    RET
+                    
+atTC_resbot         LD      miscFlags
+                    ANDI    MISC_ON_BOTTOM_ROW_MSK
+                    ST      miscFlags                           
+                    RET
+

@@ -74,6 +74,16 @@
 <script src="/ext/at67/gigatronemulator/emulator/file-browser.js"></script>
 
 <script>
+const VisualEffect = {
+    NONE: 'none',
+    STARS: 'stars',
+    STARFIELD: 'starfield',
+    FIREWORKS: 'fireworks',
+    FOUNTAIN: 'fountain',
+    FIRE: 'fire',
+    SNOW: 'snow'
+};
+
 function removeFile(index) {
     if (window.fileBrowser && window.fileBrowser.selectedFiles) {
         window.fileBrowser.selectedFiles.splice(index, 1);
@@ -254,10 +264,14 @@ function sendBuildRequest(romVersion, selectedFiles, manifest, symbolsOnly = fal
                     const hasMainAlias = window.fileBrowser.selectedFiles.some(file => file.alias === 'Main');
 
                     if (hasMainAlias) {
-                        // User chose existing mainmenu - single continue button
-                        showBuildResult(true, 'Build Successful', response.output);
+                        // User chose existing mainmenu - skip Phase 2, build ROM directly with existing apps
+                        const menuApps = window.fileBrowser.selectedFiles.filter(file => {
+                            const alias = file.alias;
+                            return alias !== 'Reset' && alias !== 'Boot' && alias !== 'Egg'; // Keep Main!
+                        });
+                        buildROM(menuApps, response);
                     } else {
-                        // No mainmenu - need Phase 2 - show cancel/continue buttons
+                        // No mainmenu - need Phase 2
                         showBuildResult(true, 'Build Successful', response.output, response);
                     }
                 }
@@ -380,7 +394,9 @@ function showBuildResult(success, title, content, buildResponse = null) {
             window.location.href = '/app.php/gigatronrombuilder/download/' + encodeURIComponent(filename);
         });
         document.getElementById('modal-emulate-btn').addEventListener('click', () => {
-            console.log('Emulate ROM');
+            const romFilePath = buildResponse.rom_file;
+            const filename = romFilePath.split('/').pop();
+            window.location.href = '/app.php/gigatronemulator?autoload_rom=' + encodeURIComponent(filename) + '&source=rombuilder';
         });
     } else {
         // Single button for errors and other cases
@@ -388,16 +404,6 @@ function showBuildResult(success, title, content, buildResponse = null) {
             <div style="display: flex;">
                 <button id="modal-continue-btn" style="width: 100%; padding: 12px; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; background: ${success ? '#28a745' : '#dc3545'}; color: white;">Continue</button>
             </div>`;
-        document.getElementById('modal-continue-btn').addEventListener('click', hideBuildResult);
-    }
-
-    // Add event listeners for the buttons
-    if (success && buildResponse) {
-        // Two buttons for Phase 2 entry
-        document.getElementById('modal-cancel-btn').addEventListener('click', hideBuildResult);
-        document.getElementById('modal-continue-btn').addEventListener('click', () => showMainmenuEditor(buildResponse));
-    } else {
-        // Single button for all other cases
         document.getElementById('modal-continue-btn').addEventListener('click', hideBuildResult);
     }
 
@@ -508,6 +514,12 @@ function createPhase2LayoutHTML(apps) {
                         <label style="display: block; margin-bottom: 5px; color: #e0e0e0; cursor: pointer;">
                             <input type="radio" name="graphics" value="fountain" style="margin-right: 8px;"> Fountain
                         </label>
+                        <label style="display: block; margin-bottom: 5px; color: #e0e0e0; cursor: pointer;">
+                            <input type="radio" name="graphics" value="fire" style="margin-right: 8px;"> Fire
+                        </label>
+                        <label style="display: block; margin-bottom: 5px; color: #e0e0e0; cursor: pointer;">
+                            <input type="radio" name="graphics" value="snow" style="margin-right: 8px;"> Snow
+                        </label>
                     </div>
 
                 </div>
@@ -562,10 +574,7 @@ function getUISettings() {
     return {
         enableMusic: musicEnabled,
         enableBeep: beepEnabled,
-        enableStars: selectedGraphics === 'stars',
-        enableStarfield: selectedGraphics === 'starfield',
-        enableFireworks: selectedGraphics === 'fireworks',
-        enableFountain: selectedGraphics === 'fountain'
+        visualEffect: selectedGraphics
     };
 }
 
@@ -578,10 +587,7 @@ function generateMainmenuCode(apps, options = {}) {
     const {
         enableMusic = false,
         enableBeep = false,
-        enableStars = false,
-        enableStarfield = false,
-        enableFireworks = false,
-        enableFountain = false
+        visualEffect = VisualEffect.NONE,
     } = options;
 
     const numApps = apps.length;
@@ -589,15 +595,21 @@ function generateMainmenuCode(apps, options = {}) {
     const appSymbols = apps.map(app => app.alias || app.filename.replace(/\.(gt1|gcl)$/i, ''));
 
     let code = generateBaseCode(numApps, appNames, appSymbols);
-    code += generateMainLoop(enableMusic, enableStars, enableStarfield, enableFireworks, enableFountain);
+    code += generateMainLoop(enableMusic, visualEffect);
     code += generateEventHandlers(enableBeep);
 
     if (enableMusic) code += generateMusicModule();
     if (enableBeep) code += generateBeepModule();
-    if (enableStars) code += generateStarsModule();
-    else if (enableStarfield) code += generateStarfieldModule();
-    else if (enableFireworks) code += generateFireworksModule();
-    else if (enableFountain) code += generateFountainModule();
+
+    switch (visualEffect) {
+        case VisualEffect.STARS:     code += generateStarsModule();     break;
+        case VisualEffect.STARFIELD: code += generateStarfieldModule(); break;
+        case VisualEffect.FIREWORKS: code += generateFireworksModule(); break;
+        case VisualEffect.FOUNTAIN:  code += generateFountainModule();  break;
+        case VisualEffect.FIRE:      code += generateFireModule();      break;
+        case VisualEffect.SNOW:      code += generateSnowModule();      break;
+        default: break;
+    }
 
     return code;
 }
@@ -721,37 +733,31 @@ function generateStarfieldModule() {
            'dim xPos(NUM_STARS-1) = 0\n' +
            'dim yPos(NUM_STARS-1) = 0\n' +
            'dim speed%(NUM_STARS-1) = 0\n' +
-           'dim brightness%(NUM_STARS-1) = 0\n' +
            'dim twinkle%(NUM_STARS-1) = 0\n' +
            'proc initStarfield\n' +
-           '    local i, layer\n' +
+           '    local i, spd, layer\n' +
            '    for i=0 to NUM_STARS-1\n' +
            '        xPos(i).hi = rnd(160) - 80\n' +
-           '        xPos(i).lo = 0\n' +
            '        yPos(i).hi = rnd(120) - 60\n' +
-           '        yPos(i).lo = 0\n' +
            '        layer = i AND 3\n' +
            '        if layer = 0\n' +
-           '            speed(i) = (rnd(0) AND 15) + 48\n' +
-           '            brightness(i) = &h15\n' +
+           '            spd = (rnd(0) AND 15) + 48\n' +
            '        elseif layer = 1\n' +
-           '            speed(i) = (rnd(0) AND 31) + 64\n' +
-           '            brightness(i) = &h2A\n' +
+           '            spd = (rnd(0) AND 31) + 64\n' +
            '        elseif layer = 2\n' +
-           '            speed(i) = (rnd(0) AND 63) + 128\n' +
-           '            brightness(i) = &h3F\n' +
+           '            spd = (rnd(0) AND 63) + 128\n' +
            '        else\n' +
-           '            speed(i) = (rnd(0) AND 63) + 192\n' +
-           '            brightness(i) = &h3F\n' +
+           '            spd = (rnd(0) AND 63) + 192\n' +
            '        endif\n' +
+           '        speed(i) = spd\n' +
            '        twinkle(i) = rnd(0) AND 63\n' +
            '    next i\n' +
            'endproc\n' +
            'proc updateStarfield\n' +
-           '    local i, xp, yp, spd, brt, twk, pxy, color\n' +
+           '    local i, xp, yp, spd, twk, pxy, color\n' +
            '    for i=0 to NUM_STARS-1\n' +
            '        xp = xPos(i) : yp = yPos(i)\n' +
-           '        spd = speed(i) : brt = brightness(i) : twk = twinkle(i)\n' +
+           '        spd = speed(i) : twk = twinkle(i)\n' +
            '        pxy.lo = xp.hi + STARFIELD_ORG_X\n' +
            '        pxy.hi = yp.hi + STARFIELD_ORG_Y\n' +
            '        if &(peek(pxy) AND &h80)\n' +
@@ -767,9 +773,9 @@ function generateStarfieldModule() {
            '        inc twk.lo\n' +
            '        if twk &&> 63 then twk = 0\n' +
            '        twinkle(i) = twk\n' +
-           '        if twk &< 21\n' +
+           '        if twk &&< 21\n' +
            '            color = &h15\n' +
-           '        elseif twk &&< 42\n' +
+           '        elseif twk &< 42\n' +
            '            color = &h2A\n' +
            '        else\n' +
            '            color = &h3F\n' +
@@ -784,11 +790,10 @@ function generateStarfieldModule() {
 }
 
 function generateFireworksModule() {
-    return 'const NUM_FIREWORKS = 48\n' +
+    return 'const NUM_FIREWORKS = 60\n' +
            'const FIREWORKS_ORG_X = 80\n' +
            'const FIREWORKS_ORG_Y = 60 + 8\n' +
            'const GRAVITY = 48\n' +
-           'const WIND = 5\n' +
            'dim xPos(NUM_FIREWORKS-1) = 0\n' +
            'dim yPos(NUM_FIREWORKS-1) = 0\n' +
            'dim xVel(NUM_FIREWORKS-1) = 0\n' +
@@ -803,44 +808,47 @@ function generateFireworksModule() {
            '    next i\n' +
            'endproc\n' +
            'proc updateFireworks\n' +
-           '    local i, lf, xr, yr, xp, yp, pxy, col\n' +
+           '    local i, lf, xp, yp, pxy, col\n' +
            '    for i=0 to NUM_FIREWORKS-1\n' +
            '        lf = life(i)\n' +
            '        if lf &> 0\n' +
            '            xp = xPos(i) : xr = xp : xv = xVel(i)\n' +
            '            yp = yPos(i) : yr = yp : yv = yVel(i)\n' +
-           '            xv = xv + WIND\n' +
            '            yv = yv + GRAVITY\n' +
            '            xp = xp + xv\n' +
            '            yp = yp + yv\n' +
-           '            if abs(yp) > 59*256 OR abs(xp) > 79*256\n' +
-           '                pxy.lo = xr.hi + FIREWORKS_ORG_X\n' +
-           '                pxy.hi = yr.hi + FIREWORKS_ORG_Y\n' +
-           '                poke pxy, 0\n' +
-           '                lf = 0\n' +
+           '            if yp &< -59*256\n' +
+           '                if yr &&>= -59*256 then gosub clearParticle\n' +
            '                goto nextParticle\n' +
            '            endif\n' +
-           '            xPos(i) = xp : yPos(i) = yp\n' +
-           '            xVel(i) = xv : yVel(i) = yv\n' +
-           '            pxy.lo = xr.hi + FIREWORKS_ORG_X\n' +
-           '            pxy.hi = yr.hi + FIREWORKS_ORG_Y\n' +
-           '            if &(peek(pxy) AND &h80)\n' +
-           '                poke pxy, 0\n' +
+           '            if yp &> 59*256\n' +
+           '                lf = 0\n' +
+           '                gosub clearParticle\n' +
+           '                goto skipParticle\n' +
            '            endif\n' +
+           '            if abs(xp) &&> 79*256\n' +
+           '                lf = 0\n' +
+           '                gosub clearParticle\n' +
+           '                goto skipParticle\n' +
+           '            endif\n' +
+           '            gosub clearParticle\n' +
            '            pxy.lo = xp.hi + FIREWORKS_ORG_X\n' +
            '            pxy.hi = yp.hi + FIREWORKS_ORG_Y\n' +
            '            col = color(i)\n' +
-           '            if peek(pxy) &&= 0\n' +
+           '            if peek(pxy) &= 0\n' +
            '                poke pxy, col OR &h80\n' +
            '            endif\n' +
+           'nextParticle:\n' +
            '            lf = lf - 1\n' +
-           '            if lf &&= 0\n' +
+           '            if lf &= 0\n' +
            '                if &(peek(pxy) AND &h80)\n' +
            '                    poke pxy, 0\n' +
            '                endif\n' +
            '            endif\n' +
+           '            xPos(i) = xp : yPos(i) = yp\n' +
+           '            yVel(i) = yv\n' +
            '        endif\n' +
-           'nextParticle:\n' +
+           'skipParticle:\n' +
            '        life(i) = lf\n' +
            '    next i\n' +
            '    inc fireworkTimer.lo\n' +
@@ -851,6 +859,13 @@ function generateFireworksModule() {
            '        call createFirework, centerX, centerY\n' +
            '    endif\n' +
            'endproc\n' +
+           'clearParticle:\n' +
+           '    pxy.lo = xr.hi + FIREWORKS_ORG_X\n' +
+           '    pxy.hi = yr.hi + FIREWORKS_ORG_Y\n' +
+           '    if &(peek(pxy) AND &h80)\n' +
+           '        poke pxy, 0\n' +
+           '    endif\n' +
+           'return\n' +
            'proc createFirework, centerX, centerY\n' +
            '    local i, c, count\n' +
            '    count = 0\n' +
@@ -866,7 +881,7 @@ function generateFireworksModule() {
            '            life(i) = 64 + (rnd(0) AND 31)\n' +
            '            color(i) = c\n' +
            '            inc count.lo\n' +
-           '            if count &&= 24 then return\n' +
+           '            if count &&= 20 then return\n' +
            '        endif\n' +
            '    next i\n' +
            'endproc\n';
@@ -905,7 +920,12 @@ function generateFountainModule() {
            '                if yr &&>= -59*256 then gosub clearParticle\n' +
            '                goto nextParticle\n' +
            '            endif\n' +
-           '            if yp > 59*256 OR abs(xp) > 79*256\n' +
+           '            if yp &&> 59*256\n' +
+           '                gosub clearParticle\n' +
+           '                call respawnParticle, i\n' +
+           '                goto skipParticle\n' +
+           '            endif\n' +
+           '            if abs(xp) &&> 79*256\n' +
            '                gosub clearParticle\n' +
            '                call respawnParticle, i\n' +
            '                goto skipParticle\n' +
@@ -913,7 +933,7 @@ function generateFountainModule() {
            '            gosub clearParticle\n' +
            '            if life &&< 10\n' +
            '                color = &h30\n' +
-           '            elseif life &< 20\n' +
+           '            elseif life &&< 20\n' +
            '                color = &h35\n' +
            '            elseif life &&< 30\n' +
            '                color = &h3A\n' +
@@ -922,7 +942,7 @@ function generateFountainModule() {
            '            endif\n' +
            '            pxy.lo = xp.hi + FOUNTAIN_ORG_X\n' +
            '            pxy.hi = yp.hi + FOUNTAIN_ORG_Y\n' +
-           '            if &(peek(pxy) = 0)\n' +
+           '            if (peek(pxy) = 0)\n' +
            '                poke pxy, color OR &h80\n' +
            '            endif\n' +
            'nextParticle:\n' +
@@ -950,7 +970,170 @@ function generateFountainModule() {
            'endproc\n';
 }
 
-function generateMainLoop(enableMusic, enableStars, enableStarfield, enableFireworks, enableFountain) {
+function generateFireModule() {
+    return 'const NUM_FIRE_PARTICLES = 48\n' +
+           'const FIRE_ORG_X = 80\n' +
+           'const FIRE_ORG_Y = 60 + 8\n' +
+           'dim xPos(NUM_FIRE_PARTICLES-1) = 0\n' +
+           'dim yPos(NUM_FIRE_PARTICLES-1) = 0\n' +
+           'dim xVel(NUM_FIRE_PARTICLES-1) = 0\n' +
+           'dim yVel(NUM_FIRE_PARTICLES-1) = 0\n' +
+           'dim life%(NUM_FIRE_PARTICLES-1) = 0\n' +
+           'proc initFire\n' +
+           '    local i\n' +
+           '    for i=0 to NUM_FIRE_PARTICLES-1\n' +
+           '        call respawnFireParticle, i\n' +
+           '    next i\n' +
+           'endproc\n' +
+           'proc respawnFireParticle, i\n' +
+           '    xPos(i).hi = (rnd(0) AND 63) - 32\n' +
+           '    yPos(i).hi = 59\n' +
+           '    yPos(i).lo = 0\n' +
+           '    xVel(i) = (rnd(0) AND 511) - 256\n' +
+           '    yVel(i) = -((rnd(0) AND 511) + 256)\n' +
+           '    life(i) = (rnd(0) AND 31) + 40\n' +
+           'endproc\n' +
+           'proc updateFire\n' +
+           '    local i, xp, yp, xv, yv, lf, pxy, color\n' +
+           '    for i=0 to NUM_FIRE_PARTICLES-1\n' +
+           '        lf = life(i)\n' +
+           '        if lf > 0\n' +
+           '            xp = xPos(i)\n' +
+           '            yp = yPos(i)\n' +
+           '            xv = xVel(i)\n' +
+           '            yv = yVel(i)\n' +
+           '            pxy.lo = xp.hi + FIRE_ORG_X\n' +
+           '            pxy.hi = yp.hi + FIRE_ORG_Y\n' +
+           '            if peek(pxy) AND &h80\n' +
+           '                poke pxy, 0\n' +
+           '            endif\n' +
+           '            xp = xp + xv\n' +
+           '            yp = yp + yv\n' +
+           '            yv = yv + 8\n' +
+           '            if xv > 4\n' +
+           '                xv = xv - 1\n' +
+           '            elseif xv < -4\n' +
+           '                xv = xv + 1\n' +
+           '            endif\n' +
+           '            lf = lf - 1\n' +
+           '            if lf = 0\n' +
+           '                call respawnFireParticle, i\n' +
+           '                goto nextParticle\n' +
+           '            endif\n' +
+           '            if abs(yp) > 59*256\n' +
+           '                call respawnFireParticle, i\n' +
+           '                goto nextParticle\n' +
+           '            endif\n' +
+           '            if abs(xp) > 79*256\n' +
+           '                call respawnFireParticle, i\n' +
+           '                goto nextParticle\n' +
+           '            endif\n' +
+           '            pxy.lo = xp.hi + FIRE_ORG_X\n' +
+           '            pxy.hi = yp.hi + FIRE_ORG_Y\n' +
+           '            if peek(pxy) = 0\n' +
+           '                if lf > 60\n' +
+           '                    color = &h0F\n' +
+           '                elseif lf > 50\n' +
+           '                    color = &h0B\n' +
+           '                elseif lf > 40\n' +
+           '                    color = &h07\n' +
+           '                elseif lf > 30\n' +
+           '                    color = &h03\n' +
+           '                elseif lf > 15\n' +
+           '                    color = &h06\n' +
+           '                else\n' +
+           '                    color = &h15\n' +
+           '                endif\n' +
+           '                poke pxy, color OR &h80\n' +
+           '            endif\n' +
+           '            xPos(i) = xp : yPos(i) = yp\n' +
+           '            xVel(i) = xv : yVel(i) = yv\n' +
+           '            life(i) = lf\n' +
+           '        endif\n' +
+           'nextParticle:\n' +
+           '    next i\n' +
+           'endproc\n';
+}
+
+function generateSnowModule() {
+   return 'const NUM_SNOW_PARTICLES = 80\n' +
+          'const SNOW_ORG_X = 80\n' +
+          'const SNOW_ORG_Y = 60 + 8\n' +
+          'const GROUND_Y = 59\n' +
+          'dim snowColour%(3) = &h95, &hAA, &hBF, &hBF\n' +
+          'dim jitterOffset(7) = 0, 1, 0, -1, 0, -1, 0, 1\n' +
+          'dim xPos(NUM_SNOW_PARTICLES-1) = 0\n' +
+          'dim yPos(NUM_SNOW_PARTICLES-1) = 0\n' +
+          'dim yVel(NUM_SNOW_PARTICLES-1) = 0\n' +
+          'dim colour%(NUM_SNOW_PARTICLES-1) = 0\n' +
+          'proc initSnow\n' +
+          '    local i\n' +
+          '    snowTimer = -1\n' +
+          '    for i=0 to NUM_SNOW_PARTICLES-1\n' +
+          '        call respawnSnowParticle, i\n' +
+          '    next i\n' +
+          'endproc\n' +
+          'proc updateSnow\n' +
+          '    local i, xp, yp, yv, col, pxy\n' +
+          '    for i=0 to NUM_SNOW_PARTICLES-1\n' +
+          '        xp = xPos(i)\n' +
+          '        yp = yPos(i)\n' +
+          '        yv = yVel(i)\n' +
+          '        rxy.lo = xp.hi + SNOW_ORG_X\n' +
+          '        rxy.hi = yp.hi + SNOW_ORG_Y\n' +
+          '        if &(peek(rxy) AND &h80)\n' +
+          '            poke rxy, 0\n' +
+          '        endif\n' +
+          '        yp = yp + yv\n' +
+          '        if yp &> 59*256\n' +
+          '            if rxy.hi &&< 127 then poke rxy, &h3F\n' +
+          '            call respawnSnowParticle, i\n' +
+          '            goto nextParticle\n' +
+          '        endif\n' +
+          '        pxy.hi = yp.hi + SNOW_ORG_Y\n' +
+          '        if pxy.hi &> rxy.hi\n' +
+          '            xp.hi = xp.hi + jitterOffset(rxy.hi AND 7)\n' +
+          '        endif\n' +
+          '        pxy.lo = xp.hi + SNOW_ORG_X\n' +
+          '        pixel = peek(pxy)\n' +
+          '        if (pixel)\n' +
+          '            if (NOT pixel AND &h80)\n' +
+          '                if &(peek(rxy + &h0100))\n' +
+          '                    poke rxy, &h3F\n' +
+          '                    call respawnSnowParticle, i\n' +
+          '                    goto nextParticle\n' +
+          '                else\n' +
+          '                    xp.hi = xp.hi - jitterOffset(rxy.hi AND 7)\n' +
+          '                    pxy.lo = xp.hi + SNOW_ORG_X\n' +
+          '                endif\n' +
+          '            endif\n' +
+          '        endif\n' +
+          '        if abs(xp) &&> 78*256\n' +
+          '            call respawnSnowParticle, i\n' +
+          '            goto nextParticle\n' +
+          '        endif\n' +
+          '        poke pxy, colour(i)\n' +
+          '        xPos(i) = xp : yPos(i) = yp\n' +
+          '        yVel(i) = yv\n' +
+          'nextParticle:\n' +
+          '    next i\n' +
+          '    snowTimer = snowTimer + 1\n' +
+          'endproc\n' +
+          'proc respawnSnowParticle, i\n' +
+          '    local y\n' +
+          '    xPos(i).hi = rnd(144) - 72\n' +
+          '    if snowTimer = -1\n' +
+          '        y.hi = -rnd(20) - 39\n' +
+          '    else\n' +
+          '        y.hi = -59\n' +
+          '    endif\n' +
+          '    yPos(i) = y\n' +
+          '    yVel(i) = (rnd(0) AND 127) + 128\n' +
+          '    colour(i) = snowColour(rnd(0) AND 3)\n' +
+          'endproc\n';
+}
+
+function generateMainLoop(enableMusic, visualEffect) {
     let loop = '';
 
     // Only add initialization if modules are enabled
@@ -958,17 +1141,15 @@ function generateMainLoop(enableMusic, enableStars, enableStarfield, enableFirew
         loop += 'play music, &h75a0, 3\n' +
                 'gosub resetAudio\n';
     }
-    if (enableStars) {
-        loop += 'call initStars\n';
-    }
-    else if (enableStarfield) {
-        loop += 'call initStarfield\n';
-    }
-    else if (enableFireworks) {
-        loop += 'call initFireworks\n';
-    }
-    else if (enableFountain) {
-        loop += 'call initFountain\n';
+
+    switch (visualEffect) {
+        case VisualEffect.STARS:     loop += 'call initStars\n';     break;
+        case VisualEffect.STARFIELD: loop += 'call initStarfield\n'; break;
+        case VisualEffect.FIREWORKS: loop += 'call initFireworks\n'; break;
+        case VisualEffect.FOUNTAIN:  loop += 'call initFountain\n';  break;
+        case VisualEffect.FIRE:      loop += 'call initFire\n';      break;
+        case VisualEffect.SNOW:      loop += 'call initSnow\n';      break;
+        default: break;
     }
 
     loop += 'repeat\n' +
@@ -976,17 +1157,14 @@ function generateMainLoop(enableMusic, enableStars, enableStarfield, enableFirew
             '    set FG_COLOUR, &h3F\n' +
             '    at x, y : put 62\n';
 
-    if (enableStars) {
-        loop += '    call updateStars\n';
-    }
-    else if (enableStarfield) {
-        loop += '    call updateStarfield\n';
-    }
-    else if (enableFireworks) {
-        loop += '    call updateFireworks\n';
-    }
-    else if (enableFountain) {
-        loop += '    call updateFountain\n';
+    switch (visualEffect) {
+        case VisualEffect.STARS:     loop += 'call updateStars\n';     break;
+        case VisualEffect.STARFIELD: loop += 'call updateStarfield\n'; break;
+        case VisualEffect.FIREWORKS: loop += 'call updateFireworks\n'; break;
+        case VisualEffect.FOUNTAIN:  loop += 'call updateFountain\n';  break;
+        case VisualEffect.FIRE:      loop += 'call updateFire\n';      break;
+        case VisualEffect.SNOW:      loop += 'call updateSnow\n';      break;
+        default: break;
     }
 
     loop += 'forever\n';

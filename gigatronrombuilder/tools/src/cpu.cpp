@@ -473,8 +473,8 @@ namespace Cpu
             case ROMv4:  // fallthrough
             case ROMv5a: // fallthrough
             case DEVROM: // fallthrough
-            case ROMv6:  // fallthrough
             case SDCARD: _stateS._PC = ROM_ACTIVE_INTERPRETER; break;
+            case ROMv6:  _stateS._PC = ROM_ROMv6_INTERPRETER;  break;
             case ROMvX0: _stateS._PC = ROM_ROMvX0_INTERPRETER; break;
 
             default:

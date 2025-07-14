@@ -52,29 +52,28 @@ textWorkArea                      EQU                          0x7da0
 
 ; Labels
 _entryPoint_                      EQU                          0x0200
-_nextParticle                     EQU                          0x032d
-_skipParticle                     EQU                          0x0361
-_clearParticle                    EQU                          0x036f
+_nextParticle                     EQU                          0x0313
+_skipParticle                     EQU                          0x0347
+_clearParticle                    EQU                          0x0355
 _repeat_0x0000                    EQU                          0x0234
 _updateFountain                   EQU                          0x023a
 _next_0x0001                      EQU                          0x023f
 _if_0x0004                        EQU                          0x02a3
 _endif_0x0003                     EQU                          0x02a6
-_endif_0x0005                     EQU                          0x02d4
-_elseif_0x0006                    EQU                          0x02e5
-_elseif_0x0007                    EQU                          0x0300
-_else_0x0008                      EQU                          0x030e
-_endif_0x0009                     EQU                          0x0312
-_endif_0x000a                     EQU                          0x032d
-_endif_0x0002                     EQU                          0x0361
-_endif_0x000b                     EQU                          0x0388
-_respawnParticle                  EQU                          0x038a
-_initFountain                     EQU                          0x0415
-_next_0x000c                      EQU                          0x0422
+_endif_0x0005                     EQU                          0x02bb
+_endif_0x0006                     EQU                          0x02d7
+_if_0x0008                        EQU                          0x030b
+_endif_0x0007                     EQU                          0x0313
+_endif_0x0002                     EQU                          0x0347
+_endif_0x0009                     EQU                          0x036e
+_respawnParticle                  EQU                          0x0370
+_initFountain                     EQU                          0x03f2
+_next_0x000a                      EQU                          0x0408
+_page_0x0300                      EQU                          0x0300
 _page_0x0400                      EQU                          0x0400
 
 ; Constants
-_NUM_PARTICLES                    EQU                          0x0020
+_NUM_PARTICLES                    EQU                          0x0028
 _FOUNTAIN_ORG_X                   EQU                          0x0050
 _FOUNTAIN_ORG_Y                   EQU                          0x0044
 _GRAVITY                          EQU                          0x0040
@@ -86,27 +85,29 @@ _xv                               EQU                          0x0032
 _yr                               EQU                          0x0034
 _yv                               EQU                          0x0036
 _pxy                              EQU                          0x0038
+_lf                               EQU                          0x003a
 
 ; Local Variables
 _updateFountain_i                 EQU                          0x00c4
 _updateFountain_xp                EQU                          0x00c6
 _updateFountain_yp                EQU                          0x00c8
-_updateFountain_color             EQU                          0x00ca
-_updateFountain_life              EQU                          0x00cc
+_updateFountain_life              EQU                          0x00ca
 _respawnParticle_i                EQU                          0x00c4
 _initFountain_i                   EQU                          0x00c4
 
 ; Arrays
-_xPos                             EQU                          0x7fc0
-_xPos                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
-_yPos                             EQU                          0x7cc0
-_yPos                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
-_xVel                             EQU                          0x7bc0
-_xVel                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
-_yVel                             EQU                          0x7ac0
-_yVel                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
-_age                              EQU                          0x7fa0
-_age                              DB                           0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 
+_xPos                             EQU                          0x7fb0
+_xPos                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
+_yPos                             EQU                          0x7cb0
+_yPos                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
+_xVel                             EQU                          0x7bb0
+_xVel                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
+_yVel                             EQU                          0x7ab0
+_yVel                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
+_age                              EQU                          0x79d8
+_age                              DB                           0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 
+_colour                           EQU                          0x79b8
+_colour                           DB                           0xb0 0xb0 0xb0 0xb0 0xb0 0xb0 0xb0 0xb0 0xb0 0xb0 0xb5 0xb5 0xb5 0xb5 0xb5 0xb5 0xb5 0xb5 0xb5 0xb5 0xba 0xba 0xba 0xba 0xba 0xba 0xba 0xba 0xba 0xba 0xbf 0xbf 
 
 ; Strings
 
@@ -165,7 +166,7 @@ _updateFountain                   PUSH                                          
                                   LDI                          0
                                   STW                          _updateFountain_i            ; for i=0 to NUM_PARTICLES-1
 
-_next_0x0001                      LDWI                         0x7fa0
+_next_0x0001                      LDWI                         0x79d8
                                   ADDW                         _updateFountain_i
                                   PEEK                         
                                   STW                          _updateFountain_life         ; life = age(i)
@@ -174,25 +175,25 @@ _next_0x0001                      LDWI                         0x7fa0
                                   CALLI                        convertGtOp
                                   JumpFalse                    _endif_0x0002 0              ; if life > 0
 
-                                  LDWI                         0x7fc0
+                                  LDWI                         0x7fb0
                                   ADDW                         _updateFountain_i
                                   ADDW                         _updateFountain_i
                                   DEEK                         
                                   STW                          _updateFountain_xp
                                   STW                          _xr
-                                  LDWI                         0x7bc0
+                                  LDWI                         0x7bb0
                                   ADDW                         _updateFountain_i
                                   ADDW                         _updateFountain_i
                                   DEEK                         
                                   STW                          _xv                          ; xp = xPos(i) : xr = xp : xv = xVel(i)
 
-                                  LDWI                         0x7cc0
+                                  LDWI                         0x7cb0
                                   ADDW                         _updateFountain_i
                                   ADDW                         _updateFountain_i
                                   DEEK                         
                                   STW                          _updateFountain_yp
                                   STW                          _yr
-                                  LDWI                         0x7ac0
+                                  LDWI                         0x7ab0
                                   ADDW                         _updateFountain_i
                                   ADDW                         _updateFountain_i
                                   DEEK                         
@@ -223,16 +224,7 @@ _if_0x0004                        CALLI                        _nextParticle    
 
 _endif_0x0003                     LDWI                         15104
                                   SUBW                         _updateFountain_yp
-                                  CALLI                        convertLtOp
-                                  STW                          0xe8
-                                  LDW                          _updateFountain_xp
-                                  Absolute                     
-                                  STW                          0xea
-                                  LDWI                         20224
-                                  SUBW                         0xea
-                                  CALLI                        convertLtOp
-                                  ORW                          0xe8
-                                  JumpFalse                    _endif_0x0005 3              ; if yp > 59*256 OR abs(xp) > 79*256
+                                  BGE                          _endif_0x0005                ; if yp &&> 59*256
 
                                   CALLI                        _clearParticle               ; gosub clearParticle
 
@@ -242,38 +234,24 @@ _endif_0x0003                     LDWI                         15104
 
                                   CALLI                        _skipParticle                ; goto skipParticle
 
-_endif_0x0005                     CALLI                        _clearParticle               ; gosub clearParticle
+_endif_0x0005                     LDW                          _updateFountain_xp
+                                  Absolute                     
+                                  STW                          0xe8
+                                  LDWI                         20224
+                                  SUBW                         0xe8
+                                  BGE                          _endif_0x0006                ; if abs(xp) &&> 79*256
 
-                                  LDW                          _updateFountain_life
-                                  SUBI                         10
-                                  BGE                          _elseif_0x0006               ; if life &&< 10
+                                  CALLI                        _clearParticle               ; gosub clearParticle
 
-                                  LDI                          48
-                                  STW                          _updateFountain_color        ; color = &h30
+                                  LDW                          _updateFountain_i
+                                  STW                          0xc4
+                                  CALLI                        _respawnParticle             ; call respawnParticle, i
 
-                                  CALLI                        _endif_0x0009
-_elseif_0x0006                    LDW                          _updateFountain_life
-                                  SUBI                         20
-                                  JumpLT                       _elseif_0x0007 6             ; elseif life &< 20
+                                  CALLI                        _skipParticle                ; goto skipParticle
 
-                                  LDI                          53
-                                  STW                          _updateFountain_color        ; color = &h35
+_endif_0x0006                     CALLI                        _clearParticle               ; gosub clearParticle
 
-                                  CALLI                        _endif_0x0009
-                                  CALLI                        _elseif_0x0007
-_elseif_0x0007                    LDW                          _updateFountain_life
-                                  SUBI                         30
-                                  BGE                          _else_0x0008                 ; elseif life &&< 30
-
-                                  LDI                          58
-                                  STW                          _updateFountain_color        ; color = &h3A
-
-                                  CALLI                        _endif_0x0009                ; else
-
-_else_0x0008                      LDI                          63
-                                  STW                          _updateFountain_color        ; color = &h3F
-
-_endif_0x0009                     LD                           _updateFountain_xp + 1
+                                  LD                           _updateFountain_xp + 1
                                   ADDI                         80
                                   ST                           _pxy                         ; pxy.lo = xp.hi + FOUNTAIN_ORG_X
 
@@ -284,41 +262,52 @@ _endif_0x0009                     LD                           _updateFountain_x
                                   LDW                          _pxy
                                   PEEK                         
                                   CALLI                        convertEqOp
-                                  BEQ                          _endif_0x000a                ; if &(peek(pxy) = 0)
+                                  JumpFalse                    _endif_0x0007 5              ; if (peek(pxy) = 0)
 
-                                  LDW                          _updateFountain_color
-                                  ORI                          0x80
-                                  POKE                         _pxy                         ; poke pxy, color OR &h80
+                                  LDW                          _updateFountain_life
+                                  STW                          _lf                          ; lf = life
+
+                                  CALLI                        _page_0x0300
+_page_0x0300                      LDW                          _lf
+                                  SUBI                         31
+                                  BLE                          _if_0x0008
+                                  LDI                          31
+                                  STW                          _lf                          ; if lf &&> 31 then lf = 31
+
+_if_0x0008                        LDWI                         0x79b8
+                                  ADDW                         _lf
+                                  PEEK                         
+                                  POKE                         _pxy                         ; poke pxy, colour(lf)
 
 _nextParticle                     INC                          _updateFountain_life         ; inc life.lo
 
-                                  LDWI                         0x7fa0
+                                  LDWI                         0x79d8
                                   ADDW                         _updateFountain_i
                                   STW                          memAddr
                                   LDW                          _updateFountain_life
                                   POKE                         memAddr                      ; age(i) = life
 
-                                  LDWI                         0x7fc0
+                                  LDWI                         0x7fb0
                                   ADDW                         _updateFountain_i
                                   ADDW                         _updateFountain_i
                                   STW                          memAddr
                                   LDW                          _updateFountain_xp
                                   DOKE                         memAddr
-                                  LDWI                         0x7cc0
+                                  LDWI                         0x7cb0
                                   ADDW                         _updateFountain_i
                                   ADDW                         _updateFountain_i
                                   STW                          memAddr
                                   LDW                          _updateFountain_yp
                                   DOKE                         memAddr                      ; xPos(i) = xp : yPos(i) = yp
 
-                                  LDWI                         0x7ac0
+                                  LDWI                         0x7ab0
                                   ADDW                         _updateFountain_i
                                   ADDW                         _updateFountain_i
                                   STW                          memAddr
                                   LDW                          _yv
                                   DOKE                         memAddr                      ; yVel(i) = yv
 
-_skipParticle                     ForNextFarInc                _updateFountain_i _next_0x0001 31                                                                                        ; next i
+_skipParticle                     ForNextFarInc                _updateFountain_i _next_0x0001 39                                                                                        ; next i
 
                                   Return                                                    ; endproc
 
@@ -334,12 +323,12 @@ _clearParticle                    PUSH
                                   LDW                          _pxy
                                   PEEK                         
                                   ANDI                         0x80
-                                  BEQ                          _endif_0x000b                ; if &(peek(pxy) AND &h80)
+                                  BEQ                          _endif_0x0009                ; if &(peek(pxy) AND &h80)
 
                                   LDI                          0
                                   POKE                         _pxy                         ; poke pxy, 0
 
-_endif_0x000b                     Return                                                    ; return
+_endif_0x0009                     Return                                                    ; return
 
 _respawnParticle                  PUSH                                                      ; proc respawnParticle, i
 
@@ -347,7 +336,7 @@ _respawnParticle                  PUSH                                          
                                   STW                          memValue
                                   LDW                          _respawnParticle_i
                                   STW                          memIndex0
-                                  LDWI                         0x7fc0
+                                  LDWI                         0x7fb0
                                   ADDW                         memIndex0
                                   ADDW                         memIndex0
                                   STW                          memAddr
@@ -359,7 +348,7 @@ _respawnParticle                  PUSH                                          
                                   STW                          memValue
                                   LDW                          _respawnParticle_i
                                   STW                          memIndex0
-                                  LDWI                         0x7cc0
+                                  LDWI                         0x7cb0
                                   ADDW                         memIndex0
                                   ADDW                         memIndex0
                                   STW                          memAddr
@@ -375,7 +364,7 @@ _respawnParticle                  PUSH                                          
                                   LDWI                         -500
                                   ADDW                         0xe8
                                   STW                          memValue
-                                  LDWI                         0x7bc0
+                                  LDWI                         0x7bb0
                                   ADDW                         _respawnParticle_i
                                   ADDW                         _respawnParticle_i
                                   STW                          memAddr
@@ -393,15 +382,14 @@ _respawnParticle                  PUSH                                          
                                   LDI                          0
                                   SUBW                         0xe8
                                   STW                          memValue
-                                  LDWI                         0x7ac0
+                                  LDWI                         0x7ab0
                                   ADDW                         _respawnParticle_i
-                                  CALLI                        _page_0x0400
-_page_0x0400                      ADDW                         _respawnParticle_i
+                                  ADDW                         _respawnParticle_i
                                   STW                          memAddr
                                   LDW                          memValue
                                   DOKE                         memAddr                      ; yVel(i) = -((rnd(0) AND 1023) + 1000)
 
-                                  LDWI                         0x7fa0
+                                  LDWI                         0x79d8
                                   ADDW                         _respawnParticle_i
                                   STW                          memAddr
                                   LDI                          1
@@ -413,23 +401,24 @@ _initFountain                     PUSH                                          
 
                                   LDI                          0
                                   STW                          _pxy
-                                  STW                          _xr
+                                  CALLI                        _page_0x0400
+_page_0x0400                      STW                          _xr
                                   STW                          _yr                          ; pxy = 0 : xr = pxy : yr = xr
 
                                   LDI                          0
                                   STW                          _initFountain_i              ; for i=0 to NUM_PARTICLES-1
 
-_next_0x000c                      LDW                          _initFountain_i
+_next_0x000a                      LDW                          _initFountain_i
                                   STW                          0xc4
                                   CALLI                        _respawnParticle             ; call respawnParticle, i
 
-                                  LDWI                         0x7fa0
+                                  LDWI                         0x79d8
                                   ADDW                         _initFountain_i
                                   STW                          memAddr
                                   LDI                          1
                                   POKE                         memAddr                      ; age(i) = 1
 
-                                  ForNextFarInc                _initFountain_i _next_0x000c 31                                                                                          ; next i
+                                  ForNextFarInc                _initFountain_i _next_0x000a 39                                                                                          ; next i
 
                                   Return                                                    ; endproc
 
@@ -443,16 +432,15 @@ _next_0x000c                      LDW                          _initFountain_i
 ;*************************************************************************************************************
 ;*************************************************************************************************************
 
-romCheck                          EQU     0x79a4
-convertEqOp                       EQU     0x7ba3
-convertLtOp                       EQU     0x7ab7
-convertGtOp                       EQU     0x7aae
-absolute                          EQU     0x7bb6
-rand16bit                         EQU     0x7aa6
-scanlineMode                      EQU     0x7bac
-resetVideoFlags                   EQU     0x7ca6
-initClearFuncs                    EQU     0x7cb1
-clearVertBlinds                   EQU     0x79cd
+romCheck                          EQU     0x78a4
+convertEqOp                       EQU     0x79af
+convertGtOp                       EQU     0x79a6
+absolute                          EQU     0x7ba6
+rand16bit                         EQU     0x77f7
+scanlineMode                      EQU     0x7aa6
+resetVideoFlags                   EQU     0x7ca5
+initClearFuncs                    EQU     0x7fa1
+clearVertBlinds                   EQU     0x78cd
 
 
 
@@ -504,14 +492,6 @@ convertEqOp         BEQ     convertEq_1
                     LDI     0
                     RET
 convertEq_1         LDI     1
-                    RET
-
-
-                    
-convertLtOp         BLT     convertLt_1
-                    LDI     0
-                    RET
-convertLt_1         LDI     1
                     RET
 
 

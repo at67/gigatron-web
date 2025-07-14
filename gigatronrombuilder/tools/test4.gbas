@@ -1,0 +1,105 @@
+_runtimePath_ "runtime"
+_runtimeStart_ &h7FFE
+_codeRomType_ ROMv5a
+_enableRomCheck_ Off
+_stringWorkArea_ &h77A0
+module "../build/SymbolTable.m"
+
+const NUM_FIRE_PARTICLES = 64
+const FIRE_ORG_X = 80
+const FIRE_ORG_Y = 60 + 8
+const FIRE_WIDTH = 80
+
+dim xPos(NUM_FIRE_PARTICLES-1) = 0
+dim yPos(NUM_FIRE_PARTICLES-1) = 0
+dim xVel(NUM_FIRE_PARTICLES-1) = 0
+dim yVel(NUM_FIRE_PARTICLES-1) = 0
+dim life%(NUM_FIRE_PARTICLES-1) = 0
+dim colour%(63) = {&h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95, 	' 0  to 15
+				   &h86, &h86, &h86, &h86, &h86, &h86, &h86, &h86, &h86, &h86, &h86, &h86, &h86, &h86, &h86, 		' 16 to 30
+				   &h83, &h83, &h83, &h83, &h83, &h83, &h83, &h83, &h83, &h83,										' 31 to 40
+				   &h87, &h87, &h87, &h87, &h87, &h87, &h87, &h87, &h87, &h87,										' 41 to 50
+				   &h8F, &h8F, &h8F, &h8F, &h8B, &h8B, &h8B, &h8B, &h8B, &h8B, &h8B, &h8B, &h8B}					' 51 to 63 
+
+tscroll off
+set BG_COLOUR, 0 : mode 2 : cls
+set FGBG_COLOUR, &h0C00
+
+call initFire
+
+repeat
+    call updateFire
+forever
+
+proc initFire
+    local i
+    for i=0 to NUM_FIRE_PARTICLES-1
+        call respawnParticle, i
+    next i
+endproc
+
+proc respawnParticle, i
+    xPos(i).hi = (rnd(0) AND 63) - 32
+    yPos(i).hi = 59
+    yPos(i).lo = 0
+    
+    ' Upward velocity with horizontal spread
+    xVel(i) = (rnd(0) AND 511) - 256
+    yVel(i) = -((rnd(0) AND 511) + 256)
+    
+    ' Life and heat
+    life(i) = (rnd(0) AND 31) + 40
+endproc
+
+proc updateFire
+    local i, xp, yp, yv, lf, pxy
+    
+    for i=0 to NUM_FIRE_PARTICLES-1
+        lf = life(i)
+        if lf > 0
+            xp = xPos(i)
+            yp = yPos(i) 
+            yv = yVel(i)
+            
+            ' Clear old position first
+            pxy.lo = xp.hi + FIRE_ORG_X
+            pxy.hi = yp.hi + FIRE_ORG_Y
+            if peek(pxy) AND &h80
+                poke pxy, 0
+            endif
+            
+            ' Update physics
+            xp = xp + xVel(i)
+            yp = yp + yv
+            yv = yv + 8
+            
+            ' Update life
+            lf = lf - 1
+            if lf = 0
+                call respawnParticle, i
+                goto nextParticle
+            endif
+            if abs(yp) > 59*256
+                call respawnParticle, i
+                goto nextParticle
+            endif
+            if abs(xp) > 79*256
+                call respawnParticle, i
+                goto nextParticle
+            endif
+            
+            ' Draw new position
+            pxy.lo = xp.hi + FIRE_ORG_X
+            pxy.hi = yp.hi + FIRE_ORG_Y
+            if peek(pxy) = 0
+				poke pxy, colour(lf AND 63)
+            endif
+            
+            ' Update arrays
+            xPos(i) = xp : yPos(i) = yp
+            yVel(i) = yv
+            life(i) = lf
+        endif
+nextParticle:
+    next i
+endproc

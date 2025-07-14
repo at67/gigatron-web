@@ -55,19 +55,19 @@ _entryPoint_                      EQU                          0x0200
 _repeat_0x0000                    EQU                          0x0249
 _updateStarfield                  EQU                          0x024f
 _next_0x0001                      EQU                          0x0254
-_endif_0x0002                     EQU                          0x0298
-_endif_0x0003                     EQU                          0x02ca
-_if_0x0004                        EQU                          0x02e4
-_elseif_0x0005                    EQU                          0x030d
-_else_0x0006                      EQU                          0x031b
-_endif_0x0007                     EQU                          0x031f
-_endif_0x0008                     EQU                          0x033a
-_initStarfield                    EQU                          0x0348
-_next_0x0009                      EQU                          0x034d
-_elseif_0x000a                    EQU                          0x03d6
-_elseif_0x000b                    EQU                          0x040e
-_else_0x000c                      EQU                          0x043d
-_endif_0x000d                     EQU                          0x045c
+_endif_0x0002                     EQU                          0x0290
+_endif_0x0003                     EQU                          0x02c2
+_if_0x0004                        EQU                          0x02dc
+_elseif_0x0005                    EQU                          0x0303
+_else_0x0006                      EQU                          0x0311
+_endif_0x0007                     EQU                          0x0315
+_endif_0x0008                     EQU                          0x0330
+_initStarfield                    EQU                          0x033e
+_next_0x0009                      EQU                          0x0343
+_elseif_0x000a                    EQU                          0x039c
+_elseif_0x000b                    EQU                          0x03b5
+_else_0x000c                      EQU                          0x03ce
+_endif_0x000d                     EQU                          0x03d7
 _page_0x0300                      EQU                          0x0300
 _page_0x0400                      EQU                          0x0400
 
@@ -77,18 +77,18 @@ _STARFIELD_ORG_X                  EQU                          0x0050
 _STARFIELD_ORG_Y                  EQU                          0x0044
 
 ; Global Variables
+_layer                            EQU                          0x0030
 
 ; Local Variables
 _updateStarfield_i                EQU                          0x00c4
 _updateStarfield_xp               EQU                          0x00c6
 _updateStarfield_yp               EQU                          0x00c8
 _updateStarfield_spd              EQU                          0x00ca
-_updateStarfield_brt              EQU                          0x00cc
-_updateStarfield_twk              EQU                          0x00ce
-_updateStarfield_pxy              EQU                          0x00d0
-_updateStarfield_color            EQU                          0x00d2
+_updateStarfield_twk              EQU                          0x00cc
+_updateStarfield_pxy              EQU                          0x00ce
+_updateStarfield_colour           EQU                          0x00d0
 _initStarfield_i                  EQU                          0x00c4
-_initStarfield_layer              EQU                          0x00c6
+_initStarfield_spd                EQU                          0x00c6
 
 ; Arrays
 _xPos                             EQU                          0x0680
@@ -97,16 +97,14 @@ _yPos                             EQU                          0x0600
 _yPos                             DW                           0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 0x0000 
 _speed                            EQU                          0x7fc0
 _speed                            DB                           0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 
-_brightness                       EQU                          0x7cc0
-_brightness                       DB                           0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 
-_twinkle                          EQU                          0x7bc0
+_twinkle                          EQU                          0x7cc0
 _twinkle                          DB                           0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 
 
 ; Strings
 
 ; Constant Strings
-_str_0x7fac                       EQU                          0x7fac
-_str_0x7fac                       DB                           18 'YO MOFO!!!!!!!!!!!' 0
+_str_0x7faf                       EQU                          0x7faf
+_str_0x7faf                       DB                           15 'TEST TEXT!!!!!!' 0
 
 ; Data
 
@@ -155,8 +153,8 @@ _entryPoint_                      LDI                          0x40
                                   LDI                          50
                                   ST                           cursorXY + 1
                                   AtTextCursor                 
-                                  PrintString                  _str_0x7fac
-                                  NewLine                                                   ; at 40, 50 : print "YO MOFO!!!!!!!!!!!"
+                                  PrintString                  _str_0x7faf
+                                  NewLine                                                   ; at 40, 50 : print "TEST TEXT!!!!!!"
 
                                   CALLI                        _initStarfield               ; call initStarfield
 
@@ -183,15 +181,12 @@ _next_0x0001                      LDWI                         0x0680
                                   LDWI                         0x7fc0
                                   ADDW                         _updateStarfield_i
                                   PEEK                         
-                                  STW                          _updateStarfield_spd
+                                  STW                          _updateStarfield_spd         ; spd = speed(i)
+
                                   LDWI                         0x7cc0
                                   ADDW                         _updateStarfield_i
                                   PEEK                         
-                                  STW                          _updateStarfield_brt
-                                  LDWI                         0x7bc0
-                                  ADDW                         _updateStarfield_i
-                                  PEEK                         
-                                  STW                          _updateStarfield_twk         ; spd = speed(i) : brt = brightness(i) : twk = twinkle(i)
+                                  STW                          _updateStarfield_twk         ; twk = twinkle(i)
 
                                   LD                           _updateStarfield_xp + 1
                                   ADDI                         80
@@ -250,7 +245,7 @@ _endif_0x0003                     LDWI                         0x0680
                                   LDI                          0
                                   STW                          _updateStarfield_twk         ; if twk &&> 63 then twk = 0
 
-_if_0x0004                        LDWI                         0x7bc0
+_if_0x0004                        LDWI                         0x7cc0
                                   ADDW                         _updateStarfield_i
                                   STW                          memAddr
                                   LDW                          _updateStarfield_twk
@@ -258,24 +253,24 @@ _if_0x0004                        LDWI                         0x7bc0
 
                                   LDW                          _updateStarfield_twk
                                   SUBI                         21
-                                  CALLI                        _page_0x0300
-_page_0x0300                      JumpLT                       _elseif_0x0005 4             ; if twk &< 21
+                                  JumpLT                       _elseif_0x0005 4             ; if twk &< 21
 
                                   LDI                          21
-                                  STW                          _updateStarfield_color       ; color = &h15
+                                  STW                          _updateStarfield_colour      ; colour = &h15
 
-                                  CALLI                        _endif_0x0007
+                                  CALLI                        _page_0x0300
+_page_0x0300                      CALLI                        _endif_0x0007
 _elseif_0x0005                    LDW                          _updateStarfield_twk
                                   SUBI                         42
                                   BGE                          _else_0x0006                 ; elseif twk &&< 42
 
                                   LDI                          42
-                                  STW                          _updateStarfield_color       ; color = &h2A
+                                  STW                          _updateStarfield_colour      ; colour = &h2A
 
                                   CALLI                        _endif_0x0007                ; else
 
 _else_0x0006                      LDI                          63
-                                  STW                          _updateStarfield_color       ; color = &h3F
+                                  STW                          _updateStarfield_colour      ; colour = &h3F
 
 _endif_0x0007                     LD                           _updateStarfield_xp + 1
                                   ADDI                         80
@@ -290,9 +285,9 @@ _endif_0x0007                     LD                           _updateStarfield_
                                   CALLI                        convertEqOp
                                   BEQ                          _endif_0x0008                ; if &(peek(pxy) = 0)
 
-                                  LDW                          _updateStarfield_color
+                                  LDW                          _updateStarfield_colour
                                   ORI                          0x80
-                                  POKE                         _updateStarfield_pxy         ; poke pxy, color OR &h80
+                                  POKE                         _updateStarfield_pxy         ; poke pxy, colour OR &h80
 
 _endif_0x0008                     ForNextFarInc                _updateStarfield_i _next_0x0001 63                                                                                       ; next i
 
@@ -317,13 +312,6 @@ _next_0x0009                      LDI                          0xa0
                                   INC                          memAddr
                                   POKE                         memAddr                      ; xPos(i).hi = rnd(160) - 80
 
-                                  LDWI                         0x0680
-                                  ADDW                         _initStarfield_i
-                                  ADDW                         _initStarfield_i
-                                  STW                          memAddr
-                                  LDI                          0
-                                  POKE                         memAddr                      ; xPos(i).lo = 0
-
                                   LDI                          0x78
                                   RandMod                      
                                   SUBI                         60
@@ -338,39 +326,21 @@ _next_0x0009                      LDI                          0xa0
                                   INC                          memAddr
                                   POKE                         memAddr                      ; yPos(i).hi = rnd(120) - 60
 
-                                  LDWI                         0x0600
-                                  ADDW                         _initStarfield_i
-                                  ADDW                         _initStarfield_i
-                                  STW                          memAddr
-                                  LDI                          0
-                                  POKE                         memAddr                      ; yPos(i).lo = 0
-
                                   LDW                          _initStarfield_i
                                   ANDI                         0x03
-                                  STW                          _initStarfield_layer         ; layer = i AND 3
+                                  STW                          _layer                       ; layer = i AND 3
 
-                                  LDW                          _initStarfield_layer
+                                  LDW                          _layer
                                   CALLI                        convertEqOp
                                   JumpFalse                    _elseif_0x000a 8             ; if layer = 0
 
                                   Rand                         
                                   ANDI                         0x0f
                                   ADDI                         48
-                                  STW                          memValue
-                                  LDWI                         0x7fc0
-                                  ADDW                         _initStarfield_i
-                                  STW                          memAddr
-                                  LDW                          memValue
-                                  POKE                         memAddr                      ; speed(i) = (rnd(0) AND 15) + 48
-
-                                  LDWI                         0x7cc0
-                                  ADDW                         _initStarfield_i
-                                  STW                          memAddr
-                                  LDI                          21
-                                  POKE                         memAddr                      ; brightness(i) = &h15
+                                  STW                          _initStarfield_spd           ; spd = (rnd(0) AND 15) + 48
 
                                   CALLI                        _endif_0x000d
-_elseif_0x000a                    LDW                          _initStarfield_layer
+_elseif_0x000a                    LDW                          _layer
                                   XORI                         1
                                   CALLI                        convertEqOp
                                   JumpFalse                    _elseif_0x000b 10            ; elseif layer = 1
@@ -378,22 +348,10 @@ _elseif_0x000a                    LDW                          _initStarfield_la
                                   Rand                         
                                   ANDI                         0x1f
                                   ADDI                         64
-                                  STW                          memValue
-                                  LDWI                         0x7fc0
-                                  ADDW                         _initStarfield_i
-                                  STW                          memAddr
-                                  LDW                          memValue
-                                  POKE                         memAddr                      ; speed(i) = (rnd(0) AND 31) + 64
-
-                                  CALLI                        _page_0x0400
-_page_0x0400                      LDWI                         0x7cc0
-                                  ADDW                         _initStarfield_i
-                                  STW                          memAddr
-                                  LDI                          42
-                                  POKE                         memAddr                      ; brightness(i) = &h2A
+                                  STW                          _initStarfield_spd           ; spd = (rnd(0) AND 31) + 64
 
                                   CALLI                        _endif_0x000d
-_elseif_0x000b                    LDW                          _initStarfield_layer
+_elseif_0x000b                    LDW                          _layer
                                   XORI                         2
                                   CALLI                        convertEqOp
                                   JumpFalse                    _else_0x000c 12              ; elseif layer = 2
@@ -401,47 +359,32 @@ _elseif_0x000b                    LDW                          _initStarfield_la
                                   Rand                         
                                   ANDI                         0x3f
                                   ADDI                         128
-                                  STW                          memValue
-                                  LDWI                         0x7fc0
-                                  ADDW                         _initStarfield_i
-                                  STW                          memAddr
-                                  LDW                          memValue
-                                  POKE                         memAddr                      ; speed(i) = (rnd(0) AND 63) + 128
-
-                                  LDWI                         0x7cc0
-                                  ADDW                         _initStarfield_i
-                                  STW                          memAddr
-                                  LDI                          63
-                                  POKE                         memAddr                      ; brightness(i) = &h3F
+                                  STW                          _initStarfield_spd           ; spd = (rnd(0) AND 63) + 128
 
                                   CALLI                        _endif_0x000d                ; else
 
 _else_0x000c                      Rand                         
                                   ANDI                         0x3f
                                   ADDI                         192
-                                  STW                          memValue
-                                  LDWI                         0x7fc0
+                                  STW                          _initStarfield_spd           ; spd = (rnd(0) AND 63) + 192
+
+_endif_0x000d                     LDWI                         0x7fc0
                                   ADDW                         _initStarfield_i
                                   STW                          memAddr
-                                  LDW                          memValue
-                                  POKE                         memAddr                      ; speed(i) = (rnd(0) AND 63) + 192
+                                  LDW                          _initStarfield_spd
+                                  POKE                         memAddr                      ; speed(i) = spd
 
-                                  LDWI                         0x7cc0
-                                  ADDW                         _initStarfield_i
-                                  STW                          memAddr
-                                  LDI                          63
-                                  POKE                         memAddr                      ; brightness(i) = &h3F
-
-_endif_0x000d                     Rand                         
+                                  Rand                         
                                   ANDI                         0x3f
                                   STW                          memValue
-                                  LDWI                         0x7bc0
+                                  LDWI                         0x7cc0
                                   ADDW                         _initStarfield_i
                                   STW                          memAddr
                                   LDW                          memValue
                                   POKE                         memAddr                      ; twinkle(i) = rnd(0) AND 63
 
-                                  ForNextFarInc                _initStarfield_i _next_0x0009 63                                                                                         ; next i
+                                  CALLI                        _page_0x0400
+_page_0x0400                      ForNextFarInc                _initStarfield_i _next_0x0009 63                                                                                         ; next i
 
                                   Return                                                    ; endproc
 
@@ -455,23 +398,23 @@ _endif_0x000d                     Rand
 ;*************************************************************************************************************
 ;*************************************************************************************************************
 
-romCheck                          EQU     0x76d6
-convertEqOp                       EQU     0x79a3
-absolute                          EQU     0x7ba0
-divide16bit                       EQU     0x7aac
+romCheck                          EQU     0x77d6
+convertEqOp                       EQU     0x76cb
+absolute                          EQU     0x7aa2
+divide16bit                       EQU     0x7bac
 rand16bit                         EQU     0x7ca0
-randMod16bit                      EQU     0x78a2
-scanlineMode                      EQU     0x7aa2
-resetVideoFlags                   EQU     0x7fa1
-initClearFuncs                    EQU     0x76a3
-clearVertBlinds                   EQU     0x77cd
-clearCursorRow                    EQU     0x77a1
-printInit                         EQU     0x7baa
-printText                         EQU     0x75ea
-printChar                         EQU     0x78b3
+randMod16bit                      EQU     0x79a2
+scanlineMode                      EQU     0x77a8
+resetVideoFlags                   EQU     0x7ba1
+initClearFuncs                    EQU     0x7fa0
+clearVertBlinds                   EQU     0x78cd
+clearCursorRow                    EQU     0x78a1
+printInit                         EQU     0x76e9
+printText                         EQU     0x76d4
+printChar                         EQU     0x79b3
 printClip                         EQU     0x7ca8
-newLineScroll                     EQU     0x79ac
-atTextCursor                      EQU     0x76b2
+newLineScroll                     EQU     0x7aac
+atTextCursor                      EQU     0x77b2
 
 
 

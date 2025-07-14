@@ -2,7 +2,7 @@ _runtimePath_ "runtime"
 _runtimeStart_ &h7FFE
 _codeRomType_ ROMv5a
 
-const NUM_PARTICLES = 32
+const NUM_PARTICLES = 40
 const FOUNTAIN_ORG_X = 80
 const FOUNTAIN_ORG_Y = 60 + 8
 const GRAVITY = 64
@@ -13,7 +13,11 @@ dim yPos(NUM_PARTICLES-1) = 0
 dim xVel(NUM_PARTICLES-1) = 0
 dim yVel(NUM_PARTICLES-1) = 0
 dim age%(NUM_PARTICLES-1) = 0
-
+dim colour%(31) = {&hB0, &hB0, &hB0, &hB0, &hB0, &hB0, &hB0, &hB0, &hB0, &hB0,	' 0  to 9
+				   &hB5, &hB5, &hB5, &hB5, &hB5, &hB5, &hB5, &hB5, &hB5, &hB5,	' 10 to 19
+				   &hBA, &hBA, &hBA, &hBA, &hBA, &hBA, &hBA, &hBA, &hBA, &hBA,	' 20 to 29
+				   &hBF, &hBF}													' 30 to 31
+			
 set BG_COLOUR, 0
 mode 2 : cls
 
@@ -25,7 +29,7 @@ repeat
 forever
 
 proc updateFountain
-    local i, xp, yp, color, life
+    local i, xp, yp, life
     
     for i=0 to NUM_PARTICLES-1
         life = age(i)
@@ -47,31 +51,26 @@ proc updateFountain
 			endif
 
             ' Check if particle goes off screen
-            if yp > 59*256 OR abs(xp) > 79*256
+            if yp &&> 59*256
 				gosub clearParticle
                 call respawnParticle, i
                 goto skipParticle
             endif
-
-            ' Clear old position
+            if abs(xp) &&> 79*256
+				gosub clearParticle
+                call respawnParticle, i
+                goto skipParticle
+            endif
+			
 			gosub clearParticle
 				
-            ' Color based on age - blue to white progression
-            if life &&< 10
-                color = &h30    ' dark blue
-            elseif life &< 20
-                color = &h35    ' light blue
-            elseif life &&< 30
-                color = &h3A    ' blue-white
-            else
-                color = &h3F    ' white froth
-            endif
-            
             ' Draw new position
             pxy.lo = xp.hi + FOUNTAIN_ORG_X
             pxy.hi = yp.hi + FOUNTAIN_ORG_Y
-            if &(peek(pxy) = 0)
-                poke pxy, color OR &h80
+            if (peek(pxy) = 0)
+				lf = life
+				if lf &&> 31 then lf = 31
+                poke pxy, colour(lf)
             endif
 
 nextParticle:

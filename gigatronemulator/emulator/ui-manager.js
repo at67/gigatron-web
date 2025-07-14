@@ -218,6 +218,79 @@ class UIManager
                 document.getElementById('loading-status').textContent = `Error loading: ${file.filename}`;
             });
     }
+
+    loadRomFromUrl(romUrl, filename)
+    {
+        if(!this.emulatorReady || !emulator)
+        {
+            console.log('UI Manager: Cannot load ROM from URL, emulator not ready');
+            return;
+        }
+
+        console.log(`UI Manager: Loading custom ROM ${filename} from URL: ${romUrl}`);
+
+        // Stop emulator if running
+        if(running)
+        {
+            stopEmulator();
+        }
+
+        // Check for 64K requirement in filename
+        if(filename.toLowerCase().includes('64k'))
+        {
+            Module.ccall('emulator_set_64k_mode', null, ['number', 'boolean'], [emulator, true]);
+        }
+        else
+        {
+            Module.ccall('emulator_set_64k_mode', null, ['number', 'boolean'], [emulator, false]);
+        }
+
+        // Load the ROM from URL
+        fetch(romUrl)
+            .then(response =>
+            {
+                if(!response.ok)
+                {
+                    throw new Error(`Failed to load custom ROM ${filename}: ${response.status}`);
+                }
+                return response.arrayBuffer();
+            })
+            .then(data =>
+            {
+                console.log(`UI Manager: Loaded custom ROM ${filename}, size: ${data.byteLength} bytes`);
+                console.log('ROM data first 10 bytes:', Array.from(new Uint8Array(data.slice(0, 10))).map(b => b.toString(16).padStart(2, '0')));
+
+                let dataPtr = Module._malloc(data.byteLength);
+                Module.HEAPU8.set(new Uint8Array(data), dataPtr);
+
+                Module.ccall('emulator_load_rom', null, ['number', 'number'], [emulator, dataPtr]);
+
+                // Reset emulator state
+                resetEmulator();
+                setTimeout(() => {startEmulator();}, 100);
+
+                // Mark ROM as loaded
+                this.romLoaded = true;
+
+                // Update status panel with custom ROM name
+                document.getElementById('status-rom-name').textContent = filename;
+                document.getElementById('download-rom').style.display = 'none'; // Hide download for custom ROMs
+
+                // Update ROM type UI
+                updateROMTypeUI();
+
+                Module._free(dataPtr);
+                resetAudio();
+
+                console.log(`UI Manager: Custom ROM ${filename} loaded successfully`);
+                document.getElementById('loading-status').textContent = `Loaded: ${filename}`;
+            })
+            .catch(error =>
+            {
+                console.error('UI Manager: Failed to load custom ROM:', error);
+                document.getElementById('loading-status').textContent = `Error loading custom ROM: ${filename}`;
+            });
+    }
 }
 
 // Initialize UI manager when DOM is loaded

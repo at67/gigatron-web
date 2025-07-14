@@ -1,0 +1,91 @@
+_runtimePath_ "runtime"
+_runtimeStart_ &h7FFE
+_codeRomType_ ROMv5a
+_enableRomCheck_ Off
+_stringWorkArea_ &h77A0
+
+'not using strings
+free STRINGWORKAREA
+
+
+const numPixels = 64 'yxDelay, yxPixel and yxPos addresses need to be adjusted accordingly
+const yxDelay = &h0400 'need space for at least numPixels * sizeof(byte)
+const yxPixel = &h0500 'need space for at least numPixels * sizeof(word)
+const yxPos   = &h0600 'need space for at least numPixels * sizeof(word)
+const yEnd    = 120
+const yTop    = 2
+const vTop    = 8
+
+def byte(yxDelay, 0, 1, numPixels) = 0
+def word(yxPixel, 0, 1, numPixels) = 0
+def word(yxPos, 0, 1, numPixels) = (rnd(75)+vTop+yTop)*256 + urnd(2, 157, numPixels, 1)
+
+
+gosub init
+   
+frame = 0
+
+repeat
+	flip = frame AND 1
+
+    for i=0 &to (numPixels-1)*2 step 2
+		cont = 0
+		i2 = i LSR 1
+		yxd = yxDelay + i2
+		d = peek(yxd)
+		if &(d)
+			cont = 1
+			dec d
+			poke yxd, d
+		endif
+
+        if &(cont) then continue
+        
+        yx = deek(yxPos + i)
+        update = yx.hi AND &h80
+        yx = yx AND &h7FFF
+        yx.lo = (yx.lo AND &hFE) + ((yx.hi AND 4) LSR 2) 'jitter position
+        
+        poke yxPixel + i + flip, peek(yx)
+        if &(update)
+            f = flip XOR 1
+            gosub jitterPixel
+        endif
+        poke yx, &h3F
+        
+        inc yx.hi
+        update = &h8000
+        if yx.hi &&= yEnd + 8
+            f = flip
+            gosub jitterPixel
+			yx.hi = vTop + yTop
+			update = &h0000
+			poke yxd, rnd(0) AND &h1F
+        endif
+
+        doke yxPos + i, yx OR update
+        
+continue:
+    next i
+	
+	inc frame.lo
+forever
+
+jitterPixel:
+    jyx = yx - &h0100
+    jyx.lo = (jyx.lo AND &hFE) + ((jyx.hi AND 4) LSR 2)
+    poke jyx, peek(yxPixel + i + f)
+return
+
+init:
+	tscroll off
+	set BG_COLOUR, 0 : mode 2 : cls
+	set FGBG_COLOUR, &h0C00
+	
+	set FG_COLOUR, &h0C
+	at 10, 34 : print "Racer"
+	at 10, 43 : print "Snake"
+	at 10, 52 : print "Tetris"
+	at 10, 61 : print "Frogger"
+	at 10, 70 : print "Centipede"
+return

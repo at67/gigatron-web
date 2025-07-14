@@ -1,0 +1,129 @@
+_runtimePath_ "runtime"
+_runtimeStart_ &h7FFE
+_codeRomType_ ROMv5a
+_enableRomCheck_ Off
+_stringWorkArea_ &h77A0
+
+const NUM_SNOW_PARTICLES = 80
+const SNOW_ORG_X = 80
+const SNOW_ORG_Y = 60 + 8
+const GROUND_Y = 59
+
+
+dim snowColour%(3) = &h95, &hAA, &hBF, &hBF
+dim jitterOffset(7) = 0, 1, 0, -1, 0, -1, 0, 1
+
+dim xPos(NUM_SNOW_PARTICLES-1) = 0
+dim yPos(NUM_SNOW_PARTICLES-1) = 0
+dim yVel(NUM_SNOW_PARTICLES-1) = 0
+dim colour%(NUM_SNOW_PARTICLES-1) = 0
+
+tscroll off
+set BG_COLOUR, 0 : mode 2 : cls
+set FGBG_COLOUR, &h0C00
+
+' Draw menu text
+set FG_COLOUR, &h0C
+at 10, 34 : print "Racer"
+at 10, 43 : print "Snake"
+at 10, 52 : print "Tetris"
+at 10, 61 : print "Frogger"
+at 10, 70 : print "Centipede"
+
+
+t = -1
+
+call initSnow
+
+repeat
+    call updateSnow
+	t = t + 1
+forever
+
+proc initSnow
+    local i
+    for i=0 to NUM_SNOW_PARTICLES-1
+        call respawnSnowParticle, i
+    next i
+endproc
+
+proc updateSnow
+    local i, xp, yp, yv, col, pxy
+    
+    for i=0 to NUM_SNOW_PARTICLES-1
+        xp = xPos(i)
+        yp = yPos(i)
+        yv = yVel(i)
+        
+        ' clear at old position
+        rxy.lo = xp.hi + SNOW_ORG_X
+        rxy.hi = yp.hi + SNOW_ORG_Y
+        if &(peek(rxy) AND &h80)
+            poke rxy, 0
+        endif
+        
+        ' gravity
+        yp = yp + yv
+
+        ' ground
+        if yp &&> 59*256
+            if rxy.hi &&< 127 then poke rxy, &h3F					' deposit snow
+            call respawnSnowParticle, i
+            goto nextParticle
+        endif
+		
+		pxy.hi = yp.hi + SNOW_ORG_Y
+		
+		if pxy.hi &&> rxy.hi
+			xp.hi = xp.hi + jitterOffset(rxy.hi AND 7)
+		endif
+
+		pxy.lo = xp.hi + SNOW_ORG_X
+		
+        ' is pixel occupied
+		pixel = peek(pxy)
+        if &(pixel)
+			if &(NOT pixel AND &h80) 	 						' if pixel is NOT a snow particle
+				if &(peek(rxy + &h0100)) 						' if there is vertical support
+					poke rxy, &h3F								' deposit snow
+					call respawnSnowParticle, i
+					goto nextParticle
+				else
+					xp.hi = xp.hi - jitterOffset(rxy.hi AND 7) 	' remove jitter, (allows particles to fall through small gaps)
+					pxy.lo = xp.hi + SNOW_ORG_X
+				endif
+			endif
+        endif
+
+        ' walls
+        if abs(xp) &&> 78*256
+            call respawnSnowParticle, i
+            goto nextParticle
+        endif
+		
+        ' draw at updated position
+        'if peek(pxy) &&= 0 then poke pxy, colour(i)
+		poke pxy, colour(i)
+
+        ' update arrays
+        xPos(i) = xp : yPos(i) = yp
+        yVel(i) = yv
+nextParticle:
+    next i
+endproc
+
+proc respawnSnowParticle, i
+	local x, y
+	
+    ' random X position
+    x.hi = rnd(144) - 72
+	if t = -1
+		y.hi = -rnd(20) - 39  										' for the first frame have a large vertical variance
+	else			
+		y.hi = -59													' for all other frames use the ceiling
+	endif
+    xPos(i) = x
+	yPos(i) = y
+    yVel(i) = (rnd(0) AND 127) + 128
+	colour(i) = snowColour(rnd(0) AND 3)
+endproc
