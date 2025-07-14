@@ -35,7 +35,7 @@ private:
     int _vSync=0, _hSync=0;
     int _vgaX=0, _vgaY=VSYNC_START;
 
-    bool _is64k=false;
+    bool _is64k=true;
     bool _vBlank = false;
     bool _initAudio=true;
 
@@ -314,7 +314,7 @@ void Emulator::reset()
     }
 
     _IN = 0xFF;
-    _is64k = false;
+    _is64k = true;
     _audioWriteIndex = 0;
 
     _vgaX = 0, _vgaY = VSYNC_START;

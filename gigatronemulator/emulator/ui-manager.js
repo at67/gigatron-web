@@ -219,7 +219,7 @@ class UIManager
             });
     }
 
-    loadRomFromUrl(romUrl, filename)
+    loadRomFromUrl(romUrl, filename, enable64K = false)
     {
         if(!this.emulatorReady || !emulator)
         {
@@ -236,7 +236,7 @@ class UIManager
         }
 
         // Check for 64K requirement in filename
-        if(filename.toLowerCase().includes('64k'))
+        if(filename.toLowerCase().includes('64k')  ||  enable64K)
         {
             Module.ccall('emulator_set_64k_mode', null, ['number', 'boolean'], [emulator, true]);
         }

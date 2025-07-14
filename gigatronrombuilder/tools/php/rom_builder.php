@@ -195,36 +195,46 @@ class RomBuilder {
     }
 
     private function createTempSymlinks() {
+        // Internal folders
         $apps_link = $this->romsrc_dir . '/Apps';
         if (!file_exists($apps_link)) {
             symlink('../romdeps/Apps', $apps_link);
         }
-
         $core_link = $this->romsrc_dir . '/Core';
         if (!file_exists($core_link)) {
             symlink('../romdeps/Core', $core_link);
         }
 
-        $games_link = $this->romsrc_dir . '/games';
-        if (!file_exists($games_link)) {
-            symlink('../../gigatronemulator/gt1/games', $games_link);
+        // Curated folders
+        $directories = ['6502', 'apps', 'audio', 'bench', 'cellular', 'chess', 'classic', 'contest',
+                        'demos', 'fractal', 'games', 'graphics', 'math', 'tinybasic', 'util'];
+        foreach ($directories as $dir) {
+            $link = $this->romsrc_dir . '/' . $dir;
+            if (!file_exists($link)) {
+                symlink('../../gigatronemulator/gt1/' . $dir, $link);
+            }
         }
     }
 
     private function cleanupTempSymlinks() {
+        // Internal folders
         $apps_link = $this->romsrc_dir . '/Apps';
         if (is_link($apps_link)) {
             unlink($apps_link);
         }
-
         $core_link = $this->romsrc_dir . '/Core';
         if (is_link($core_link)) {
             unlink($core_link);
         }
 
-        $games_link = $this->romsrc_dir . '/games';
-        if (is_link($games_link)) {
-            unlink($games_link);
+        // Curated folders
+        $directories = ['6502', 'apps', 'audio', 'bench', 'cellular', 'chess', 'classic', 'contest',
+                        'demos', 'fractal', 'games', 'graphics', 'math', 'tinybasic', 'util'];
+        foreach ($directories as $dir) {
+            $link = $this->romsrc_dir . '/' . $dir;
+            if (is_link($link)) {
+                unlink($link);
+            }
         }
     }
 

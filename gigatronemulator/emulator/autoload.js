@@ -73,7 +73,7 @@ function handleAutoLoading() {
                     // Load custom ROM from ROM builder
                     console.log('Loading custom ROM from ROM builder:', autoloadRom);
                     const romUrl = '/app.php/gigatronrombuilder/serve_rom/' + encodeURIComponent(autoloadRom);
-                    window.uiManager.loadRomFromUrl(romUrl, autoloadRom);
+                    window.uiManager.loadRomFromUrl(romUrl, autoloadRom, true);
                 } else {
                     // Load official ROM from file browser
                     const romFile = window.fileBrowser.files.rom.find(f => f.filename === autoloadRom);

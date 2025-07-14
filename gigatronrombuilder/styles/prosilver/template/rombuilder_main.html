@@ -232,8 +232,7 @@ function generateManifest(romVersion, selectedFiles)
             symbolName = file.alias;
         } else {
             symbolName = file.filename.replace(/\.(gt1|gcl)$/i, '');
-            symbolName = symbolName.replace(/_v[\w\d]+$/i, '');
-            // Keep your existing special cases for CardBoot, etc.
+            //symbolName = symbolName.replace(/_v[\w\d]+$/i, '');
         }
 
         var entry = symbolName + '=' + file.fullPath;
@@ -429,6 +428,7 @@ function showPhase2Modal(apps, buildResponse) {
     const modal = document.getElementById('build-result-modal');
     const titleElement = document.getElementById('modal-title');
     const contentElement = document.getElementById('modal-content');
+    const romVersion = document.getElementById('base-rom-select').value;
     const buttonContainer = document.querySelector('#build-result-modal .button-container');
 
     // Override modal structure for Phase 2 - KEEP ORIGINAL SIZE
@@ -450,7 +450,7 @@ function showPhase2Modal(apps, buildResponse) {
     titleElement.textContent = 'Mainmenu Editor';
 
     // Create two-panel layout
-    contentElement.innerHTML = createPhase2LayoutHTML(apps);
+    contentElement.innerHTML = createPhase2LayoutHTML(apps, romVersion);
 
     // Phase 2 buttons
     buttonContainer.innerHTML = `
@@ -469,7 +469,7 @@ function showPhase2Modal(apps, buildResponse) {
     modal.style.display = 'block';
 }
 
-function createPhase2LayoutHTML(apps) {
+function createPhase2LayoutHTML(apps, romVersion) {
     return `
         <div style="display: flex; gap: 20px; width: 100%; height: 360px;">
             <!-- Left Panel: Module Selection -->
@@ -482,7 +482,7 @@ function createPhase2LayoutHTML(apps) {
                     <!-- ROM Name -->
                     <div style="margin-bottom: 15px;">
                         <h4 style="margin: 0 0 8px 0; color: #e0e0e0; font-size: 14px;">ROM Name:</h4>
-                        <input type="text" id="rom-name" value="ROMv5a.rom" style="width: 96%; padding: 2px; background: #1a1a1a; color: #e0e0e0; border: 1px solid #444; border-radius: 2px; font-size: 12px;">
+                        <input type="text" id="rom-name" value="ROM` + romVersion + `.rom" style="width: 96%; padding: 2px; background: #1a1a1a; color: #e0e0e0; border: 1px solid #444; border-radius: 2px; font-size: 12px;">
                     </div>
 
                     <!-- Audio Effects -->
@@ -555,14 +555,14 @@ function createMainmenuPreviewHTML(apps) {
 }
 
 function buildROM(apps, buildResponse) {
-    // Generate GBAS source from apps
-    const gbasSource = generateGbasSource(apps);
+    const romVersion = document.getElementById('base-rom-select').value;
+
+    // Generate GBAS source from apps (now can use romVersion)
+    const gbasSource = generateGbasSource(apps, romVersion);
 
     // Send request to compile mainmenu and rebuild ROM
-    const romVersion = document.getElementById('base-rom-select').value;
     const selectedFiles = window.fileBrowser.selectedFiles;
     const manifest = generateManifest(romVersion, selectedFiles);
-
     sendMainmenuBuildRequest(romVersion, selectedFiles, manifest, gbasSource);
 }
 
@@ -578,12 +578,12 @@ function getUISettings() {
     };
 }
 
-function generateGbasSource(apps) {
+function generateGbasSource(apps, romVersion) {
     const settings = getUISettings();
-    return generateMainmenuCode(apps, settings);
+    return generateMainmenuCode(apps, romVersion, settings);
 }
 
-function generateMainmenuCode(apps, options = {}) {
+function generateMainmenuCode(apps, romVersion, options = {}) {
     const {
         enableMusic = false,
         enableBeep = false,
@@ -594,7 +594,7 @@ function generateMainmenuCode(apps, options = {}) {
     const appNames = apps.map(app => app.alias || app.filename.replace(/\.(gt1|gcl)$/i, ''));
     const appSymbols = apps.map(app => app.alias || app.filename.replace(/\.(gt1|gcl)$/i, ''));
 
-    let code = generateBaseCode(numApps, appNames, appSymbols);
+    let code = generateBaseCode(numApps, appNames, appSymbols, romVersion);
     code += generateMainLoop(enableMusic, visualEffect);
     code += generateEventHandlers(enableBeep);
 
@@ -614,10 +614,10 @@ function generateMainmenuCode(apps, options = {}) {
     return code;
 }
 
-function generateBaseCode(numApps, appNames, appSymbols) {
+function generateBaseCode(numApps, appNames, appSymbols, romVersion) {
     return '_runtimePath_ "runtime"\n' +
            '_runtimeStart_ &h7FFE\n' +
-           '_codeRomType_ ROMv5a\n' +
+           '_codeRomType_ ROM' + romVersion + '\n' +
            '_enableRomCheck_ Off\n' +
            '_stringWorkArea_ &h77A0\n' +
            'module "../build/SymbolTable.m"\n' +

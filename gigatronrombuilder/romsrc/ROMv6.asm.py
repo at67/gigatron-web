@@ -161,7 +161,20 @@ from asm import *
 import gcl0x as gcl
 import font_v4 as font
 
+import argparse
 
+# Parse command line arguments
+parser = argparse.ArgumentParser(description='Build Gigatron ROM')
+parser.add_argument('--symbols-only', action='store_true', 
+                    help='Generate symbol table only, skip ROM generation')
+parser.add_argument('applications', nargs='*', help='Application files to include')
+args = parser.parse_args()
+
+SYMBOLS_ONLY = args.symbols_only
+
+# Configure asm.py for symbols-only mode
+if SYMBOLS_ONLY:
+    setSymbolsOnlyMode(True)
 
 # Variable WITH_SPI_BITS defines the number of potential MISO bits in
 # bytes returned by a RAM&IO expansion board (in range 1 to 4). The
@@ -6062,7 +6075,7 @@ define('ledTempo',   ledTempo)
 define('userVars',   userVars)
 define('userVars_v4',userVars_v4)
 define('userVars_v5',userVars_v5)
-define('userVars_v5',userVars_v6)
+define('userVars_v6',userVars_v6)
 define('videoTable', videoTable)
 define('vIRQ_v5',    vIRQ_v5)
 define('ctrlBits_v5',ctrlBits)
@@ -6142,7 +6155,7 @@ def insertRomDir(name):
 if pc()&255 >= 251:                     # Don't start in a trampoline region
   align(0x100)
 
-for application in argv[1:]:
+for application in args.applications:
   print()
 
   # Determine label
@@ -6299,6 +6312,7 @@ for application in argv[1:]:
         trampoline()
 
   else:
+    print('Application assert: ', application)
     assert False
 
   C('End of %s, size %d' % (application, pc() - symbol(name)))
@@ -6346,5 +6360,9 @@ if pc()&255 > 0:
 #-----------------------------------------------------------------------
 # Finish assembly
 #-----------------------------------------------------------------------
+if SYMBOLS_ONLY:
+    print('Symbol table generation complete')
+    exit(0)
+    
 end()
 writeRomFiles(argv[0])

@@ -183,6 +183,21 @@ import gcl0x as gcl
 import font_v4 as font
 import font_vX0 as fontvX0
 
+import argparse
+
+# Parse command line arguments
+parser = argparse.ArgumentParser(description='Build Gigatron ROM')
+parser.add_argument('--symbols-only', action='store_true', 
+                    help='Generate symbol table only, skip ROM generation')
+parser.add_argument('applications', nargs='*', help='Application files to include')
+args = parser.parse_args()
+
+SYMBOLS_ONLY = args.symbols_only
+
+# Configure asm.py for symbols-only mode
+if SYMBOLS_ONLY:
+    setSymbolsOnlyMode(True)
+    
 enableListing()
 #-----------------------------------------------------------------------
 #
@@ -15810,7 +15825,7 @@ def insertRomDir(name):
 if pc()&255 >= 251:                     # Don't start in a trampoline region
   align(0x100)
 
-for application in argv[1:]:
+for application in args.applications:
   print()
 
   # Determine label
@@ -16014,6 +16029,9 @@ if pc()&255 > 0:
 #-----------------------------------------------------------------------
 # Finish assembly
 #-----------------------------------------------------------------------
+if SYMBOLS_ONLY:
+    print('Symbol table generation complete')
+    exit(0)
+    
 end()
 writeRomFiles(argv[0])
-gtBasicSymbolsFile.close()     # opened in asm.py
