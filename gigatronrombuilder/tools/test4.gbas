@@ -8,7 +8,6 @@ module "../build/SymbolTable.m"
 const NUM_FIRE_PARTICLES = 64
 const FIRE_ORG_X = 80
 const FIRE_ORG_Y = 60 + 8
-const FIRE_WIDTH = 80
 
 dim xPos(NUM_FIRE_PARTICLES-1) = 0
 dim yPos(NUM_FIRE_PARTICLES-1) = 0

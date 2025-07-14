@@ -4,7 +4,7 @@ _codeRomType_ ROMv5a
 _enableRomCheck_ Off
 _stringWorkArea_ &h77A0
 module "../build/SymbolTable.m"
-const NUM_APPS = 6
+const NUM_APPS = 1
 const LIST_X0  = 10
 const LIST_X1  = 88
 const LIST_Y   = 34
@@ -12,8 +12,8 @@ const LIST_DY  = 9
 const CURS_DX  = 8
 const CURS_X   = LIST_X0 - CURS_DX
 const CURS_Y   = LIST_Y
-const dim apps$(NUM_APPS-1) = "Invader", "PucMon_ROMv5a", "tetronis", "Craps", "VideoPoker", "bricks"
-dim execs(NUM_APPS-1) = Invader, PucMon_ROMv5a, tetronis, Craps, VideoPoker, bricks
+const dim apps$(NUM_APPS-1) = "Invader"
+dim execs(NUM_APPS-1) = Invader
 tscroll off
 set BG_COLOUR, 0 : mode 2 : cls
 set FGBG_COLOUR, &h0C00
@@ -27,12 +27,12 @@ x = CURS_X : y = CURS_Y
 index = 0
 play music, &h75a0, 3
 gosub resetAudio
-call initSnow
+call initStars
 repeat
     gosub get("BUTTON_STATE")
     set FG_COLOUR, &h3F
     at x, y : put 62
-call updateSnow
+call updateStars
 forever
 execApp:
     cls
@@ -94,78 +94,60 @@ beep:
     set SOUND_TIMER, 2
     set BUTTON_STATE, &hEF
 return
-const NUM_SNOW_PARTICLES = 80
-const SNOW_ORG_X = 80
-const SNOW_ORG_Y = 60 + 8
-const GROUND_Y = 59
-dim snowColour%(3) = &h95, &hAA, &hBF, &hBF
-dim jitterOffset(7) = 0, 1, 0, -1, 0, -1, 0, 1
-dim xPos(NUM_SNOW_PARTICLES-1) = 0
-dim yPos(NUM_SNOW_PARTICLES-1) = 0
-dim yVel(NUM_SNOW_PARTICLES-1) = 0
-dim colour%(NUM_SNOW_PARTICLES-1) = 0
-proc initSnow
+const NUM_STARS = 48
+const STARS_ORG_X = 80
+const STARS_ORG_Y = 60 + 8
+dim xPos(NUM_STARS-1) = 0
+dim yPos(NUM_STARS-1) = 0
+dim xVel(NUM_STARS-1) = 0
+dim yVel(NUM_STARS-1) = 0
+dim star%(NUM_STARS-1) = 0
+dim colour%(31) = {&h00, &h00, &h00, &h00, &h00, &h00, &h00, &h00, &h00,
+                   &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95,
+                   &hAA, &hAA, &hAA, &hAA, &hAA, &hAA, &hAA, &hAA,
+                   &hBF, &hBF, &hBF, &hBF, &hBF, &hBF, &hBF}
+proc initStars
     local i
-    snowTimer = -1
-    for i=0 to NUM_SNOW_PARTICLES-1
-        call respawnSnowParticle, i
+    for i=0 to NUM_STARS-1
+        call newStar, i
     next i
 endproc
-proc updateSnow
-    local i, xp, yp, yv, col, pxy
-    for i=0 to NUM_SNOW_PARTICLES-1
-        xp = xPos(i)
-        yp = yPos(i)
-        yv = yVel(i)
-        rxy.lo = xp.hi + SNOW_ORG_X
-        rxy.hi = yp.hi + SNOW_ORG_Y
-        if &(peek(rxy) AND &h80)
-            poke rxy, 0
+proc newStar, i
+    star(i) = 0
+    xPos(i) = 0
+    yPos(i) = 0
+    repeat
+        xv = (rnd(0) AND 2047) - 1024
+        yv = (rnd(0) AND 2047) - 1024
+    until abs(xv) > 200  OR  abs(yv) > 200
+    xVel(i) = xv : xp = xv
+    yVel(i) = yv : yp = yv
+endproc
+proc updateStars
+    local i, ss, pxy
+    for i=0 to NUM_STARS-1
+        xp = xPos(i) : xv = xVel(i)
+        yp = yPos(i) : yv = yVel(i)
+        pxy.lo = xp.hi + STARS_ORG_X
+        pxy.hi = yp.hi + STARS_ORG_Y
+        if &(peek(pxy) AND &h80)
+            poke pxy, 0
         endif
+        xp = xp + xv
         yp = yp + yv
-        if yp &> 59*256
-            if rxy.hi &&< 127 then poke rxy, &h3F
-            call respawnSnowParticle, i
-            goto nextParticle
+        if abs(yp) &&> 59*256
+            call newStar, i
         endif
-        pxy.hi = yp.hi + SNOW_ORG_Y
-        if pxy.hi &> rxy.hi
-            xp.hi = xp.hi + jitterOffset(rxy.hi AND 7)
+        if abs(xp) &&> 79*256
+            call newStar, i
         endif
-        pxy.lo = xp.hi + SNOW_ORG_X
-        pixel = peek(pxy)
-        if (pixel)
-            if (NOT pixel AND &h80)
-                if &(peek(rxy + &h0100))
-                    poke rxy, &h3F
-                    call respawnSnowParticle, i
-                    goto nextParticle
-                else
-                    xp.hi = xp.hi - jitterOffset(rxy.hi AND 7)
-                    pxy.lo = xp.hi + SNOW_ORG_X
-                endif
-            endif
+        ss = star(i)
+        pxy.lo = xp.hi + STARS_ORG_X
+        pxy.hi = yp.hi + STARS_ORG_Y
+        if peek(pxy) &&= 0
+            poke pxy, colour(min(ss, 31))
+            star(i) = ss + 1
         endif
-        if abs(xp) &&> 78*256
-            call respawnSnowParticle, i
-            goto nextParticle
-        endif
-        poke pxy, colour(i)
         xPos(i) = xp : yPos(i) = yp
-        yVel(i) = yv
-nextParticle:
     next i
-    snowTimer = snowTimer + 1
-endproc
-proc respawnSnowParticle, i
-    local y
-    xPos(i).hi = rnd(144) - 72
-    if snowTimer = -1
-        y.hi = -rnd(20) - 39
-    else
-        y.hi = -59
-    endif
-    yPos(i) = y
-    yVel(i) = (rnd(0) AND 127) + 128
-    colour(i) = snowColour(rnd(0) AND 3)
 endproc

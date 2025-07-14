@@ -665,54 +665,22 @@ function generateBeepModule() {
 }
 
 function generateStarsModule() {
-    return 'const NUM_STARS = 32\n' +
+    return 'const NUM_STARS = 48\n' +
            'const STARS_ORG_X = 80\n' +
            'const STARS_ORG_Y = 60 + 8\n' +
-           'dim star%(NUM_STARS-1) = 0\n' +
            'dim xPos(NUM_STARS-1) = 0\n' +
            'dim yPos(NUM_STARS-1) = 0\n' +
            'dim xVel(NUM_STARS-1) = 0\n' +
            'dim yVel(NUM_STARS-1) = 0\n' +
+           'dim star%(NUM_STARS-1) = 0\n' +
+           'dim colour%(31) = {&h00, &h00, &h00, &h00, &h00, &h00, &h00, &h00, &h00,\n' +
+           '                   &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95,\n' +
+           '                   &hAA, &hAA, &hAA, &hAA, &hAA, &hAA, &hAA, &hAA,\n' +
+           '                   &hBF, &hBF, &hBF, &hBF, &hBF, &hBF, &hBF}\n' +
            'proc initStars\n' +
            '    local i\n' +
            '    for i=0 to NUM_STARS-1\n' +
            '        call newStar, i\n' +
-           '    next i\n' +
-           'endproc\n' +
-           'proc updateStars\n' +
-           '    local i, xr, yr, xp, yp, ss, pxy\n' +
-           '    for i=0 to NUM_STARS-1\n' +
-           '        xp = xPos(i) : xr = xp : xv = xVel(i)\n' +
-           '        yp = yPos(i) : yr = yp : yv = yVel(i)\n' +
-           '        xp = xp + xv\n' +
-           '        yp = yp + yv\n' +
-           '        if abs(yp) > 59*256\n' +
-           '            call newStar, i\n' +
-           '            xp = xv : yp = yv\n' +
-           '        endif\n' +
-           '        if abs(xp) > 79*256\n' +
-           '            call newStar, i\n' +
-           '            xp = xv : yp = yv\n' +
-           '        endif\n' +
-           '        xPos(i) = xp : yPos(i) = yp\n' +
-           '        pxy.lo = xr.hi + STARS_ORG_X\n' +
-           '        pxy.hi = yr.hi + STARS_ORG_Y\n' +
-           '        if peek(pxy) AND &h80\n' +
-           '            poke pxy, 0\n' +
-           '        endif\n' +
-           '        ss = star(i)\n' +
-           '        pxy.lo = xp.hi + STARS_ORG_X\n' +
-           '        pxy.hi = yp.hi + STARS_ORG_Y\n' +
-           '        if peek(pxy) = 0\n' +
-           '            if ss > 20\n' +
-           '                poke pxy, &h3F OR &h80\n' +
-           '            elseif ss > 10\n' +
-           '                poke pxy, &h2A OR &h80\n' +
-           '            elseif ss > 4\n' +
-           '                poke pxy, &h15 OR &h80\n' +
-           '            endif\n' +
-           '            star(i) = ss + 1\n' +
-           '        endif\n' +
            '    next i\n' +
            'endproc\n' +
            'proc newStar, i\n' +
@@ -720,9 +688,39 @@ function generateStarsModule() {
            '    xPos(i) = 0\n' +
            '    yPos(i) = 0\n' +
            '    repeat\n' +
-           '        xv = (rnd(0) AND 2047) - 1024 : xVel(i) = xv\n' +
-           '        yv = (rnd(0) AND 2047) - 1024 : yVel(i) = yv\n' +
+           '        xv = (rnd(0) AND 2047) - 1024\n' +
+           '        yv = (rnd(0) AND 2047) - 1024\n' +
            '    until abs(xv) > 200  OR  abs(yv) > 200\n' +
+           '    xVel(i) = xv : xp = xv\n' +
+           '    yVel(i) = yv : yp = yv\n' +
+           'endproc\n' +
+           'proc updateStars\n' +
+           '    local i, ss, pxy\n' +
+           '    for i=0 to NUM_STARS-1\n' +
+           '        xp = xPos(i) : xv = xVel(i)\n' +
+           '        yp = yPos(i) : yv = yVel(i)\n' +
+           '        pxy.lo = xp.hi + STARS_ORG_X\n' +
+           '        pxy.hi = yp.hi + STARS_ORG_Y\n' +
+           '        if &(peek(pxy) AND &h80)\n' +
+           '            poke pxy, 0\n' +
+           '        endif\n' +
+           '        xp = xp + xv\n' +
+           '        yp = yp + yv\n' +
+           '        if abs(yp) &&> 59*256\n' +
+           '            call newStar, i\n' +
+           '        endif\n' +
+           '        if abs(xp) &&> 79*256\n' +
+           '            call newStar, i\n' +
+           '        endif\n' +
+           '        ss = star(i)\n' +
+           '        pxy.lo = xp.hi + STARS_ORG_X\n' +
+           '        pxy.hi = yp.hi + STARS_ORG_Y\n' +
+           '        if peek(pxy) &&= 0\n' +
+           '            poke pxy, colour(min(ss, 31))\n' +
+           '            star(i) = ss + 1\n' +
+           '        endif\n' +
+           '        xPos(i) = xp : yPos(i) = yp\n' +
+           '    next i\n' +
            'endproc\n';
 }
 
@@ -754,7 +752,7 @@ function generateStarfieldModule() {
            '    next i\n' +
            'endproc\n' +
            'proc updateStarfield\n' +
-           '    local i, xp, yp, spd, twk, pxy, color\n' +
+           '    local i, xp, yp, spd, twk, pxy, colour\n' +
            '    for i=0 to NUM_STARS-1\n' +
            '        xp = xPos(i) : yp = yPos(i)\n' +
            '        spd = speed(i) : twk = twinkle(i)\n' +
@@ -774,16 +772,16 @@ function generateStarfieldModule() {
            '        if twk &&> 63 then twk = 0\n' +
            '        twinkle(i) = twk\n' +
            '        if twk &&< 21\n' +
-           '            color = &h15\n' +
+           '            colour = &h15\n' +
            '        elseif twk &< 42\n' +
-           '            color = &h2A\n' +
+           '            colour = &h2A\n' +
            '        else\n' +
-           '            color = &h3F\n' +
+           '            colour = &h3F\n' +
            '        endif\n' +
            '        pxy.lo = xp.hi + STARFIELD_ORG_X\n' +
            '        pxy.hi = yp.hi + STARFIELD_ORG_Y\n' +
            '        if &(peek(pxy) = 0)\n' +
-           '            poke pxy, color OR &h80\n' +
+           '            poke pxy, colour OR &h80\n' +
            '        endif\n' +
            '    next i\n' +
            'endproc\n';
@@ -793,13 +791,13 @@ function generateFireworksModule() {
     return 'const NUM_FIREWORKS = 60\n' +
            'const FIREWORKS_ORG_X = 80\n' +
            'const FIREWORKS_ORG_Y = 60 + 8\n' +
-           'const GRAVITY = 48\n' +
+           'const GRAVITY = 40\n' +
            'dim xPos(NUM_FIREWORKS-1) = 0\n' +
            'dim yPos(NUM_FIREWORKS-1) = 0\n' +
            'dim xVel(NUM_FIREWORKS-1) = 0\n' +
            'dim yVel(NUM_FIREWORKS-1) = 0\n' +
            'dim life%(NUM_FIREWORKS-1) = 0\n' +
-           'dim color%(NUM_FIREWORKS-1) = 0\n' +
+           'dim colour%(NUM_FIREWORKS-1) = 0\n' +
            'proc initFireworks\n' +
            '    local i\n' +
            '    fireworkTimer = 0\n' +
@@ -808,7 +806,7 @@ function generateFireworksModule() {
            '    next i\n' +
            'endproc\n' +
            'proc updateFireworks\n' +
-           '    local i, lf, xp, yp, pxy, col\n' +
+           '    local i, lf, xp, yp, pxy\n' +
            '    for i=0 to NUM_FIREWORKS-1\n' +
            '        lf = life(i)\n' +
            '        if lf &> 0\n' +
@@ -834,9 +832,8 @@ function generateFireworksModule() {
            '            gosub clearParticle\n' +
            '            pxy.lo = xp.hi + FIREWORKS_ORG_X\n' +
            '            pxy.hi = yp.hi + FIREWORKS_ORG_Y\n' +
-           '            col = color(i)\n' +
            '            if peek(pxy) &= 0\n' +
-           '                poke pxy, col OR &h80\n' +
+           '                poke pxy, colour(i)\n' +
            '            endif\n' +
            'nextParticle:\n' +
            '            lf = lf - 1\n' +
@@ -869,7 +866,7 @@ function generateFireworksModule() {
            'proc createFirework, centerX, centerY\n' +
            '    local i, c, count\n' +
            '    count = 0\n' +
-           '    c = rnd(0) AND &h3f\n' +
+           '    c = rnd(0) AND &h3f OR &h80\n' +
            '    for i=0 to NUM_FIREWORKS-1\n' +
            '        if life(i) &= 0\n' +
            '            xv = (rnd(0) AND 1023) - 512\n' +
@@ -879,7 +876,7 @@ function generateFireworksModule() {
            '            xVel(i) = xv\n' +
            '            yVel(i) = yv\n' +
            '            life(i) = 64 + (rnd(0) AND 31)\n' +
-           '            color(i) = c\n' +
+           '            colour(i) = c\n' +
            '            inc count.lo\n' +
            '            if count &&= 20 then return\n' +
            '        endif\n' +
@@ -898,6 +895,10 @@ function generateFountainModule() {
            'dim xVel(NUM_PARTICLES-1) = 0\n' +
            'dim yVel(NUM_PARTICLES-1) = 0\n' +
            'dim age%(NUM_PARTICLES-1) = 0\n' +
+           'dim colour%(31) = {&hB0, &hB0, &hB0, &hB0, &hB0, &hB0, &hB0, &hB0, &hB0, &hB0,\n' +
+           '                   &hB5, &hB5, &hB5, &hB5, &hB5, &hB5, &hB5, &hB5, &hB5, &hB5,\n' +
+           '                   &hBA, &hBA, &hBA, &hBA, &hBA, &hBA, &hBA, &hBA, &hBA, &hBA,\n' +
+           '                   &hBF, &hBF}\n' +
            'proc initFountain\n' +
            '    local i\n' +
            '    pxy = 0 : xr = pxy : yr = xr\n' +
@@ -907,7 +908,7 @@ function generateFountainModule() {
            '    next i\n' +
            'endproc\n' +
            'proc updateFountain\n' +
-           '    local i, xp, yp, color, life\n' +
+           '    local i, xp, yp, life\n' +
            '    for i=0 to NUM_PARTICLES-1\n' +
            '        life = age(i)\n' +
            '        if life > 0\n' +
@@ -931,19 +932,10 @@ function generateFountainModule() {
            '                goto skipParticle\n' +
            '            endif\n' +
            '            gosub clearParticle\n' +
-           '            if life &&< 10\n' +
-           '                color = &h30\n' +
-           '            elseif life &&< 20\n' +
-           '                color = &h35\n' +
-           '            elseif life &&< 30\n' +
-           '                color = &h3A\n' +
-           '            else\n' +
-           '                color = &h3F\n' +
-           '            endif\n' +
            '            pxy.lo = xp.hi + FOUNTAIN_ORG_X\n' +
            '            pxy.hi = yp.hi + FOUNTAIN_ORG_Y\n' +
-           '            if (peek(pxy) = 0)\n' +
-           '                poke pxy, color OR &h80\n' +
+           '            if &(peek(pxy) = 0)\n' +
+           '                poke pxy, colour(min(life, 31))\n' +
            '            endif\n' +
            'nextParticle:\n' +
            '            inc life.lo\n' +
@@ -971,7 +963,7 @@ function generateFountainModule() {
 }
 
 function generateFireModule() {
-    return 'const NUM_FIRE_PARTICLES = 48\n' +
+    return 'const NUM_FIRE_PARTICLES = 64\n' +
            'const FIRE_ORG_X = 80\n' +
            'const FIRE_ORG_Y = 60 + 8\n' +
            'dim xPos(NUM_FIRE_PARTICLES-1) = 0\n' +
@@ -979,6 +971,11 @@ function generateFireModule() {
            'dim xVel(NUM_FIRE_PARTICLES-1) = 0\n' +
            'dim yVel(NUM_FIRE_PARTICLES-1) = 0\n' +
            'dim life%(NUM_FIRE_PARTICLES-1) = 0\n' +
+           'dim colour%(63) = {&h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95,\n' +
+           '                   &h86, &h86, &h86, &h86, &h86, &h86, &h86, &h86, &h86, &h86, &h86, &h86, &h86, &h86, &h86,\n' +
+           '                   &h83, &h83, &h83, &h83, &h83, &h83, &h83, &h83, &h83, &h83,\n' +
+           '                   &h87, &h87, &h87, &h87, &h87, &h87, &h87, &h87, &h87, &h87,\n' +
+           '                   &h8F, &h8F, &h8F, &h8F, &h8B, &h8B, &h8B, &h8B, &h8B, &h8B, &h8B, &h8B, &h8B}\n' +
            'proc initFire\n' +
            '    local i\n' +
            '    for i=0 to NUM_FIRE_PARTICLES-1\n' +
@@ -988,66 +985,46 @@ function generateFireModule() {
            'proc respawnFireParticle, i\n' +
            '    xPos(i).hi = (rnd(0) AND 63) - 32\n' +
            '    yPos(i).hi = 59\n' +
-           '    yPos(i).lo = 0\n' +
            '    xVel(i) = (rnd(0) AND 511) - 256\n' +
            '    yVel(i) = -((rnd(0) AND 511) + 256)\n' +
            '    life(i) = (rnd(0) AND 31) + 40\n' +
            'endproc\n' +
            'proc updateFire\n' +
-           '    local i, xp, yp, xv, yv, lf, pxy, color\n' +
+           '    local i, xp, yp, yv, lf, pxy\n' +
            '    for i=0 to NUM_FIRE_PARTICLES-1\n' +
            '        lf = life(i)\n' +
-           '        if lf > 0\n' +
+           '        if lf &> 0\n' +
            '            xp = xPos(i)\n' +
            '            yp = yPos(i)\n' +
-           '            xv = xVel(i)\n' +
            '            yv = yVel(i)\n' +
            '            pxy.lo = xp.hi + FIRE_ORG_X\n' +
            '            pxy.hi = yp.hi + FIRE_ORG_Y\n' +
            '            if peek(pxy) AND &h80\n' +
            '                poke pxy, 0\n' +
            '            endif\n' +
-           '            xp = xp + xv\n' +
+           '            xp = xp + xVel(i)\n' +
            '            yp = yp + yv\n' +
            '            yv = yv + 8\n' +
-           '            if xv > 4\n' +
-           '                xv = xv - 1\n' +
-           '            elseif xv < -4\n' +
-           '                xv = xv + 1\n' +
-           '            endif\n' +
            '            lf = lf - 1\n' +
-           '            if lf = 0\n' +
+           '            if lf &&= 0\n' +
            '                call respawnFireParticle, i\n' +
            '                goto nextParticle\n' +
            '            endif\n' +
-           '            if abs(yp) > 59*256\n' +
+           '            if abs(yp) &&> 59*256\n' +
            '                call respawnFireParticle, i\n' +
            '                goto nextParticle\n' +
            '            endif\n' +
-           '            if abs(xp) > 79*256\n' +
+           '            if abs(xp) &&> 79*256\n' +
            '                call respawnFireParticle, i\n' +
            '                goto nextParticle\n' +
            '            endif\n' +
            '            pxy.lo = xp.hi + FIRE_ORG_X\n' +
            '            pxy.hi = yp.hi + FIRE_ORG_Y\n' +
            '            if peek(pxy) = 0\n' +
-           '                if lf > 60\n' +
-           '                    color = &h0F\n' +
-           '                elseif lf > 50\n' +
-           '                    color = &h0B\n' +
-           '                elseif lf > 40\n' +
-           '                    color = &h07\n' +
-           '                elseif lf > 30\n' +
-           '                    color = &h03\n' +
-           '                elseif lf > 15\n' +
-           '                    color = &h06\n' +
-           '                else\n' +
-           '                    color = &h15\n' +
-           '                endif\n' +
-           '                poke pxy, color OR &h80\n' +
+           '                poke pxy, colour(lf AND 63)\n' +
            '            endif\n' +
            '            xPos(i) = xp : yPos(i) = yp\n' +
-           '            xVel(i) = xv : yVel(i) = yv\n' +
+           '            yVel(i) = yv\n' +
            '            life(i) = lf\n' +
            '        endif\n' +
            'nextParticle:\n' +

@@ -25,7 +25,7 @@ repeat
 forever
 
 proc updateFireworks
-    local i, lf, xp, yp, pxy, col
+    local i, lf, xp, yp, pxy
     
     for i=0 to NUM_FIREWORKS-1
 		lf = life(i)
