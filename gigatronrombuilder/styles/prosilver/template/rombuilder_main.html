@@ -27,7 +27,7 @@
     <div class="emulator-panel" style="flex: 4;">
         <div class="emulator-container" style="width: 100%;">
             <!-- Combined Status Display -->
-            <div id="status-display" style="background: #2d2d2d; border: 2px solid #444; border-radius: 8px; color: #e0e0e0; width: 100%; height: 600px; display: flex; flex-direction: column; overflow: hidden; position: relative;">
+            <div id="status-display" style="background: #2d2d2d; border: 2px solid #444; border-radius: 8px; color: #e0e0e0; width: 100%; height: 630px; display: flex; flex-direction: column; overflow: hidden; position: relative;">
                 <!-- ROM Status (Top 1/5) -->
                 <div style="padding: 10px; border-bottom: 1px solid #444; flex-shrink: 0;">
                     <div style="font-weight: normal; margin-bottom: 8px; font-size: 13px;">Selected ROM:</div>
@@ -472,13 +472,13 @@ function showPhase2Modal(apps, buildResponse) {
 
 function createPhase2LayoutHTML(apps, romVersion) {
     return `
-        <div style="display: flex; gap: 20px; width: 100%; height: 360px;">
+        <div style="display: flex; gap: 15px; width: 100%; height: 360px;">
             <!-- Left Panel: Module Selection -->
-            <div style="width: 280px; background: #1a1a1a; border: 1px solid #444; border-radius: 4px; display: flex; flex-direction: column;">
+            <div style="width: 280px; height: 456px; background: #1a1a1a; border: 1px solid #444; border-radius: 4px; display: flex; flex-direction: column;">
                 <div style="padding: 8px 15px; border-bottom: 1px solid #444; color: #e0e0e0; font-weight: bold; flex-shrink: 0;">
                     Effects & Modules
                 </div>
-                <div id="module-selection-content" style="padding: 15px; flex: 1; overflow-y: auto; display: block;">
+                <div id="module-selection-content" style="padding: 15px; flex: 1; overflow-y: auto; display: flex; flex-direction: column;">
 
                     <!-- ROM Name -->
                     <div style="margin-bottom: 15px;">
@@ -493,7 +493,7 @@ function createPhase2LayoutHTML(apps, romVersion) {
                             <input type="checkbox" id="enable-music" checked style="margin-right: 8px;"> Music
                         </label>
                         <label style="display: block; margin-bottom: 5px; color: #e0e0e0; cursor: pointer;">
-                            <input type="checkbox" id="enable-beep" checked style="margin-right: 8px;"> Button Beeps
+                            <input type="checkbox" id="enable-beep" checked style="margin-right: 8px;"> Beeps
                         </label>
                     </div>
 
@@ -523,6 +523,18 @@ function createPhase2LayoutHTML(apps, romVersion) {
                         </label>
                     </div>
 
+                    <!-- Cursor Style -->
+                    <div style="margin-bottom: 15px;">
+                        <h4 style="margin: 0 0 8px 0; color: #e0e0e0; font-size: 14px;">Cursor Style:</h4>
+                        <select id="cursor-style" style="width: 96%; padding: 2px; background: #1a1a1a; color: #e0e0e0; border: 1px solid #444; border-radius: 2px; font-size: 12px;">
+                            <option value="outline">Outline</option>
+                            <option value="underline">Underline</option>
+                            <option value="inverse">Inverse</option>
+                            <option value="highlight">Highlight</option>
+                            <option value="blink">Blink</option>
+                            <option value="bright">Bright</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -548,13 +560,11 @@ var menuConfig = menuConfig || {
 };
 
 function createMainmenuPreviewHTML(apps) {
-    menuConfig.originalApps = apps;
-
     // Initialize menu config with app data (160x120 coordinates)
-    menuConfig.items = menuConfig.originalApps.map((app, i) => ({
+    menuConfig.items = apps.slice(0, 10).map((app, i) => ({
         text: app.alias || app.filename.replace(/\.(gt1|gcl)$/i, ''),
-        x: 2 + (i % 2) * 80,           // 8 items per row
-        y: 0 + Math.floor(i / 2) * 10,
+        x: i < 5 ? 2 : 82,
+        y: 34 + (i % 5) * 9,
         color: '#00CC00',
         visible: true
     }));
@@ -570,9 +580,9 @@ function createMainmenuPreviewHTML(apps) {
                     style="width: 480px; height: 360px; image-rendering: pixelated; cursor: crosshair;"></canvas>
 
             <!-- Top Properties Panel - positioned in title bar -->
-            <div id="properties-panel" style="position: absolute; top: -53px; right: 15px; background: transparent; border: none; padding: 0; display: none;">
+            <div id="properties-panel" style="position: absolute; top: -52px; right: 15px; background: transparent; border: none; padding: 0; display: none;">
                 <div style="color: #e0e0e0; font-size: 12px; display: flex; align-items: center; gap: 10px;">
-                    <input type="text" id="selected-text" placeholder="Text" style="background: #1a1a1a; color: #e0e0e0; border: 1px solid #444; padding: 2px; width: 120px;">
+                    <input type="text" id="selected-text" placeholder="Text" style="background: #1a1a1a; color: #e0e0e0; border: 1px solid #444; padding: 2px; width: 200px;">
                     <label>
                         X: <input type="number" id="selected-x" min="0" max="154" style="width: 40px; background: #1a1a1a; color: #e0e0e0; border: 1px solid #444;">
                     </label>
@@ -587,7 +597,7 @@ function createMainmenuPreviewHTML(apps) {
 
             <!-- Bottom Controls Panel -->
             <div style="position: absolute; top: 365px; left: 0; right: 0; background: #1a1a1a; border: 1px solid #444; border-radius: 4px; padding: 8px;">
-                <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap; color: #e0e0e0; font-size: 12px;">
+                <div style="display: flex; gap: 15px; align-items: flex-start; flex-wrap: wrap; color: #e0e0e0; font-size: 14px;">
                     <label>
                         Text: <input type="color" id="text-color" value="#00cc00" style="width: 30px; height: 20px;">
                     </label>
@@ -603,6 +613,30 @@ function createMainmenuPreviewHTML(apps) {
                     <button id="reset-layout-btn" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer;">
                         Reset Layout
                     </button>
+                    <label style="display: flex; align-items: flex-start; gap: 5px; margin-left: 15px;">
+                        <input type="checkbox" id="show-grid" checked> Grid
+                        <input type="checkbox" id="snap-to-grid" checked> Snap
+                        <div style="display: inline-block; margin-left: 10px; line-height: 1;">
+                            <div style="display: flex; line-height: 1; margin-bottom: -2px;">
+                                <input type="range" id="grid-size-x" min="2" max="12" value="6" style="width: 40px; background: #555; border: 1px solid #888; border-radius: 3px; height: 16px;">
+                                <span id="grid-size-x-value" style="font-size: 14px; width: 30px; margin-left: 5px;">6</span>
+                            </div>
+                            <div style="display: flex; line-height: 1;">
+                                <input type="range" id="grid-size-y" min="2" max="16" value="8" style="width: 40px; background: #555; border: 1px solid #888; border-radius: 3px; height: 16px;">
+                                <span id="grid-size-y-value" style="font-size: 14px; width: 30px; margin-left: 5px;">8</span>
+                            </div>
+                        </div>
+                        <div style="display: inline-block; margin-left: 10px; line-height: 1;">
+                            <div style="display: flex; line-height: 1; margin-bottom: -2px;">
+                                <input type="range" id="grid-offset-x" min="0" max="11" value="2" style="width: 40px; background: #555; border: 1px solid #888; border-radius: 3px; height: 16px;">
+                                <span id="grid-offset-x-value" style="font-size: 14px; width: 30px; margin-left: 5px;">2</span>
+                            </div>
+                            <div style="display: flex; line-height: 1;">
+                                <input type="range" id="grid-offset-y" min="0" max="15" value="0" style="width: 40px; background: #555; border: 1px solid #888; border-radius: 3px; height: 16px;">
+                                <span id="grid-offset-y-value" style="font-size: 14px; width: 30px; margin-left: 5px;">0</span>
+                            </div>
+                        </div>
+                    </label>
                 </div>
             </div>
         </div>
@@ -692,14 +726,65 @@ function setupMainmenuPreview() {
                 renderPreview();
             }
         });
+
+        // Grid controls
+        document.getElementById('show-grid').addEventListener('change', () => {
+            renderPreview();
+        });
+
+        document.getElementById('grid-size-x').addEventListener('input', (e) => {
+            document.getElementById('grid-size-x-value').textContent = e.target.value;
+            renderPreview();
+        });
+
+        document.getElementById('grid-size-y').addEventListener('input', (e) => {
+            document.getElementById('grid-size-y-value').textContent = e.target.value;
+            renderPreview();
+        });
+
+        document.getElementById('grid-offset-x').addEventListener('input', (e) => {
+            const newOffset = parseInt(e.target.value);
+            const oldOffset = parseInt(document.getElementById('grid-offset-x-value').textContent);
+            document.getElementById('grid-offset-x-value').textContent = newOffset;
+
+            if (document.getElementById('snap-to-grid')?.checked) {
+                const deltaOffset = newOffset - oldOffset;
+                menuConfig.items.forEach(item => {
+                    item.x += deltaOffset;
+                });
+                if (selectedItemIndex >= 0) {
+                    updatePropertiesPanel();
+                }
+            }
+            renderPreview();
+        });
+
+        document.getElementById('grid-offset-y').addEventListener('input', (e) => {
+            const newOffset = parseInt(e.target.value);
+            const oldOffset = parseInt(document.getElementById('grid-offset-y-value').textContent);
+            document.getElementById('grid-offset-y-value').textContent = newOffset;
+
+            if (document.getElementById('snap-to-grid')?.checked) {
+                const deltaOffset = newOffset - oldOffset;
+                menuConfig.items.forEach(item => {
+                    item.y += deltaOffset;
+                });
+                if (selectedItemIndex >= 0) {
+                    updatePropertiesPanel();
+                }
+            }
+            renderPreview();
+        });
     }
 
     function setupCanvasEvents() {
         canvas.addEventListener('mousedown', (e) => {
             const rect = canvas.getBoundingClientRect();
+            // Convert mouse position to 160x120 coordinates
             const x = Math.floor((e.clientX - rect.left) / 3);
             const y = Math.floor((e.clientY - rect.top) / 3);
 
+            // Check if clicking on an item
             selectedItemIndex = findItemAtPosition(x, y);
 
             if (selectedItemIndex >= 0) {
@@ -718,11 +803,24 @@ function setupMainmenuPreview() {
         canvas.addEventListener('mousemove', (e) => {
             if (isDragging && selectedItemIndex >= 0) {
                 const rect = canvas.getBoundingClientRect();
+                // Convert mouse position to 160x120 coordinates
                 const x = Math.floor((e.clientX - rect.left) / 3);
                 const y = Math.floor((e.clientY - rect.top) / 3);
 
-                menuConfig.items[selectedItemIndex].x = Math.max(0, Math.min(154, x - dragOffset.x));
-                menuConfig.items[selectedItemIndex].y = Math.max(0, Math.min(112, y - dragOffset.y));
+                let newX = Math.max(0, Math.min(154, x - dragOffset.x));
+                let newY = Math.max(0, Math.min(112, y - dragOffset.y));
+
+                if (document.getElementById('snap-to-grid')?.checked) {
+                    const gridSizeX = parseInt(document.getElementById('grid-size-x')?.value || 6);
+                    const gridSizeY = parseInt(document.getElementById('grid-size-y')?.value || 8);
+                    const offsetX = parseInt(document.getElementById('grid-offset-x')?.value || 2);
+                    const offsetY = parseInt(document.getElementById('grid-offset-y')?.value || 0);
+                    newX = Math.round((newX - offsetX) / gridSizeX) * gridSizeX + offsetX;
+                    newY = Math.round((newY - offsetY) / gridSizeY) * gridSizeY + offsetY;
+                }
+
+                menuConfig.items[selectedItemIndex].x = newX;
+                menuConfig.items[selectedItemIndex].y = newY;
 
                 updatePropertiesPanel();
                 renderPreview();
@@ -733,6 +831,7 @@ function setupMainmenuPreview() {
             isDragging = false;
         });
 
+        // Prevent context menu
         canvas.addEventListener('contextmenu', (e) => e.preventDefault());
     }
 
@@ -774,14 +873,26 @@ function setupMainmenuPreview() {
     }
 
     function resetToDefaultLayout() {
-        // Recreate items from original apps data
-        menuConfig.items = menuConfig.originalApps.map((app, i) => ({
-            text: app.alias || app.filename.replace(/\.(gt1|gcl)$/i, ''),
-            x: 2 + (i % 2) * 80,           // 2 items per row
-            y: 0 + Math.floor(i / 2) * 10,
-            color: '#00CC00',
-            visible: true
-        }));
+        // Reset to original 2-column layout (160x120 coordinates)
+        menuConfig.items.forEach((item, i) => {
+            item.x = i < 5 ? 2 : 82;
+            item.y = 34 + (i % 5) * 9;
+            item.color = '#00CC00';
+        });
+
+        // Reset grid controls to default values
+        document.getElementById('grid-size-x').value = 6;
+        document.getElementById('grid-size-y').value = 8;
+        document.getElementById('grid-offset-x').value = 2;
+        document.getElementById('grid-offset-y').value = 0;
+        document.getElementById('show-grid').checked = true;
+        document.getElementById('snap-to-grid').checked = true;
+
+        // Update the visual display values
+        document.getElementById('grid-size-x-value').textContent = '6';
+        document.getElementById('grid-size-y-value').textContent = '8';
+        document.getElementById('grid-offset-x-value').textContent = '2';
+        document.getElementById('grid-offset-y-value').textContent = '0';
 
         menuConfig.cursor.x = 2;
         menuConfig.cursor.y = 52;
@@ -804,19 +915,21 @@ function setupMainmenuPreview() {
                 // Highlight selected item (scale coordinates by 3)
                 if (index === selectedItemIndex) {
                     ctx.fillStyle = '#333333';
-                    const textWidth = ctx.measureText(item.text).width;
-                    ctx.fillRect((item.x - 1) * 3, (item.y - 1) * 3, textWidth + 6, 30);
+                    const selectionWidth = item.text.length * 6 * 3; // Each char is 6 logical pixels = 18 screen pixels
+                    ctx.fillRect((item.x - 1) * 3, (item.y - 1) * 3, selectionWidth + 6, 30);
                 }
 
                 // Draw text (scale coordinates by 3)
                 ctx.fillStyle = item.color;
-                ctx.fillText(item.text, item.x * 3, item.y * 3);
+                for (let i = 0; i < item.text.length; i++) {
+                    ctx.fillText(item.text[i], (item.x + i * 6) * 3, item.y * 3);
+                }
             }
         });
 
         // Draw cursor (scale coordinates by 3)
-        ctx.fillStyle = menuConfig.cursor.color;
-        ctx.fillText('>', menuConfig.cursor.x * 3, menuConfig.cursor.y * 3);
+        //ctx.fillStyle = menuConfig.cursor.color;
+        //ctx.fillText('>', menuConfig.cursor.x * 3, menuConfig.cursor.y * 3);
 
         // Draw grid (optional)
         if (document.getElementById('show-grid')?.checked) {
@@ -825,19 +938,27 @@ function setupMainmenuPreview() {
     }
 
     function drawGrid() {
-        ctx.strokeStyle = '#222222';
+        if (!document.getElementById('show-grid')?.checked) return;
+
+        const gridSizeX = parseInt(document.getElementById('grid-size-x')?.value || 6);
+        const gridSizeY = parseInt(document.getElementById('grid-size-y')?.value || 8);
+        const gridOffsX = parseInt(document.getElementById('grid-offset-x')?.value || 2);
+        const gridOffsY = parseInt(document.getElementById('grid-offset-y')?.value || 0);
+
+        const pixelSizeX = gridSizeX * 3;
+        const pixelSizeY = gridSizeY * 3;
+
+        ctx.strokeStyle = '#333333';
         ctx.lineWidth = 1;
 
-        // Vertical lines every 18 pixels (6 * 3 = character width at 3x scale)
-        for (let x = 0; x < 480; x += 18) {
+        for (let x = gridOffsX*3; x < 480; x += pixelSizeX) {
             ctx.beginPath();
             ctx.moveTo(x, 0);
             ctx.lineTo(x, 360);
             ctx.stroke();
         }
 
-        // Horizontal lines every 24 pixels (8 * 3 = character height at 3x scale)
-        for (let y = 0; y < 360; y += 24) {
+        for (let y = gridOffsY*3; y < 360; y += pixelSizeY) {
             ctx.beginPath();
             ctx.moveTo(0, y);
             ctx.lineTo(480, y);
