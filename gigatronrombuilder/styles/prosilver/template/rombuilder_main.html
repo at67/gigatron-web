@@ -563,8 +563,8 @@ function createMainmenuPreviewHTML(apps) {
     // Initialize menu config with app data (160x120 coordinates)
     menuConfig.items = apps.slice(0, 10).map((app, i) => ({
         text: app.alias || app.filename.replace(/\.(gt1|gcl)$/i, ''),
-        x: i < 5 ? 2 : 82,
-        y: 34 + (i % 5) * 9,
+        x: i < 8 ? 2 : 82,
+        y: 32 + (i % 8) * 8,
         color: '#00CC00',
         visible: true
     }));
@@ -875,8 +875,8 @@ function setupMainmenuPreview() {
     function resetToDefaultLayout() {
         // Reset to original 2-column layout (160x120 coordinates)
         menuConfig.items.forEach((item, i) => {
-            item.x = i < 5 ? 2 : 82;
-            item.y = 34 + (i % 5) * 9;
+            item.x = i < 8 ? 2 : 82;
+            item.y = 32 + (i % 8) * 8;
             item.color = '#00CC00';
         });
 
@@ -951,10 +951,24 @@ function setupMainmenuPreview() {
         ctx.strokeStyle = '#333333';
         ctx.lineWidth = 1;
 
+        for (let x = gridOffsX*3 - pixelSizeX; x >= 0; x -= pixelSizeX) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, 360);
+            ctx.stroke();
+        }
+
         for (let x = gridOffsX*3; x < 480; x += pixelSizeX) {
             ctx.beginPath();
             ctx.moveTo(x, 0);
             ctx.lineTo(x, 360);
+            ctx.stroke();
+        }
+
+        for (let y = gridOffsY*3 - pixelSizeY; y >= 0; y -= pixelSizeY) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(480, y);
             ctx.stroke();
         }
 
