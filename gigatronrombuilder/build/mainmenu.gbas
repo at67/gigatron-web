@@ -5,24 +5,24 @@ _enableRomCheck_ Off
 _stringWorkArea_ &h77A0
 module "SymbolTable.m"
 const NUM_APPS = 5
-const dim apps$(NUM_APPS-1) = "bowling", "Eliza", "Hello", "slots", "tinymaze"
-dim execs(NUM_APPS-1) = bowling, Eliza, HelloWorld, slots, tinymaze
+const dim menuText$(NUM_APPS-1) = "bowling", "Eliza", "Hello", "slots", "tinymaze"
+dim symbols(NUM_APPS-1) = bowling, Eliza, HelloWorld, slots, tinymaze
 const maxX = 2
 const maxY = 3
 x = 0 : y = x
 curIndex = -1 : newIndex = 0
-dim textX%(NUM_APPS-1) = 38, 92, 38, 92, 38
-dim textY%(NUM_APPS-1) = 40, 40, 56, 56, 72
-dim textColors%(NUM_APPS-1) = &h07, &h07, &h07, &h07, &h07
+dim menuX%(NUM_APPS-1) = 38, 92, 38, 92, 38
+dim menuY%(NUM_APPS-1) = 40, 40, 56, 56, 72
+dim textColors%(NUM_APPS-1) = &h0F, &h0F, &h0F, &h0F, &h0F
 tscroll off
 tclip on
-set BG_COLOUR, &h00 : mode 2 : cls
+set BG_COLOUR, &h10 : mode 2 : cls
 for i = 0 to NUM_APPS - 1
-    set FG_COLOUR, textColors(i) : at textX(i), textY(i) : print apps$(i)
+    set FG_COLOUR, textColors(i) : at menuX(i), menuY(i) : print menuText$(i)
 next i
 play music, &h75a0, 3
 gosub resetAudio
-call initFountain
+call initFireworks
 repeat
    gosub get("BUTTON_STATE")
    if newIndex <> curIndex
@@ -30,35 +30,30 @@ repeat
       call drawCursor, newIndex, 1
       curIndex = newIndex
    endif
-call updateFountain
+call updateFireworks
 forever
-const NUM_PARTICLES = 40
-const FOUNTAIN_ORG_X = 80
-const FOUNTAIN_ORG_Y = 60 + 8
-const GRAVITY = 64
-const SPAWN_Y = 59
-dim xPos(NUM_PARTICLES-1) = 0
-dim yPos(NUM_PARTICLES-1) = 0
-dim xVel(NUM_PARTICLES-1) = 0
-dim yVel(NUM_PARTICLES-1) = 0
-dim age%(NUM_PARTICLES-1) = 0
-dim colour%(31) = {&hB0, &hB0, &hB0, &hB0, &hB0, &hB0, &hB0, &hB0, &hB0, &hB0,
-                   &hB5, &hB5, &hB5, &hB5, &hB5, &hB5, &hB5, &hB5, &hB5, &hB5,
-                   &hBA, &hBA, &hBA, &hBA, &hBA, &hBA, &hBA, &hBA, &hBA, &hBA,
-                   &hBF, &hBF}
-proc initFountain
+const NUM_FIREWORKS = 60
+const FIREWORKS_ORG_X = 80
+const FIREWORKS_ORG_Y = 60 + 8
+const GRAVITY = 40
+dim xPos(NUM_FIREWORKS-1) = 0
+dim yPos(NUM_FIREWORKS-1) = 0
+dim xVel(NUM_FIREWORKS-1) = 0
+dim yVel(NUM_FIREWORKS-1) = 0
+dim life%(NUM_FIREWORKS-1) = 0
+dim colour%(NUM_FIREWORKS-1) = 0
+proc initFireworks
     local i
-    pxy = 0 : xr = pxy : yr = xr
-    for i=0 to NUM_PARTICLES-1
-        call respawnParticle, i
-        age(i) = 1
+    fireworkTimer = 0
+    for i=0 &to NUM_FIREWORKS-1
+        life(i) = 0
     next i
 endproc
-proc updateFountain
-    local i, xp, yp, life
-    for i=0 to NUM_PARTICLES-1
-        life = age(i)
-        if life > 0
+proc updateFireworks
+    local i, lf, xp, yp, pxy
+    for i=0 to NUM_FIREWORKS-1
+        lf = life(i)
+        if lf > 0
             xp = xPos(i) : xr = xp : xv = xVel(i)
             yp = yPos(i) : yr = yp : yv = yVel(i)
             yv = yv + GRAVITY
@@ -69,47 +64,71 @@ proc updateFountain
                 goto nextParticle
             endif
             if yp > 59*256
+                lf = 0
                 gosub clearParticle
-                call respawnParticle, i
                 goto skipParticle
             endif
             if abs(xp) > 79*256
+                lf = 0
                 gosub clearParticle
-                call respawnParticle, i
                 goto skipParticle
             endif
             gosub clearParticle
-            pxy.lo = xp.hi + FOUNTAIN_ORG_X
-            pxy.hi = yp.hi + FOUNTAIN_ORG_Y
+            pxy.lo = xp.hi + FIREWORKS_ORG_X
+            pxy.hi = yp.hi + FIREWORKS_ORG_Y
             if peek(pxy) = get("BG_COLOUR")
-                poke pxy, colour(min(life, 31))
+                poke pxy, colour(i)
             endif
 nextParticle:
-            inc life.lo
-            age(i) = life
+            lf = lf - 1
+            if lf = 0
+                if peek(pxy) AND &h80
+                    poke pxy, get("BG_COLOUR")
+                endif
+            endif
             xPos(i) = xp : yPos(i) = yp
             yVel(i) = yv
         endif
 skipParticle:
+        life(i) = lf
     next i
+    inc fireworkTimer.lo
+    if fireworkTimer > 20
+        fireworkTimer = 0
+        centerX = (rnd(0) AND 127) - 64
+        centerY = (rnd(0) AND 63) - 48
+        call createFirework, centerX, centerY
+    endif
 endproc
 clearParticle:
-    pxy.lo = xr.hi + FOUNTAIN_ORG_X
-    pxy.hi = yr.hi + FOUNTAIN_ORG_Y
+    pxy.lo = xr.hi + FIREWORKS_ORG_X
+    pxy.hi = yr.hi + FIREWORKS_ORG_Y
     if peek(pxy) AND &h80
         poke pxy, get("BG_COLOUR")
     endif
 return
-proc respawnParticle, i
-    xPos(i).hi = 0
-    yPos(i).hi = SPAWN_Y
-    xVel(i) = (rnd(0) AND 1023) - 500
-    yVel(i) = -((rnd(0) AND 1023) + 1000)
-    age(i) = 1
+proc createFirework, centerX, centerY
+    local i, c, count
+    count = 0
+    c = rnd(0) AND &h3f OR &h80
+    for i=0 to NUM_FIREWORKS-1
+        if life(i) = 0
+            xv = (rnd(0) AND 1023) - 512
+            yv = (rnd(0) AND 1023) - 768
+            xPos(i).hi = centerX
+            yPos(i).hi = centerY
+            xVel(i) = xv
+            yVel(i) = yv
+            life(i) = 64 + (rnd(0) AND 31)
+            colour(i) = c
+            inc count.lo
+            if count = 20 then return
+        endif
+    next i
 endproc
 execApp:
     cls
-    exec execs(curIndex.lo), &h0200
+    exec symbols(curIndex.lo), &h0200
 return
 'button A
 127:    gosub beep
@@ -138,14 +157,14 @@ return
 proc drawCursor, index, active
     local x, y, w
     if index &&= -1 then return
-    x = textX(index)
-    y = textY(index)
-    w = peek(addr(apps$(index)))
+    x = menuX(index)
+    y = menuY(index)
+    w = peek(addr(menuText$(index)))
     w = (w LSL 2) + w + w
     if active
-        set FG_COLOUR, &h3F
+        set FG_COLOUR, &h3D OR &h40
     else
-        set FG_COLOUR, &h00
+        set FG_COLOUR, &h10
     endif
     line x-1, y-1, x+w, y-1
     line x-1, y+8, x+w, y+8
