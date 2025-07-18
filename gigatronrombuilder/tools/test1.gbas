@@ -14,7 +14,7 @@ dim yVel(NUM_FIREWORKS-1) = 0
 dim life%(NUM_FIREWORKS-1) = 0
 dim colour%(NUM_FIREWORKS-1) = 0
 
-set FGBG_COLOUR, &h3C00
+set FGBG_COLOUR, &h3C11
 mode 2 : cls
 t = 0
 
@@ -62,7 +62,7 @@ proc updateFireworks
             ' Draw new position
             pxy.lo = xp.hi + FIREWORKS_ORG_X
             pxy.hi = yp.hi + FIREWORKS_ORG_Y
-            if peek(pxy) &= 0
+            if peek(pxy) &= get("BG_COLOUR")
                 poke pxy, colour(i)
             endif
 
@@ -71,7 +71,7 @@ nextParticle:
             lf = lf - 1
 			if lf &&= 0
 			    if &(peek(pxy) AND &h80)
-					poke pxy, 0
+					poke pxy, get("BG_COLOUR")
 				endif
 			endif
 
@@ -96,7 +96,7 @@ clearParticle:
 	pxy.lo = xr.hi + FIREWORKS_ORG_X
 	pxy.hi = yr.hi + FIREWORKS_ORG_Y
 	if &(peek(pxy) AND &h80)
-		poke pxy, 0
+		poke pxy, get("BG_COLOUR")
 	endif
 return
 

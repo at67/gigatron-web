@@ -19,8 +19,8 @@ dim yVel(NUM_SNOW_PARTICLES-1) = 0
 dim colour%(NUM_SNOW_PARTICLES-1) = 0
 
 tscroll off
-set BG_COLOUR, 0 : mode 2 : cls
-set FGBG_COLOUR, &h0C00
+set BG_COLOUR, &h11 : mode 2 : cls
+set FG_COLOUR, &h0C
 
 ' Draw menu text
 set FG_COLOUR, &h0C
@@ -59,7 +59,7 @@ proc updateSnow
         rxy.lo = xp.hi + SNOW_ORG_X
         rxy.hi = yp.hi + SNOW_ORG_Y
         if &(peek(rxy) AND &h80)
-            poke rxy, 0
+            poke rxy, get("BG_COLOUR")
         endif
         
         ' gravity
@@ -82,9 +82,9 @@ proc updateSnow
 		
         ' is pixel occupied
 		pixel = peek(pxy)
-        if &(pixel)
+        if &(pixel <> get("BG_COLOUR"))
 			if &(NOT pixel AND &h80) 	 						' if pixel is NOT a snow particle
-				if &(peek(rxy + &h0100)) 						' if there is vertical support
+				if &(peek(rxy + &h0100) <> get("BG_COLOUR")) 	' if there is vertical support
 					poke rxy, &h3F								' deposit snow
 					call respawnSnowParticle, i
 					goto nextParticle
@@ -102,7 +102,6 @@ proc updateSnow
         endif
 		
         ' draw at updated position
-        'if peek(pxy) &&= 0 then poke pxy, colour(i)
 		poke pxy, colour(i)
 
         ' update arrays

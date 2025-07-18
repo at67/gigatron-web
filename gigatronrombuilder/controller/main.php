@@ -72,7 +72,7 @@ class main
             $rom_name = $data['rom_name'] ?? null;
 
             // Write GBAS source to file
-            $gbas_file = __DIR__ . '/../tools/mainmenu.gbas';
+            $gbas_file = __DIR__ . '/../build/mainmenu.gbas';
             file_put_contents($gbas_file, $gbas_source);
 
             // Compile GBAS to GT1
@@ -91,7 +91,7 @@ class main
                 $builder = new \RomBuilder();
 
                 // Remove the closing quote, add comma + Main entry, then add closing quote back
-                $updated_manifest = rtrim($custom_manifest, '"') . ",\n      Main=../tools/" . basename($compile_result['gt1_file']) . '"';
+                $updated_manifest = rtrim($custom_manifest, '"') . ",\n      Main=../build/" . basename($compile_result['gt1_file']) . '"';
 
                 // DEBUG: Add manifest info to output
                 $debug_output = "DEBUG INFO:\n";

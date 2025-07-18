@@ -5,8 +5,7 @@ _enableRomCheck_ Off
 _stringWorkArea_ &h77A0
 
 tscroll off
-set BG_COLOUR, 0 : mode 2 : cls
-set FGBG_COLOUR, &h0C00
+set BG_COLOUR, &h11 : mode 2 : cls
 
 call initStars
 
@@ -23,7 +22,7 @@ dim yPos(NUM_STARS-1) = 0
 dim xVel(NUM_STARS-1) = 0
 dim yVel(NUM_STARS-1) = 0
 dim star%(NUM_STARS-1) = 0
-dim colour%(31) = {&h00, &h00, &h00, &h00, &h00, &h00, &h00, &h00, &h00, 	' 0  to 8
+dim colour%(31) = {&h00, &h00, &h00, &h00, &h00, &h00, &h00, &h00, &h95, 	' 0  to 8
 				   &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95, 			' 9  to 16
 				   &hAA, &hAA, &hAA, &hAA, &hAA, &hAA, &hAA, &hAA,			' 17 to 24
 				   &hBF, &hBF, &hBF, &hBF, &hBF, &hBF, &hBF}				' 25 to 31
@@ -48,7 +47,7 @@ proc newStar, i
 endproc
 
 proc drawStars
-    local i, ss, pxy
+    local i, ss, pxy, bgColour
 
 	' xp, yp, xv, yv are all globals so we get fast return values from newStar
     for i=0 to NUM_STARS-1
@@ -59,7 +58,7 @@ proc drawStars
         pxy.lo = xp.hi + STARS_ORG_X
         pxy.hi = yp.hi + STARS_ORG_Y
         if &(peek(pxy) AND &h80)
-            poke pxy, 0
+            poke pxy, get("BG_COLOUR")
         endif
 		
 		' update
@@ -76,8 +75,8 @@ proc drawStars
 		ss = star(i)
         pxy.lo = xp.hi + STARS_ORG_X
         pxy.hi = yp.hi + STARS_ORG_Y
-        if &(peek(pxy) = 0)
-			poke pxy, colour(min(ss, 31))
+        if peek(pxy) &&= get("BG_COLOUR")
+			if ss &&> 7 then poke pxy, colour(min(ss, 31))
             star(i) = ss + 1
         endif
 

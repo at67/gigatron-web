@@ -21,8 +21,7 @@ dim colour%(63) = {&h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95, &
 				   &h8F, &h8F, &h8F, &h8F, &h8B, &h8B, &h8B, &h8B, &h8B, &h8B, &h8B, &h8B, &h8B}					' 51 to 63 
 
 tscroll off
-set BG_COLOUR, 0 : mode 2 : cls
-set FGBG_COLOUR, &h0C00
+set BG_COLOUR, &h11 : mode 2 : cls
 
 call initFire
 
@@ -64,7 +63,7 @@ proc updateFire
             pxy.lo = xp.hi + FIRE_ORG_X
             pxy.hi = yp.hi + FIRE_ORG_Y
             if peek(pxy) AND &h80
-                poke pxy, 0
+                poke pxy, get("BG_COLOUR")
             endif
             
             ' Update physics
@@ -90,7 +89,7 @@ proc updateFire
             ' Draw new position
             pxy.lo = xp.hi + FIRE_ORG_X
             pxy.hi = yp.hi + FIRE_ORG_Y
-            if peek(pxy) = 0
+            if peek(pxy) = get("BG_COLOUR")
 				poke pxy, colour(lf AND 63)
             endif
             

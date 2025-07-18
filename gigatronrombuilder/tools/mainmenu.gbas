@@ -1,83 +1,146 @@
 _runtimePath_ "runtime"
 _runtimeStart_ &h7FFE
-_codeRomType_ ROMvX0
+_codeRomType_ ROMv5a
 _enableRomCheck_ Off
 _stringWorkArea_ &h77A0
 module "../build/SymbolTable.m"
-const NUM_APPS = 12
-const LIST_X0  = 10
-const LIST_X1  = 88
-const LIST_Y   = 34
-const LIST_DY  = 9
-const CURS_DX  = 8
-const CURS_X   = LIST_X0 - CURS_DX
-const CURS_Y   = LIST_Y
-const dim apps$(NUM_APPS-1) = "SoundFx64k_ROMvX0", "Blit", "CirclesF_ROMvX0", "Fill_ROMvX0", "Flood_ROMv5a", "Flood_ROMvX0", "Lines_ROMvX0", "Pixels", "Pixels_ROMvX0", "Points", "Points_ROMvX0", "Polys"
-dim execs(NUM_APPS-1) = SoundFx64k_ROMvX0, Blit, CirclesF_ROMvX0, Fill_ROMvX0, Flood_ROMv5a, Flood_ROMvX0, Lines_ROMvX0, Pixels, Pixels_ROMvX0, Points, Points_ROMvX0, Polys
+const CURSOR_STYLE = "outline"
+const NUM_APPS = 4
+const dim apps$(NUM_APPS-1) = "bowling", "Eliza", "slots", "tinymaze"
+dim execs(NUM_APPS-1) = bowling, Eliza, slots, tinymaze
+const maxRows = 2
+const maxCols = 2
+row = 0 : col = row
+curIndex = -1 : newIndex = 0
+dim textX%(NUM_APPS-1) = 38, 74, 38, 74
+dim textY%(NUM_APPS-1) = 48, 48, 64, 64
+dim textColors%(NUM_APPS-1) = &h0C, &h0C, &h0C, &h0C
 tscroll off
-set BG_COLOUR, 0 : mode 2 : cls
-set FGBG_COLOUR, &h0C00
-y = LIST_Y
-for i=0 to 4
-    if i < NUM_APPS   then at LIST_X0, y : print left$(apps$(i), 11)
-    if i < NUM_APPS-5 then at LIST_X1, y : print left$(apps$(i+5), 11)
-    y = y + LIST_DY
+tclip on
+set BG_COLOUR, &h00 : mode 2 : cls
+for i = 0 to NUM_APPS - 1
+    set FG_COLOUR, textColors(i) : at textX(i), textY(i) : print apps$(i)
 next i
-x = CURS_X : y = CURS_Y
-index = 0
 play music, &h75a0, 3
 gosub resetAudio
+call initStars
 repeat
     gosub get("BUTTON_STATE")
-    set FG_COLOUR, &h3F
-    at x, y : put 62
+    if newIndex <> curIndex
+        call drawCursor, curIndex, 0
+        call drawCursor, newIndex, 1
+		curIndex = newIndex
+    endif
+    call updateStars
 forever
+const NUM_STARS = 32
+const STARS_ORG_X = 80
+const STARS_ORG_Y = 60 + 8
+dim xPos(NUM_STARS-1) = 0
+dim yPos(NUM_STARS-1) = 0
+dim xVel(NUM_STARS-1) = 0
+dim yVel(NUM_STARS-1) = 0
+dim star%(NUM_STARS-1) = 0
+dim colour%(31) = {&h00, &h00, &h00, &h00, &h00, &h00, &h00, &h00, &h95,
+                   &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95,
+                   &hAA, &hAA, &hAA, &hAA, &hAA, &hAA, &hAA, &hAA,
+                   &hBF, &hBF, &hBF, &hBF, &hBF, &hBF, &hBF}
+proc initStars
+    local i
+    for i=0 &to NUM_STARS-1
+        call newStar, i
+    next i
+endproc
+proc newStar, i
+    star(i) = 0
+    xPos(i) = 0
+    yPos(i) = 0
+    repeat
+        xv = (rnd(0) AND 2047) - 1024
+        yv = (rnd(0) AND 2047) - 1024
+    until abs(xv) > 200  OR  abs(yv) > 200
+    xVel(i) = xv : xp = xv
+    yVel(i) = yv : yp = yv
+endproc
+proc updateStars
+    local i, ss, pxy
+    for i=0 to NUM_STARS-1
+        xp = xPos(i) : xv = xVel(i)
+        yp = yPos(i) : yv = yVel(i)
+        pxy.lo = xp.hi + STARS_ORG_X
+        pxy.hi = yp.hi + STARS_ORG_Y
+        if &(peek(pxy) AND &h80)
+            poke pxy, get("BG_COLOUR")
+        endif
+        xp = xp + xv
+        yp = yp + yv
+        if abs(yp) &&> 59*256
+            call newStar, i
+        endif
+        if abs(xp) &&> 79*256
+            call newStar, i
+        endif
+        ss = star(i)
+        pxy.lo = xp.hi + STARS_ORG_X
+        pxy.hi = yp.hi + STARS_ORG_Y
+        if peek(pxy) &&= get("BG_COLOUR")
+            if ss &&> 7 then poke pxy, colour(min(ss, 31))
+            star(i) = ss + 1
+        endif
+        xPos(i) = xp : yPos(i) = yp
+    next i
+endproc
 execApp:
     cls
-    exec execs(index), &h0200
+    exec execs(curIndex.lo), &h0200
 return
 'button A
 127:    gosub beep
         gosub execApp
         return
 'right
-254:    at x, y : put 32
-        if x = (LIST_X1 - CURS_DX) then return
-        x = (LIST_X1 - CURS_DX)
+254:    inc row.lo
+        if row &&= maxRows then row = 0
         gosub beep
-        index = index + 5
         return
 'left
-253:    at x, y : put 32
-        if x = (LIST_X0 - CURS_DX) then return
-        x = (LIST_X0 - CURS_DX)
+253:    row = row - 1
+        if row &&< 0 then row = maxRows - 1
         gosub beep
-        index = index - 5
         return
 'down
-251:    at x, y : put 32
-        y = y + LIST_DY
-        if y > (LIST_Y + 4*LIST_DY)
-            y = (LIST_Y + 4*LIST_DY)
-            return
-        endif
+251:    inc col.lo
+        if col &&= maxCols then col = 0
         gosub beep
-        index = index + 1
-        if (x = LIST_X0 - CURS_DX) AND index > 4 then index = 4
-        if (x = LIST_X1 - CURS_DX) AND index > 9 then index = 9
         return
 'up
-247:    at x, y : put 32
-        y = y - LIST_DY
-        if y < LIST_Y
-            y = LIST_Y
-            return
-        endif
+247:    col = col - 1
+        if col &&< 0 then col = maxCols - 1
         gosub beep
-        index = index - 1
-        if (x = LIST_X0 - CURS_DX) AND index < 0 then index = 0
-        if (x = LIST_X1 - CURS_DX) AND index < 5 then index = 5
         return
+proc drawCursor, index, active
+    local x, y, w
+	
+	if index &&= -1 then return
+    x = textX(index)
+    y = textY(index)
+	w = peek(addr(apps$(index)))
+    w = (w LSL 2) + w + w
+    
+    if CURSOR_STYLE = "outline"
+        if &(active)
+            set FG_COLOUR, &h0F
+        else
+            set FG_COLOUR, get("BG_COLOUR")
+        endif
+        line x-1, y-1, x+w, y-1
+        line x-1, y+8, x+w, y+8
+        line x-1, y-1, x-1, y+8
+        line x+w, y-1, x+w, y+8
+    endif
+    
+    set FG_COLOUR, textColors(index) : at x, y : print apps$(index)
+endproc
 def byte(&h75a0) = &h90, &h3c, &h91, &h40, &h92, &h43, &h93, &h48, &h0c, &h80, &h81, &h82, &h83, &h01, &h90, &h3c,
 def byte         = &h91, &h40, &h92, &h43, &h93, &h48, &h24, &h80, &h81, &h82, &h83, &hd0, &h00, &h00
 resetAudio:
@@ -88,6 +151,7 @@ resetAudio:
     endasm
 return
 beep:
+    newIndex = col * maxRows + row
     sound on, 1, 8200
     set SOUND_TIMER, 2
     set BUTTON_STATE, &hEF

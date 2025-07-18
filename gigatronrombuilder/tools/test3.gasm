@@ -52,9 +52,9 @@ textWorkArea                      EQU                          0x7da0
 
 ; Labels
 _entryPoint_                      EQU                          0x0200
-_nextParticle                     EQU                          0x0313
-_skipParticle                     EQU                          0x0347
-_clearParticle                    EQU                          0x0355
+_nextParticle                     EQU                          0x031d
+_skipParticle                     EQU                          0x0351
+_clearParticle                    EQU                          0x035f
 _repeat_0x0000                    EQU                          0x0234
 _updateFountain                   EQU                          0x023a
 _next_0x0001                      EQU                          0x023f
@@ -62,13 +62,13 @@ _if_0x0004                        EQU                          0x02a3
 _endif_0x0003                     EQU                          0x02a6
 _endif_0x0005                     EQU                          0x02bb
 _endif_0x0006                     EQU                          0x02d7
-_if_0x0008                        EQU                          0x030b
-_endif_0x0007                     EQU                          0x0313
-_endif_0x0002                     EQU                          0x0347
-_endif_0x0009                     EQU                          0x036e
-_respawnParticle                  EQU                          0x0370
-_initFountain                     EQU                          0x03f2
-_next_0x000a                      EQU                          0x0408
+_if_0x0008                        EQU                          0x0315
+_endif_0x0007                     EQU                          0x031d
+_endif_0x0002                     EQU                          0x0351
+_endif_0x0009                     EQU                          0x0378
+_respawnParticle                  EQU                          0x037a
+_initFountain                     EQU                          0x0406
+_next_0x000a                      EQU                          0x0413
 _page_0x0300                      EQU                          0x0300
 _page_0x0400                      EQU                          0x0400
 
@@ -147,8 +147,8 @@ _entryPoint_                      LDI                          0x40
 %define FONT_BOTH
 %define TEXT_SCROLL                                                                         ; INIT
 
-                                  LDI                          0
-                                  ST                           fgbgColour                   ; set BG_COLOUR, 0
+                                  LDI                          17
+                                  ST                           fgbgColour                   ; set BG_COLOUR, &h11
 
                                   LDI                          2
                                   STW                          graphicsMode
@@ -261,14 +261,17 @@ _endif_0x0006                     CALLI                        _clearParticle   
 
                                   LDW                          _pxy
                                   PEEK                         
+                                  STW                          0xe8
+                                  LD                           fgbgColour
+                                  XORW                         0xe8
                                   CALLI                        convertEqOp
-                                  JumpFalse                    _endif_0x0007 5              ; if (peek(pxy) = 0)
+                                  CALLI                        _page_0x0300
+_page_0x0300                      JumpFalse                    _endif_0x0007 5              ; if (peek(pxy) = get("BG_COLOUR"))
 
                                   LDW                          _updateFountain_life
                                   STW                          _lf                          ; lf = life
 
-                                  CALLI                        _page_0x0300
-_page_0x0300                      LDW                          _lf
+                                  LDW                          _lf
                                   SUBI                         31
                                   BLE                          _if_0x0008
                                   LDI                          31
@@ -325,8 +328,8 @@ _clearParticle                    PUSH
                                   ANDI                         0x80
                                   BEQ                          _endif_0x0009                ; if &(peek(pxy) AND &h80)
 
-                                  LDI                          0
-                                  POKE                         _pxy                         ; poke pxy, 0
+                                  LD                           fgbgColour
+                                  POKE                         _pxy                         ; poke pxy, get("BG_COLOUR")
 
 _endif_0x0009                     Return                                                    ; return
 
@@ -392,7 +395,8 @@ _respawnParticle                  PUSH                                          
                                   LDWI                         0x79d8
                                   ADDW                         _respawnParticle_i
                                   STW                          memAddr
-                                  LDI                          1
+                                  CALLI                        _page_0x0400
+_page_0x0400                      LDI                          1
                                   POKE                         memAddr                      ; age(i) = 1
 
                                   Return                                                    ; endproc
@@ -401,8 +405,7 @@ _initFountain                     PUSH                                          
 
                                   LDI                          0
                                   STW                          _pxy
-                                  CALLI                        _page_0x0400
-_page_0x0400                      STW                          _xr
+                                  STW                          _xr
                                   STW                          _yr                          ; pxy = 0 : xr = pxy : yr = xr
 
                                   LDI                          0

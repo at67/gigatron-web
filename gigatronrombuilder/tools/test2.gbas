@@ -11,7 +11,7 @@ dim yPos(NUM_STARS-1) = 0
 dim speed%(NUM_STARS-1) = 0
 dim twinkle%(NUM_STARS-1) = 0
 
-set FGBG_COLOUR, &h0C00
+set FGBG_COLOUR, &h0C11
 mode 2 : cls
 at 40, 50 : print "TEST TEXT!!!!!!"
 
@@ -33,7 +33,7 @@ proc updateStarfield
         pxy.lo = xp.hi + STARFIELD_ORG_X
         pxy.hi = yp.hi + STARFIELD_ORG_Y
         if &(peek(pxy) AND &h80)
-            poke pxy, 0
+            poke pxy, get("BG_COLOUR")
         endif
         
         ' Move star horizontally
@@ -65,7 +65,7 @@ proc updateStarfield
         ' Draw new position
         pxy.lo = xp.hi + STARFIELD_ORG_X
         pxy.hi = yp.hi + STARFIELD_ORG_Y
-        if &(peek(pxy) = 0)
+        if &(peek(pxy) = get("BG_COLOUR"))
             poke pxy, colour OR &h80
         endif
     next i

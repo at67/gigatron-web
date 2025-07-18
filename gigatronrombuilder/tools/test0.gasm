@@ -52,17 +52,18 @@ textWorkArea                      EQU                          0x77a0
 
 ; Labels
 _entryPoint_                      EQU                          0x0200
-_repeat_0x0000                    EQU                          0x0236
-_initStars                        EQU                          0x023c
-_next_0x0001                      EQU                          0x0241
-_newStar                          EQU                          0x0256
-_repeat_0x0002                    EQU                          0x027c
-_drawStars                        EQU                          0x02e0
-_next_0x0003                      EQU                          0x02e5
-_endif_0x0004                     EQU                          0x032e
-_endif_0x0005                     EQU                          0x0350
-_endif_0x0006                     EQU                          0x0366
-_endif_0x0007                     EQU                          0x03a7
+_repeat_0x0000                    EQU                          0x0231
+_initStars                        EQU                          0x0237
+_next_0x0001                      EQU                          0x023c
+_newStar                          EQU                          0x0251
+_repeat_0x0002                    EQU                          0x0277
+_drawStars                        EQU                          0x02db
+_next_0x0003                      EQU                          0x02e0
+_endif_0x0004                     EQU                          0x0329
+_endif_0x0005                     EQU                          0x034b
+_endif_0x0006                     EQU                          0x0361
+_if_0x0008                        EQU                          0x039b
+_endif_0x0007                     EQU                          0x03ac
 _page_0x0300                      EQU                          0x0300
 
 ; Constants
@@ -82,6 +83,7 @@ _newStar_i                        EQU                          0x00c4
 _drawStars_i                      EQU                          0x00c4
 _drawStars_ss                     EQU                          0x00c6
 _drawStars_pxy                    EQU                          0x00c8
+_drawStars_bgColour               EQU                          0x00ca
 
 ; Arrays
 _xPos                             EQU                          0x7fa0
@@ -95,7 +97,7 @@ _yVel                             DW                           0x0000 0x0000 0x0
 _star                             EQU                          0x7bd0
 _star                             DB                           0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 
 _colour                           EQU                          0x7bb0
-_colour                           DB                           0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x95 0x95 0x95 0x95 0x95 0x95 0x95 0x95 0xaa 0xaa 0xaa 0xaa 0xaa 0xaa 0xaa 0xaa 0xbf 0xbf 0xbf 0xbf 0xbf 0xbf 0xbf 
+_colour                           DB                           0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x95 0x95 0x95 0x95 0x95 0x95 0x95 0x95 0x95 0xaa 0xaa 0xaa 0xaa 0xaa 0xaa 0xaa 0xaa 0xbf 0xbf 0xbf 0xbf 0xbf 0xbf 0xbf 
 
 ; Strings
 
@@ -136,15 +138,12 @@ _entryPoint_                      InitialiseOn
                                   ANDI                         0xfd
                                   ST                           miscFlags                    ; tscroll off
 
-                                  LDI                          0
+                                  LDI                          17
                                   ST                           fgbgColour
                                   LDI                          2
                                   STW                          graphicsMode
                                   ScanlineMode                 
-                                  ClearVertBlinds                                           ; set BG_COLOUR, 0 : mode 2 : cls
-
-                                  LDWI                         3072
-                                  STW                          fgbgColour                   ; set FGBG_COLOUR, &h0C00
+                                  ClearVertBlinds                                           ; set BG_COLOUR, &h11 : mode 2 : cls
 
                                   CALLI                        _initStars                   ; call initStars
 
@@ -249,11 +248,11 @@ _next_0x0003                      LDWI                         0x7fa0
                                   ADDW                         _drawStars_i
                                   ADDW                         _drawStars_i
                                   DEEK                         
-                                  CALLI                        _page_0x0300
-_page_0x0300                      STW                          _xv                          ; xp = xPos(i) : xv = xVel(i)
+                                  STW                          _xv                          ; xp = xPos(i) : xv = xVel(i)
 
                                   LDWI                         0x7ea0
-                                  ADDW                         _drawStars_i
+                                  CALLI                        _page_0x0300
+_page_0x0300                      ADDW                         _drawStars_i
                                   ADDW                         _drawStars_i
                                   DEEK                         
                                   STW                          _yp
@@ -276,8 +275,8 @@ _page_0x0300                      STW                          _xv              
                                   ANDI                         0x80
                                   BEQ                          _endif_0x0004                ; if &(peek(pxy) AND &h80)
 
-                                  LDI                          0
-                                  POKE                         _drawStars_pxy               ; poke pxy, 0
+                                  LD                           fgbgColour
+                                  POKE                         _drawStars_pxy               ; poke pxy, get("BG_COLOUR")
 
 _endif_0x0004                     LDW                          _xp
                                   ADDW                         _xv
@@ -324,9 +323,14 @@ _endif_0x0006                     LDWI                         0x7bd0
 
                                   LDW                          _drawStars_pxy
                                   PEEK                         
-                                  CALLI                        convertEqOp
-                                  BEQ                          _endif_0x0007                ; if &(peek(pxy) = 0)
+                                  STW                          0xe8
+                                  LD                           fgbgColour
+                                  XORW                         0xe8
+                                  BNE                          _endif_0x0007                ; if peek(pxy) &&= get("BG_COLOUR")
 
+                                  LDW                          _drawStars_ss
+                                  SUBI                         7
+                                  BLE                          _if_0x0008
                                   LDW                          _drawStars_ss
                                   STW                          intSrcA
                                   LDI                          31
@@ -335,9 +339,9 @@ _endif_0x0006                     LDWI                         0x7bd0
                                   LDWI                         0x7bb0
                                   ADDW                         memIndex0
                                   PEEK                         
-                                  POKE                         _drawStars_pxy               ; poke pxy, colour(min(ss, 31))
+                                  POKE                         _drawStars_pxy               ; if ss &&> 7 then poke pxy, colour(min(ss, 31))
 
-                                  LDW                          _drawStars_ss
+_if_0x0008                        LDW                          _drawStars_ss
                                   ADDI                         1
                                   STW                          memValue
                                   LDWI                         0x7bd0
@@ -373,23 +377,14 @@ _endif_0x0007                     LDWI                         0x7fa0
 ;*************************************************************************************************************
 ;*************************************************************************************************************
 
-convertEqOp                       EQU     0x7aa0
-convertGtOp                       EQU     0x79ec
+convertGtOp                       EQU     0x7aa0
 absolute                          EQU     0x7aa9
 integerMin                        EQU     0x7ba1
-rand16bit                         EQU     0x79e4
+rand16bit                         EQU     0x79ed
 scanlineMode                      EQU     0x79f5
 resetVideoFlags                   EQU     0x7ab3
 initClearFuncs                    EQU     0x7abe
 clearVertBlinds                   EQU     0x7acd
-
-
-                    
-convertEqOp         BEQ     convertEq_1
-                    LDI     0
-                    RET
-convertEq_1         LDI     1
-                    RET
 
 
                     

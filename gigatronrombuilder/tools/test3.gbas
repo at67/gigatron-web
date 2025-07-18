@@ -18,7 +18,7 @@ dim colour%(31) = {&hB0, &hB0, &hB0, &hB0, &hB0, &hB0, &hB0, &hB0, &hB0, &hB0,	'
 				   &hBA, &hBA, &hBA, &hBA, &hBA, &hBA, &hBA, &hBA, &hBA, &hBA,	' 20 to 29
 				   &hBF, &hBF}													' 30 to 31
 			
-set BG_COLOUR, 0
+set BG_COLOUR, &h11
 mode 2 : cls
 
 call initFountain
@@ -67,7 +67,7 @@ proc updateFountain
             ' Draw new position
             pxy.lo = xp.hi + FOUNTAIN_ORG_X
             pxy.hi = yp.hi + FOUNTAIN_ORG_Y
-            if (peek(pxy) = 0)
+            if (peek(pxy) = get("BG_COLOUR"))
 				lf = life
 				if lf &&> 31 then lf = 31
                 poke pxy, colour(lf)
@@ -90,7 +90,7 @@ clearParticle:
 	pxy.lo = xr.hi + FOUNTAIN_ORG_X
 	pxy.hi = yr.hi + FOUNTAIN_ORG_Y
 	if &(peek(pxy) AND &h80)
-		poke pxy, 0
+		poke pxy, get("BG_COLOUR")
 	endif
 return
 

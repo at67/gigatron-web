@@ -61,13 +61,13 @@ _if_0x0004                        EQU                          0x02dc
 _elseif_0x0005                    EQU                          0x0303
 _else_0x0006                      EQU                          0x0311
 _endif_0x0007                     EQU                          0x0315
-_endif_0x0008                     EQU                          0x0330
-_initStarfield                    EQU                          0x033e
-_next_0x0009                      EQU                          0x0343
-_elseif_0x000a                    EQU                          0x039c
-_elseif_0x000b                    EQU                          0x03b5
-_else_0x000c                      EQU                          0x03ce
-_endif_0x000d                     EQU                          0x03d7
+_endif_0x0008                     EQU                          0x0336
+_initStarfield                    EQU                          0x0344
+_next_0x0009                      EQU                          0x0349
+_elseif_0x000a                    EQU                          0x03a2
+_elseif_0x000b                    EQU                          0x03bb
+_else_0x000c                      EQU                          0x03d4
+_endif_0x000d                     EQU                          0x03dd
 _page_0x0300                      EQU                          0x0300
 _page_0x0400                      EQU                          0x0400
 
@@ -140,8 +140,8 @@ _entryPoint_                      LDI                          0x40
 %define FONT_BOTH
 %define TEXT_SCROLL                                                                         ; INIT
 
-                                  LDWI                         3072
-                                  STW                          fgbgColour                   ; set FGBG_COLOUR, &h0C00
+                                  LDWI                         3089
+                                  STW                          fgbgColour                   ; set FGBG_COLOUR, &h0C11
 
                                   LDI                          2
                                   STW                          graphicsMode
@@ -201,8 +201,8 @@ _next_0x0001                      LDWI                         0x0680
                                   ANDI                         0x80
                                   BEQ                          _endif_0x0002                ; if &(peek(pxy) AND &h80)
 
-                                  LDI                          0
-                                  POKE                         _updateStarfield_pxy         ; poke pxy, 0
+                                  LD                           fgbgColour
+                                  POKE                         _updateStarfield_pxy         ; poke pxy, get("BG_COLOUR")
 
 _endif_0x0002                     LDW                          _updateStarfield_xp
                                   ADDW                         _updateStarfield_spd
@@ -282,8 +282,11 @@ _endif_0x0007                     LD                           _updateStarfield_
 
                                   LDW                          _updateStarfield_pxy
                                   PEEK                         
+                                  STW                          0xe8
+                                  LD                           fgbgColour
+                                  XORW                         0xe8
                                   CALLI                        convertEqOp
-                                  BEQ                          _endif_0x0008                ; if &(peek(pxy) = 0)
+                                  BEQ                          _endif_0x0008                ; if &(peek(pxy) = get("BG_COLOUR"))
 
                                   LDW                          _updateStarfield_colour
                                   ORI                          0x80
@@ -380,11 +383,11 @@ _endif_0x000d                     LDWI                         0x7fc0
                                   LDWI                         0x7cc0
                                   ADDW                         _initStarfield_i
                                   STW                          memAddr
-                                  LDW                          memValue
+                                  CALLI                        _page_0x0400
+_page_0x0400                      LDW                          memValue
                                   POKE                         memAddr                      ; twinkle(i) = rnd(0) AND 63
 
-                                  CALLI                        _page_0x0400
-_page_0x0400                      ForNextFarInc                _initStarfield_i _next_0x0009 63                                                                                         ; next i
+                                  ForNextFarInc                _initStarfield_i _next_0x0009 63                                                                                         ; next i
 
                                   Return                                                    ; endproc
 

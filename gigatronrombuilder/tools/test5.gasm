@@ -52,25 +52,26 @@ textWorkArea                      EQU                          0x77a0
 
 ; Labels
 _entryPoint_                      EQU                          0x0200
-_nextParticle                     EQU                          0x0400
-_repeat_0x0000                    EQU                          0x02a3
-_initSnow                         EQU                          0x02af
-_next_0x0001                      EQU                          0x02b4
-_updateSnow                       EQU                          0x02c9
-_next_0x0002                      EQU                          0x02ce
-_endif_0x0003                     EQU                          0x030e
-_if_0x0005                        EQU                          0x0327
-_endif_0x0004                     EQU                          0x0331
-_endif_0x0006                     EQU                          0x0358
-_else_0x0009                      EQU                          0x038c
-_endif_0x000a                     EQU                          0x03a8
-_endif_0x0008                     EQU                          0x03a8
-_endif_0x0007                     EQU                          0x03a8
-_endif_0x000b                     EQU                          0x03c1
-_respawnSnowParticle              EQU                          0x040e
-_else_0x000c                      EQU                          0x043b
-_endif_0x000d                     EQU                          0x0440
+_nextParticle                     EQU                          0x0406
+_repeat_0x0000                    EQU                          0x02a2
+_initSnow                         EQU                          0x02ae
+_next_0x0001                      EQU                          0x02b3
+_updateSnow                       EQU                          0x02c8
+_next_0x0002                      EQU                          0x02cd
+_endif_0x0003                     EQU                          0x030c
+_if_0x0005                        EQU                          0x0325
+_endif_0x0004                     EQU                          0x032f
+_endif_0x0006                     EQU                          0x0356
+_else_0x0009                      EQU                          0x0398
+_endif_0x000a                     EQU                          0x03b4
+_endif_0x0008                     EQU                          0x03b4
+_endif_0x0007                     EQU                          0x03b4
+_endif_0x000b                     EQU                          0x03cd
+_respawnSnowParticle              EQU                          0x0414
+_else_0x000c                      EQU                          0x0441
+_endif_0x000d                     EQU                          0x0446
 _page_0x0300                      EQU                          0x0300
+_page_0x0400                      EQU                          0x0400
 
 ; Constants
 _NUM_SNOW_PARTICLES               EQU                          0x0050
@@ -158,15 +159,15 @@ _entryPoint_                      InitialiseOn
                                   ANDI                         0xfd
                                   ST                           miscFlags                    ; tscroll off
 
-                                  LDI                          0
+                                  LDI                          17
                                   ST                           fgbgColour
                                   LDI                          2
                                   STW                          graphicsMode
                                   ScanlineMode                 
-                                  ClearVertBlinds                                           ; set BG_COLOUR, 0 : mode 2 : cls
+                                  ClearVertBlinds                                           ; set BG_COLOUR, &h11 : mode 2 : cls
 
-                                  LDWI                         3072
-                                  STW                          fgbgColour                   ; set FGBG_COLOUR, &h0C00
+                                  LDI                          12
+                                  ST                           fgbgColour + 1               ; set FG_COLOUR, &h0C
 
                                   LDI                          12
                                   ST                           fgbgColour + 1               ; set FG_COLOUR, &h0C
@@ -266,16 +267,16 @@ _next_0x0002                      LDWI                         0x0660
 
                                   LD                           _updateSnow_yp + 1
                                   ADDI                         68
-                                  CALLI                        _page_0x0300
-_page_0x0300                      ST                           _rxy + 1                     ; rxy.hi = yp.hi + SNOW_ORG_Y
+                                  ST                           _rxy + 1                     ; rxy.hi = yp.hi + SNOW_ORG_Y
 
-                                  LDW                          _rxy
+                                  CALLI                        _page_0x0300
+_page_0x0300                      LDW                          _rxy
                                   PEEK                         
                                   ANDI                         0x80
                                   BEQ                          _endif_0x0003                ; if &(peek(rxy) AND &h80)
 
-                                  LDI                          0
-                                  POKE                         _rxy                         ; poke rxy, 0
+                                  LD                           fgbgColour
+                                  POKE                         _rxy                         ; poke rxy, get("BG_COLOUR")
 
 _endif_0x0003                     LDW                          _updateSnow_yp
                                   ADDW                         _updateSnow_yv
@@ -327,8 +328,10 @@ _endif_0x0006                     LD                           _updateSnow_xp + 
                                   PEEK                         
                                   STW                          _pixel                       ; pixel = peek(pxy)
 
-                                  LDW                          _pixel
-                                  BEQ                          _endif_0x0007                ; if &(pixel)
+                                  LD                           fgbgColour
+                                  XORW                         _pixel
+                                  CALLI                        convertNeOp
+                                  BEQ                          _endif_0x0007                ; if &(pixel <> get("BG_COLOUR"))
 
                                   LDWI                         -1
                                   XORW                         _pixel
@@ -338,7 +341,11 @@ _endif_0x0006                     LD                           _updateSnow_xp + 
                                   LDWI                         256
                                   ADDW                         _rxy
                                   PEEK                         
-                                  BEQ                          _else_0x0009                 ; if &(peek(rxy + &h0100))
+                                  STW                          0xea
+                                  LD                           fgbgColour
+                                  XORW                         0xea
+                                  CALLI                        convertNeOp
+                                  BEQ                          _else_0x0009                 ; if &(peek(rxy + &h0100) <> get("BG_COLOUR"))
 
                                   LDI                          63
                                   POKE                         _rxy                         ; poke rxy, &h3F
@@ -401,11 +408,11 @@ _endif_0x000b                     LDWI                         0x7eb0
                                   LDWI                         0x0520
                                   ADDW                         _updateSnow_i
                                   ADDW                         _updateSnow_i
-                                  STW                          memAddr
+                                  CALLI                        _page_0x0400
+_page_0x0400                      STW                          memAddr
                                   LDW                          _updateSnow_yv
                                   DOKE                         memAddr                      ; yVel(i) = yv
 
-                                  CALLI                        _nextParticle
 _nextParticle                     ForNextFarInc                _updateSnow_i _next_0x0002 79                                                                                            ; next i
 
                                   Return                                                    ; endproc
@@ -485,9 +492,10 @@ _endif_0x000d                     LDWI                         0x0660
 ;*************************************************************************************************************
 
 convertEqOp                       EQU     0x79a7
+convertNeOp                       EQU     0x78f6
 absolute                          EQU     0x7fa0
 divide16bit                       EQU     0x7dac
-rand16bit                         EQU     0x78f7
+rand16bit                         EQU     0x78ee
 randMod16bit                      EQU     0x7ba2
 scanlineMode                      EQU     0x7ca2
 resetVideoFlags                   EQU     0x7da1
@@ -507,6 +515,14 @@ convertEqOp         BEQ     convertEq_1
                     LDI     0
                     RET
 convertEq_1         LDI     1
+                    RET
+
+
+                    
+convertNeOp         BNE     convertNe_1
+                    LDI     0
+                    RET
+convertNe_1         LDI     1
                     RET
 
 

@@ -52,9 +52,9 @@ textWorkArea                      EQU                          0x7da0
 
 ; Labels
 _entryPoint_                      EQU                          0x0200
-_nextParticle                     EQU                          0x02f3
-_skipParticle                     EQU                          0x033a
-_clearParticle                    EQU                          0x037d
+_nextParticle                     EQU                          0x0302
+_skipParticle                     EQU                          0x0340
+_clearParticle                    EQU                          0x0383
 _repeat_0x0000                    EQU                          0x0239
 _updateFireworks                  EQU                          0x023f
 _next_0x0001                      EQU                          0x0244
@@ -62,18 +62,18 @@ _if_0x0004                        EQU                          0x02a5
 _endif_0x0003                     EQU                          0x02a8
 _endif_0x0005                     EQU                          0x02ba
 _endif_0x0006                     EQU                          0x02d3
-_endif_0x0007                     EQU                          0x02f3
-_endif_0x0009                     EQU                          0x0313
-_endif_0x0008                     EQU                          0x0313
-_endif_0x0002                     EQU                          0x033a
-_endif_0x000a                     EQU                          0x037b
-_endif_0x000b                     EQU                          0x0396
-_createFirework                   EQU                          0x0398
-_next_0x000c                      EQU                          0x03aa
-_if_0x000e                        EQU                          0x0457
-_endif_0x000d                     EQU                          0x0457
-_initFireworks                    EQU                          0x0465
-_next_0x000f                      EQU                          0x046a
+_endif_0x0007                     EQU                          0x0302
+_endif_0x0009                     EQU                          0x0319
+_endif_0x0008                     EQU                          0x0319
+_endif_0x0002                     EQU                          0x0340
+_endif_0x000a                     EQU                          0x0381
+_endif_0x000b                     EQU                          0x039c
+_createFirework                   EQU                          0x039e
+_next_0x000c                      EQU                          0x03b0
+_if_0x000e                        EQU                          0x045d
+_endif_0x000d                     EQU                          0x045d
+_initFireworks                    EQU                          0x046b
+_next_0x000f                      EQU                          0x0470
 _page_0x0300                      EQU                          0x0300
 _page_0x0400                      EQU                          0x0400
 
@@ -99,7 +99,6 @@ _updateFireworks_lf               EQU                          0x00c6
 _updateFireworks_xp               EQU                          0x00c8
 _updateFireworks_yp               EQU                          0x00ca
 _updateFireworks_pxy              EQU                          0x00cc
-_updateFireworks_col              EQU                          0x00ce
 _createFirework_centerX           EQU                          0x00c4
 _createFirework_centerY           EQU                          0x00c6
 _createFirework_i                 EQU                          0x00c8
@@ -159,8 +158,8 @@ _entryPoint_                      LDI                          0x40
 %define FONT_BOTH
 %define TEXT_SCROLL                                                                         ; INIT
 
-                                  LDWI                         15360
-                                  STW                          fgbgColour                   ; set FGBG_COLOUR, &h3C00
+                                  LDWI                         15377
+                                  STW                          fgbgColour                   ; set FGBG_COLOUR, &h3C11
 
                                   LDI                          2
                                   STW                          graphicsMode
@@ -273,17 +272,20 @@ _endif_0x0006                     CALLI                        _clearParticle   
 
                                   LDW                          _updateFireworks_pxy
                                   PEEK                         
-                                  JumpEQ                       _endif_0x0007 5              ; if peek(pxy) &= 0
+                                  STW                          0xe8
+                                  LD                           fgbgColour
+                                  XORW                         0xe8
+                                  JumpEQ                       _endif_0x0007 5              ; if peek(pxy) &= get("BG_COLOUR")
 
                                   LDWI                         0x7cc4
                                   ADDW                         _updateFireworks_i
                                   PEEK                         
-                                  POKE                         _updateFireworks_pxy         ; poke pxy, colour(i)
+                                  CALLI                        _page_0x0300
+_page_0x0300                      POKE                         _updateFireworks_pxy         ; poke pxy, colour(i)
 
 _nextParticle                     LDW                          _updateFireworks_lf
                                   SUBI                         1
-                                  CALLI                        _page_0x0300
-_page_0x0300                      STW                          _updateFireworks_lf          ; lf = lf - 1
+                                  STW                          _updateFireworks_lf          ; lf = lf - 1
 
                                   LDW                          _updateFireworks_lf
                                   BNE                          _endif_0x0008                ; if lf &&= 0
@@ -293,8 +295,8 @@ _page_0x0300                      STW                          _updateFireworks_
                                   ANDI                         0x80
                                   BEQ                          _endif_0x0009                ; if &(peek(pxy) AND &h80)
 
-                                  LDI                          0
-                                  POKE                         _updateFireworks_pxy         ; poke pxy, 0
+                                  LD                           fgbgColour
+                                  POKE                         _updateFireworks_pxy         ; poke pxy, get("BG_COLOUR")
 
 _endif_0x0008                     LDWI                         0x0688
                                   ADDW                         _updateFireworks_i
@@ -365,8 +367,8 @@ _clearParticle                    PUSH
                                   ANDI                         0x80
                                   BEQ                          _endif_0x000b                ; if &(peek(pxy) AND &h80)
 
-                                  LDI                          0
-                                  POKE                         _pxy                         ; poke pxy, 0
+                                  LD                           fgbgColour
+                                  POKE                         _pxy                         ; poke pxy, get("BG_COLOUR")
 
 _endif_0x000b                     Return                                                    ; return
 
@@ -416,12 +418,12 @@ _next_0x000c                      LDWI                         0x7fc4
                                   STW                          memAddr
                                   LDW                          memValue
                                   INC                          memAddr
-                                  POKE                         memAddr                      ; xPos(i).hi = centerX
+                                  CALLI                        _page_0x0400
+_page_0x0400                      POKE                         memAddr                      ; xPos(i).hi = centerX
 
                                   LDW                          _createFirework_centerY
                                   STW                          memValue
-                                  CALLI                        _page_0x0400
-_page_0x0400                      LDW                          _createFirework_i
+                                  LDW                          _createFirework_i
                                   STW                          memIndex0
                                   LDWI                         0x0610
                                   ADDW                         memIndex0

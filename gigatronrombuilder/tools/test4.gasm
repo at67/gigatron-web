@@ -52,35 +52,54 @@ textWorkArea                      EQU                          0x77a0
 
 ; Labels
 _entryPoint_                      EQU                          0x0200
-_nextParticle                     EQU                          0x0420
-_repeat_0x0000                    EQU                          0x0236
-_initFire                         EQU                          0x023c
-_next_0x0001                      EQU                          0x0241
-_respawnParticle                  EQU                          0x0256
-_updateFire                       EQU                          0x02f3
-_next_0x0002                      EQU                          0x0302
-_endif_0x0004                     EQU                          0x034e
-_endif_0x0005                     EQU                          0x0381
-_endif_0x0006                     EQU                          0x03a0
-_endif_0x0007                     EQU                          0x03bf
-_endif_0x0008                     EQU                          0x03e5
-_endif_0x0003                     EQU                          0x0420
+_nextParticle                     EQU                          0x0422
+_repeat_0x0000                    EQU                          0x0231
+_initFire                         EQU                          0x0237
+_next_0x0001                      EQU                          0x023c
+_respawnParticle                  EQU                          0x0251
+_updateFire                       EQU                          0x02ee
+_next_0x0002                      EQU                          0x02f3
+_endif_0x0004                     EQU                          0x0349
+_endif_0x0005                     EQU                          0x037c
+_endif_0x0006                     EQU                          0x039b
+_endif_0x0007                     EQU                          0x03ba
+_endif_0x0008                     EQU                          0x03e6
+_endif_0x0003                     EQU                          0x0422
 _page_0x0300                      EQU                          0x0300
 _page_0x0400                      EQU                          0x0400
 
 ; Constants
-_SYS_Reset_88                     EQU                          0x005e
+_SYS_Reset_88                     EQU                          0x004f
+_SYS_Multiply_s16_vX_66           EQU                          0x009e
+_SYS_Divide_s16_vX_80             EQU                          0x00a1
+_SYS_DrawLine_vX_86               EQU                          0x00a4
 _SYS_Exec_88                      EQU                          0x00ad
-_SYS_LoadBytes_DEVROM_XXX         EQU                          0x00ec
+_SYS_SpritePattern_vX_134         EQU                          0x00b6
+_SYS_SortUint8Array_vX_52         EQU                          0x00b9
+_SYS_SortSprites_vX_62            EQU                          0x00bc
+_SYS_SortViaIndices_vX_44         EQU                          0x00bf
+_SYS_MemCopyByte_vX_40            EQU                          0x00c2
+_SYS_MemCopyWord_vX_48            EQU                          0x00c5
+_SYS_MemCopyDWord_vX_58           EQU                          0x00c8
+_SYS_DrawVLine_vX_66              EQU                          0x00cb
+_SYS_DrawBullet_vX_140            EQU                          0x00d1
+_SYS_CmpByteBounds_vX_54          EQU                          0x00d4
+_SYS_Divide_u168_vX_56            EQU                          0x00d7
+_SYS_ScanMemoryExt_vX_50          EQU                          0x00e3
+_SYS_ScanMemory_vX_50             EQU                          0x00e6
+_SYS_CopyMemory_vX_80             EQU                          0x00e9
+_SYS_CopyMemoryExt_vX_100         EQU                          0x00ec
 _SYS_ReadRomDir_v5_80             EQU                          0x00ef
 _SYS_Out_22                       EQU                          0x00f4
 _SYS_In_24                        EQU                          0x00f9
 _videoZ                           EQU                          0x0100
 _startVideo                       EQU                          0x0103
 _vBlankStart                      EQU                          0x0104
-_sound1                           EQU                          0x0166
-_vBlankNormal                     EQU                          0x019f
-_vBlankSample                     EQU                          0x01a6
+_vblankExpansion                  EQU                          0x012e
+_vPulseInit                       EQU                          0x0135
+_sound1                           EQU                          0x0158
+_vBlankNormal                     EQU                          0x0191
+_vBlankSample                     EQU                          0x0198
 _videoA                           EQU                          0x0201
 _pixels                           EQU                          0x020a
 _sound3                           EQU                          0x02ae
@@ -97,38 +116,92 @@ _NEXT                             EQU                          0x0301
 _EXIT                             EQU                          0x030b
 _RESYNC                           EQU                          0x030c
 _LDWI                             EQU                          0x0311
+_DEC                              EQU                          0x0314
+_MOVQB                            EQU                          0x0316
+_LSRB                             EQU                          0x0318
 _LD                               EQU                          0x031a
-_CMPHS_v5                         EQU                          0x031f
+_ADDBI                            EQU                          0x031c
+_SPARE0                           EQU                          0x031f
 _LDW                              EQU                          0x0321
+_POKEI                            EQU                          0x0325
+_LSLV                             EQU                          0x0327
+_ADDVB                            EQU                          0x0329
 _STW                              EQU                          0x032b
+_CNVXY                            EQU                          0x032d
+_PREFX2                           EQU                          0x032f
+_MOVWA                            EQU                          0x0332
 _BCC                              EQU                          0x0335
-_EQ                               EQU                          0x033f
-_GT                               EQU                          0x034d
-_LT                               EQU                          0x0350
-_GE                               EQU                          0x0353
-_LE                               EQU                          0x0356
+_SUBBI                            EQU                          0x0338
+_DEEKV                            EQU                          0x033b
+_ARRVW                            EQU                          0x033d
+_LDARRW                           EQU                          0x033f
+_ADDVI                            EQU                          0x0342
+_SUBVI                            EQU                          0x0344
+_SUBVB                            EQU                          0x0348
+_DJGE                             EQU                          0x034a
+_MOVQW                            EQU                          0x034d
+_STWM                             EQU                          0x034f
+_STARRW                           EQU                          0x0351
+_LDARRB                           EQU                          0x0353
+_STARRB                           EQU                          0x0355
+_STARRI                           EQU                          0x0357
 _LDI                              EQU                          0x0359
+_PEEKV                            EQU                          0x035b
 _ST                               EQU                          0x035e
 _POP                              EQU                          0x0363
-_NE                               EQU                          0x0372
+_MOVB                             EQU                          0x0365
+_PEEKA                            EQU                          0x0367
+_POKEA                            EQU                          0x0369
+_TEQ                              EQU                          0x036b
+_TNE                              EQU                          0x036d
+_DEEKA                            EQU                          0x036f
+_LDWM                             EQU                          0x0372
 _PUSH                             EQU                          0x0375
+_DOKEI                            EQU                          0x0377
+_ARRW                             EQU                          0x0379
+_SCRLHR                           EQU                          0x037b
+_DOKEA                            EQU                          0x037d
 _LUP                              EQU                          0x037f
 _ANDI                             EQU                          0x0382
-_CALLI_v5                         EQU                          0x0385
+_CALLI                            EQU                          0x0385
 _ORI                              EQU                          0x0388
 _XORI                             EQU                          0x038c
+_DBGE                             EQU                          0x038e
 _BRA                              EQU                          0x0390
 _INC                              EQU                          0x0393
-_CMPHU_v5                         EQU                          0x0397
+_INCWA                            EQU                          0x0395
+_SPARE1                           EQU                          0x0397
 _ADDW                             EQU                          0x0399
+_LDNI                             EQU                          0x039c
+_DBNE                             EQU                          0x039e
+_DEEKR                            EQU                          0x03a0
+_PACKAW                           EQU                          0x03a2
+_DJNE                             EQU                          0x03a4
+_CMPI                             EQU                          0x03a7
+_ADDVW                            EQU                          0x03a9
+_SUBVW                            EQU                          0x03ab
 _PEEK                             EQU                          0x03ad
+_PREFX1                           EQU                          0x03b1
 _SYS                              EQU                          0x03b4
 _SUBW                             EQU                          0x03b8
+_JEQ                              EQU                          0x03bb
+_JNE                              EQU                          0x03bd
+_JLT                              EQU                          0x03bf
+_JGT                              EQU                          0x03c1
+_JLE                              EQU                          0x03c3
+_JGE                              EQU                          0x03c5
+_PREFX3                           EQU                          0x03c7
 _REENTER_28                       EQU                          0x03ca
 _REENTER                          EQU                          0x03cb
 _DEF                              EQU                          0x03cd
 _CALL                             EQU                          0x03cf
+_TGE                              EQU                          0x03d5
+_TLT                              EQU                          0x03d7
+_TGT                              EQU                          0x03d9
+_TLE                              EQU                          0x03db
+_DECWA                            EQU                          0x03dd
 _ALLOC                            EQU                          0x03df
+_PACKVW                           EQU                          0x03e1
 _ADDI                             EQU                          0x03e3
 _SUBI                             EQU                          0x03e6
 _LSLW                             EQU                          0x03e9
@@ -141,18 +214,6 @@ _ANDW                             EQU                          0x03f8
 _ORW                              EQU                          0x03fa
 _XORW                             EQU                          0x03fc
 _RET                              EQU                          0x03ff
-_addi                             EQU                          0x0418
-_subi                             EQU                          0x0426
-_lslw                             EQU                          0x0435
-_stlw                             EQU                          0x0441
-_ldlw                             EQU                          0x044c
-_poke                             EQU                          0x0457
-_peek                             EQU                          0x0462
-_doke                             EQU                          0x046d
-_deek                             EQU                          0x047a
-_andw                             EQU                          0x0486
-_orw                              EQU                          0x0491
-_xorw                             EQU                          0x049c
 _SYS_Random_34                    EQU                          0x04a7
 _SYS_LSRW7_30                     EQU                          0x04b9
 _SYS_LSRW8_24                     EQU                          0x04c6
@@ -167,18 +228,14 @@ _SYS_LSRW4_50                     EQU                          0x0652
 _SYS_LSRW5_50                     EQU                          0x066d
 _SYS_LSRW6_48                     EQU                          0x0687
 _SYS_LSLW4_46                     EQU                          0x06a0
-_SYS_Read3_40                     EQU                          0x06b9
-_txReturn                         EQU                          0x06bc
-_SYS_Unpack_56                    EQU                          0x06c0
 _font32up                         EQU                          0x0700
 _font82up                         EQU                          0x0800
 _notesTable                       EQU                          0x0900
-_invTable                         EQU                          0x0a00
+_noteTrampoline                   EQU                          0x09c0
 _SYS_SetMode_v2_80                EQU                          0x0b00
 _SYS_SetMemory_v2_54              EQU                          0x0b03
 _SYS_SendSerial1_v3_80            EQU                          0x0b06
 _SYS_ExpanderControl_v4_40        EQU                          0x0b09
-_SYS_Run6502_v4_80                EQU                          0x0b0c
 _SYS_ResetWaveforms_v4_50         EQU                          0x0b0f
 _SYS_ShuffleNoise_v4_46           EQU                          0x0b12
 _SYS_SpiExchangeBytes_v4_134      EQU                          0x0b15
@@ -188,137 +245,185 @@ _SYS_Sprite6_v3_64                EQU                          0x0c00
 _SYS_Sprite6x_v3_64               EQU                          0x0c40
 _SYS_Sprite6y_v3_64               EQU                          0x0c80
 _SYS_Sprite6xy_v3_64              EQU                          0x0cc0
-_sys_ExpanderControl              EQU                          0x0cfb
-_sys_SpiExchangeBytes             EQU                          0x0d09
-_sys_v6502                        EQU                          0x0d7f
-_v6502_ror                        EQU                          0x0d83
-_v6502_lsr                        EQU                          0x0d9d
-_v6502_rol                        EQU                          0x0dac
-_v6502_asl                        EQU                          0x0dbf
-_v6502_jmp1                       EQU                          0x0dc5
-_v6502_jmp2                       EQU                          0x0dcd
-_v6502_pla                        EQU                          0x0dd7
-_v6502_pha                        EQU                          0x0de2
-_v6502_brk                        EQU                          0x0dea
-_v6502_ENTER                      EQU                          0x0dff
-_v6502_next                       EQU                          0x0e20
-_v6502_next2                      EQU                          0x0e22
-_v6502_mode0                      EQU                          0x0e35
-_v6502_exitBefore                 EQU                          0x0e3a
-_v6502_modeIMM                    EQU                          0x0e42
-_v6502_modeACC                    EQU                          0x0e52
-_v6502_modeILL                    EQU                          0x0e58
-_v6502_modeIMP                    EQU                          0x0e58
-_v6502_modeZPX                    EQU                          0x0e5b
-_v6502_modeZP                     EQU                          0x0e5d
-_v6502_modeABS                    EQU                          0x0e78
-_v6502_modeABX                    EQU                          0x0e7a
-_v6502_modeABY                    EQU                          0x0e7b
-_v6502_modeIZY                    EQU                          0x0eab
-_v6502_modeREL                    EQU                          0x0ecf
-_v6502_modeIZX                    EQU                          0x0ee0
-_v6502_check                      EQU                          0x0ef2
-_v6502_exitAfter                  EQU                          0x0ef8
-_v6502_execute                    EQU                          0x0f00
-_v6502_ADC                        EQU                          0x1001
-_v6502_SBC                        EQU                          0x1029
-_v6502_CLC                        EQU                          0x1036
-_v6502_SEC                        EQU                          0x1038
-_v6502_BPL                        EQU                          0x103f
-_v6502_BMI                        EQU                          0x1042
-_v6502_BVC                        EQU                          0x1045
-_v6502_BVS                        EQU                          0x1049
-_v6502_BCC                        EQU                          0x104d
-_v6502_BCS                        EQU                          0x1051
-_v6502_BNE                        EQU                          0x1055
-_v6502_BEQ                        EQU                          0x1058
-_v6502_INX                        EQU                          0x106c
-_v6502_DEX                        EQU                          0x1077
-_v6502_INY                        EQU                          0x107b
-_v6502_DEY                        EQU                          0x107f
-_v6502_NOP                        EQU                          0x1083
-_v6502_AND                        EQU                          0x1085
-_v6502_ORA                        EQU                          0x1089
-_v6502_EOR                        EQU                          0x108c
-_v6502_JMP1                       EQU                          0x1096
-_v6502_JMP2                       EQU                          0x1098
-_v6502_JSR                        EQU                          0x109a
-_v6502_INC                        EQU                          0x10b7
-_v6502_LDA                        EQU                          0x10b9
-_v6502_LDX                        EQU                          0x10bb
-_v6502_LDX2                       EQU                          0x10bd
-_v6502_LDY                        EQU                          0x10bf
-_v6502_STA                        EQU                          0x10c1
-_v6502_STX                        EQU                          0x10c3
-_v6502_STX2                       EQU                          0x10c5
-_v6502_STY                        EQU                          0x10c7
-_v6502_TAX                        EQU                          0x10c9
-_v6502_TAY                        EQU                          0x10cb
-_v6502_TXA                        EQU                          0x10cd
-_v6502_TYA                        EQU                          0x10cf
-_v6502_CLV                        EQU                          0x10d1
-_v6502_RTI                        EQU                          0x10d3
-_v6502_ROR                        EQU                          0x10d5
-_v6502_LSR                        EQU                          0x10d7
-_v6502_PHA                        EQU                          0x10d9
-_v6502_CLI                        EQU                          0x10db
-_v6502_RTS                        EQU                          0x10dd
-_v6502_PLA                        EQU                          0x10df
-_v6502_SEI                        EQU                          0x10e1
-_v6502_TXS                        EQU                          0x10e3
-_v6502_TSX                        EQU                          0x10e5
-_v6502_CPY                        EQU                          0x10e7
-_v6502_CMP                        EQU                          0x10e9
-_v6502_DEC                        EQU                          0x10eb
-_v6502_CLD                        EQU                          0x10ed
-_v6502_CPX                        EQU                          0x10ef
-_v6502_ASL                        EQU                          0x10f1
-_v6502_PHP                        EQU                          0x10f3
-_v6502_BIT                        EQU                          0x10f5
-_v6502_ROL                        EQU                          0x10f7
-_v6502_PLP                        EQU                          0x10f9
-_v6502_SED                        EQU                          0x10fb
-_v6502_ILL                        EQU                          0x10fd
-_v6502_BRK                        EQU                          0x10fd
-_v6502_RESUME                     EQU                          0x10ff
-_v6502_dec                        EQU                          0x1105
-_v6502_inc                        EQU                          0x110e
-_v6502_lda                        EQU                          0x1118
-_v6502_ldx                        EQU                          0x1122
-_v6502_ldy                        EQU                          0x1126
-_v6502_ldx2                       EQU                          0x112a
-_v6502_sta                        EQU                          0x1134
-_v6502_stx                        EQU                          0x113a
-_v6502_stx2                       EQU                          0x1140
-_v6502_sty                        EQU                          0x1148
-_v6502_tax                        EQU                          0x114d
-_v6502_tsx                        EQU                          0x1154
-_v6502_txs                        EQU                          0x115e
-_v6502_tay                        EQU                          0x1162
-_v6502_txa                        EQU                          0x1165
-_v6502_tya                        EQU                          0x1168
-_v6502_cli                        EQU                          0x116b
-_v6502_sei                        EQU                          0x116e
-_v6502_cld                        EQU                          0x1171
-_v6502_sed                        EQU                          0x1174
-_v6502_clv                        EQU                          0x1176
-_v6502_bit                        EQU                          0x117d
-_v6502_rts                        EQU                          0x118f
-_v6502_php                        EQU                          0x11a2
-_v6502_cpx                        EQU                          0x11bb
-_v6502_cpy                        EQU                          0x11bd
-_v6502_cmp                        EQU                          0x11be
-_v6502_plp                        EQU                          0x11d4
-_v6502_rti                        EQU                          0x11e4
-_sys_Exec                         EQU                          0x124b
-_sys_VDrawBits                    EQU                          0x128f
-_sys_ResetWaveforms               EQU                          0x12ae
-_sys_ShuffleNoise                 EQU                          0x12cf
-_sys_LoadBytes                    EQU                          0x12e9
+_sys_ExpanderControl              EQU                          0x0d00
+_sys_SpiExchangeBytes             EQU                          0x0d15
+_sys_Exec                         EQU                          0x0e4f
+_sys_VDrawBits                    EQU                          0x0e93
+_sys_ResetWaveforms               EQU                          0x0eb2
+_sys_ShuffleNoise                 EQU                          0x0ed3
+_SYS_Multiply_u8_vX_48            EQU                          0x1300
+_SYS_OffsetVTableY_vX_36          EQU                          0x1340
+_SYS_FillByteSeq_vX_36            EQU                          0x1360
+_SYS_AddInt8Array_vX_40           EQU                          0x1380
+_SYS_ParityFill_vX_44             EQU                          0x13a0
+_sys_Multiply_s16                 EQU                          0x1900
+_sys_Divide_s16                   EQU                          0x1938
+_sys_DrawLine                     EQU                          0x197f
+_SYS_LoaderNextByteIn_32          EQU                          0x1a00
+_SYS_LoaderProcessInput_64        EQU                          0x1a16
+_SYS_LoaderPayloadCopy_34         EQU                          0x1a54
+_SYS_Unpack_56                    EQU                          0x1a68
+_sys_SortUint8Array               EQU                          0x1a8f
+_sys_SortViaIndices               EQU                          0x1ad6
+_sys_MemCopyByte                  EQU                          0x1b00
+_sys_MemCopyWord                  EQU                          0x1b18
+_sys_MemCopyDWord                 EQU                          0x1b37
+_sys_SortSprites                  EQU                          0x1c00
+_sys_DrawVLine                    EQU                          0x1d00
+_sys_SpritePattern                EQU                          0x1e00
+_sys_DrawBullet                   EQU                          0x1e76
+_sys_CmpByteBounds                EQU                          0x1f00
+_sys_Reset_88                     EQU                          0x1f41
+_sys_Divide_u168                  EQU                          0x1f61
+_SYS_ConvertVTableX_66            EQU                          0x1fc0
+_SYS_DrawSprite_vX_140            EQU                          0x2000
+_SYS_ScrollVTableY_vX_38          EQU                          0x20c0
+_SYS_RestoreSprite_vX_124         EQU                          0x2100
+_SYS_ScrollRectVTableY_vX_44      EQU                          0x21a0
+_PREFX3_PAGE                      EQU                          0x21ff
+_STB2                             EQU                          0x2211
+_STW2                             EQU                          0x2214
+_XCHGB                            EQU                          0x2217
+_MOVW                             EQU                          0x2219
+_ADDWI                            EQU                          0x221b
+_SUBWI                            EQU                          0x221d
+_ANDWI                            EQU                          0x221f
+_ORWI                             EQU                          0x2221
+_XORWI                            EQU                          0x2223
+_FNT6X8                           EQU                          0x2225
+_FNT4X6                           EQU                          0x2228
+_CONDII                           EQU                          0x222a
+_CONDBB                           EQU                          0x222c
+_CONDIB                           EQU                          0x222f
+_CONDBI                           EQU                          0x2232
+_XCHGW                            EQU                          0x2234
+_OSCPX                            EQU                          0x2237
+_SWAPB                            EQU                          0x2239
+_SWAPW                            EQU                          0x223c
+_NEEKA                            EQU                          0x223f
+_NOKEA                            EQU                          0x2242
+_ADDVL                            EQU                          0x2245
+_SUBVL                            EQU                          0x2248
+_ANDVL                            EQU                          0x224b
+_ORVL                             EQU                          0x224e
+_XORVL                            EQU                          0x2251
+_JEQL                             EQU                          0x2254
+_JNEL                             EQU                          0x2257
+_JLTL                             EQU                          0x225a
+_JGTL                             EQU                          0x225d
+_JLEL                             EQU                          0x2260
+_JGEL                             EQU                          0x2263
+_ANDBI                            EQU                          0x2266
+_ORBI                             EQU                          0x2269
+_XORBI                            EQU                          0x226c
+_ANDBK                            EQU                          0x226f
+_ORBK                             EQU                          0x2272
+_XORBK                            EQU                          0x2275
+_JMPI                             EQU                          0x2278
+_SUBIW                            EQU                          0x227b
+_VADDBW                           EQU                          0x227d
+_VSUBBW                           EQU                          0x2280
+_VADDBL                           EQU                          0x2283
+_VSUBBL                           EQU                          0x2286
+_CMPII                            EQU                          0x2289
+_IMIDI                            EQU                          0x228b
+_PMIDI                            EQU                          0x228e
+_PMIDIV                           EQU                          0x2291
+_MERGE4                           EQU                          0x2294
+_MOVL                             EQU                          0x22cd
+_MOVF                             EQU                          0x22d0
+_NROL                             EQU                          0x22d3
+_NROR                             EQU                          0x22d6
+_PREFX2_PAGE                      EQU                          0x22ff
+_LSLN                             EQU                          0x2311
+_SEXT                             EQU                          0x2313
+_NOTW                             EQU                          0x2315
+_NEGW                             EQU                          0x2317
+_ANDBA                            EQU                          0x2319
+_ORBA                             EQU                          0x231c
+_XORBA                            EQU                          0x231f
+_FREQM                            EQU                          0x2322
+_FREQA                            EQU                          0x2324
+_FREQI                            EQU                          0x2327
+_VOLM                             EQU                          0x2329
+_VOLA                             EQU                          0x232c
+_MODA                             EQU                          0x232f
+_MODI                             EQU                          0x2332
+_SMPCPY                           EQU                          0x2334
+_CMPHS                            EQU                          0x2337
+_CMPHU                            EQU                          0x233a
+_LEEKA                            EQU                          0x233d
+_LOKEA                            EQU                          0x233f
+_FEEKA                            EQU                          0x2341
+_FOKEA                            EQU                          0x2343
+_MEEKA                            EQU                          0x2345
+_MOKEA                            EQU                          0x2347
+_LSRVL                            EQU                          0x2349
+_LSLVL                            EQU                          0x234c
+_INCL                             EQU                          0x234f
+_DECL                             EQU                          0x2352
+_STPX                             EQU                          0x2354
+_PRN4X6                           EQU                          0x2357
+_VTBL                             EQU                          0x2359
+_OSCZ                             EQU                          0x235c
+_LSL8                             EQU                          0x235e
+_ADDBA                            EQU                          0x2360
+_SUBBA                            EQU                          0x2362
+_NOTB                             EQU                          0x2364
+_ABSVW                            EQU                          0x2367
+_INCW                             EQU                          0x236a
+_DECW                             EQU                          0x236c
+_WAITVV                           EQU                          0x236e
+_LSRV                             EQU                          0x2373
+_DEEKRI                           EQU                          0x2375
+_SCRLH                            EQU                          0x2377
+_MULB                             EQU                          0x237a
+_NCOPY                            EQU                          0x23cd
+_STLU                             EQU                          0x23d0
+_STLS                             EQU                          0x23d3
+_NOTL                             EQU                          0x23d5
+_NEGL                             EQU                          0x23d8
+_PREFX1_PAGE                      EQU                          0x23ff
+_NOTE                             EQU                          0x2411
+_MIDI                             EQU                          0x2414
+_XLA                              EQU                          0x2417
+_ADDLP                            EQU                          0x241a
+_SUBLP                            EQU                          0x241d
+_ANDLP                            EQU                          0x2420
+_ORLP                             EQU                          0x2423
+_XORLP                            EQU                          0x2426
+_CMPLPU                           EQU                          0x2429
+_CMPLPS                           EQU                          0x242c
+_RANDW                            EQU                          0x242f
+_LDPX                             EQU                          0x2431
+_ABSW                             EQU                          0x2433
+_SGNW                             EQU                          0x2436
+_MULB3                            EQU                          0x2439
+_MULB5                            EQU                          0x243b
+_MULB6                            EQU                          0x243d
+_MULB7                            EQU                          0x243f
+_MULB8                            EQU                          0x2441
+_MULB9                            EQU                          0x2443
+_MULB10                           EQU                          0x2445
+_WAITVB                           EQU                          0x2447
+_MULW3                            EQU                          0x2449
+_MULW5                            EQU                          0x244b
+_MULW6                            EQU                          0x244d
+_MULW7                            EQU                          0x244f
+_MULW8                            EQU                          0x2451
+_MULW9                            EQU                          0x2453
+_MULW10                           EQU                          0x2455
+_sys_CopyMemory                   EQU                          0x2f00
+_sys_CopyMemoryExt                EQU                          0x2f78
+_sys_ScanMemory                   EQU                          0x3000
+_sys_ScanMemoryExt                EQU                          0x3027
+_SYS_LoadSerialIn_vX_56           EQU                          0x3080
+_prn4x6Return                     EQU                          0x3585
+_font4x6_32up                     EQU                          0x4e00
+_font4x6_115up                    EQU                          0x4f00
 _memSize                          EQU                          0x0001
 _entropy0                         EQU                          0x0006
 _entropy1                         EQU                          0x0007
-_entropy2                         EQU                          0x0008
 _videoY                           EQU                          0x0009
 _frameCount                       EQU                          0x000e
 _serialRaw                        EQU                          0x000f
@@ -341,9 +446,6 @@ _sysArgs5                         EQU                          0x0029
 _sysArgs6                         EQU                          0x002a
 _sysArgs7                         EQU                          0x002b
 _soundTimer                       EQU                          0x002c
-_ledTimer                         EQU                          0x002d
-_ledState_v2                      EQU                          0x002e
-_ledTempo                         EQU                          0x002f
 _userVars                         EQU                          0x0030
 _videoTable                       EQU                          0x0100
 _vIRQ_v5                          EQU                          0x01f6
@@ -358,13 +460,7 @@ _keyL                             EQU                          0x00fc
 _keyH                             EQU                          0x00fd
 _oscL                             EQU                          0x00fe
 _oscH                             EQU                          0x00ff
-_maxTicks                         EQU                          0x000e
-_v6502_PC                         EQU                          0x001a
-_v6502_PCL                        EQU                          0x001a
-_v6502_PCH                        EQU                          0x001b
-_v6502_A                          EQU                          0x0018
-_v6502_X                          EQU                          0x002a
-_v6502_Y                          EQU                          0x002b
+_maxTicks                         EQU                          0x000f
 _qqVgaWidth                       EQU                          0x00a0
 _qqVgaHeight                      EQU                          0x0078
 _buttonRight                      EQU                          0x0001
@@ -375,14 +471,13 @@ _buttonStart                      EQU                          0x0010
 _buttonSelect                     EQU                          0x0020
 _buttonB                          EQU                          0x0040
 _buttonA                          EQU                          0x0080
-_Reset                            EQU                          0x130e
-_Invader                          EQU                          0x1365
-_Main                             EQU                          0x3d0e
-_sys_ReadRomDir                   EQU                          0x4600
+_Reset                            EQU                          0x500e
+_SoundFx64k_ROMvX0                EQU                          0x5065
+_Main                             EQU                          0xcaad
+_sys_ReadRomDir                   EQU                          0xd27a
 _NUM_FIRE_PARTICLES               EQU                          0x0040
 _FIRE_ORG_X                       EQU                          0x0050
 _FIRE_ORG_Y                       EQU                          0x0044
-_FIRE_WIDTH                       EQU                          0x0050
 
 ; Global Variables
 
@@ -449,15 +544,12 @@ _entryPoint_                      InitialiseOn
                                   ANDI                         0xfd
                                   ST                           miscFlags                    ; tscroll off
 
-                                  LDI                          0
+                                  LDI                          17
                                   ST                           fgbgColour
                                   LDI                          2
                                   STW                          graphicsMode
                                   ScanlineMode                 
-                                  ClearVertBlinds                                           ; set BG_COLOUR, 0 : mode 2 : cls
-
-                                  LDWI                         3072
-                                  STW                          fgbgColour                   ; set FGBG_COLOUR, &h0C00
+                                  ClearVertBlinds                                           ; set BG_COLOUR, &h11 : mode 2 : cls
 
                                   CALLI                        _initFire                    ; call initFire
 
@@ -561,11 +653,11 @@ _respawnParticle                  PUSH                                          
 _updateFire                       PUSH                                                      ; proc updateFire
 
                                   LDI                          0
-                                  CALLI                        _page_0x0300
-_page_0x0300                      STW                          _updateFire_i                ; for i=0 to NUM_FIRE_PARTICLES-1
+                                  STW                          _updateFire_i                ; for i=0 to NUM_FIRE_PARTICLES-1
 
 _next_0x0002                      LDWI                         0x7fc0
-                                  ADDW                         _updateFire_i
+                                  CALLI                        _page_0x0300
+_page_0x0300                      ADDW                         _updateFire_i
                                   PEEK                         
                                   STW                          _updateFire_lf               ; lf = life(i)
 
@@ -604,8 +696,8 @@ _next_0x0002                      LDWI                         0x7fc0
                                   ANDI                         0x80
                                   JumpFalse                    _endif_0x0004 1              ; if peek(pxy) AND &h80
 
-                                  LDI                          0
-                                  POKE                         _updateFire_pxy              ; poke pxy, 0
+                                  LD                           fgbgColour
+                                  POKE                         _updateFire_pxy              ; poke pxy, get("BG_COLOUR")
 
 _endif_0x0004                     LDWI                         0x0580
                                   ADDW                         _updateFire_i
@@ -674,8 +766,11 @@ _endif_0x0007                     LD                           _updateFire_xp + 
 
                                   LDW                          _updateFire_pxy
                                   PEEK                         
+                                  STW                          0xe8
+                                  LD                           fgbgColour
+                                  XORW                         0xe8
                                   CALLI                        convertEqOp
-                                  JumpFalse                    _endif_0x0008 5              ; if peek(pxy) = 0
+                                  JumpFalse                    _endif_0x0008 5              ; if peek(pxy) = get("BG_COLOUR")
 
                                   LDW                          _updateFire_lf
                                   ANDI                         0x3f
@@ -692,9 +787,9 @@ _endif_0x0008                     LDWI                         0x0680
                                   LDW                          _updateFire_xp
                                   DOKE                         memAddr
                                   LDWI                         0x0600
-                                  ADDW                         _updateFire_i
                                   CALLI                        _page_0x0400
 _page_0x0400                      ADDW                         _updateFire_i
+                                  ADDW                         _updateFire_i
                                   STW                          memAddr
                                   LDW                          _updateFire_yp
                                   DOKE                         memAddr                      ; xPos(i) = xp : yPos(i) = yp
