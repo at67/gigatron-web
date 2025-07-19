@@ -28,7 +28,8 @@ function createMenuConfigFromApps(apps) {
         gridOffsetX: 8,
         gridOffsetY: 1,
         gridMaxCols: apps.length,
-        defaultColor: '#00CC00'
+        defaultColor: '#00CC00',
+        decorativeText: []
     };
 
     menuConfig.items.sort((a, b) => a.text.localeCompare(b.text, undefined, {

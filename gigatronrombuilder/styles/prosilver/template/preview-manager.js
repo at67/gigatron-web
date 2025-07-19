@@ -5,6 +5,7 @@ function setupMainmenuPreview() {
     const canvas = document.getElementById('preview-canvas');
     const ctx = canvas.getContext('2d');
     let selectedItemIndex = -1;
+    let selectedType = 'menu'; // 'menu' or 'decorative'
     let isDragging = false;
     let dragOffset = { x: 0, y: 0 };
     let columnColors = ['#00ff00', '#ffff00', '#ffa500', '#00ffff', '#ff69b4', '#ff0000', '#0000ff', '#800080', '#ffc0cb', '#90ee90'];
@@ -94,10 +95,15 @@ function setupMainmenuPreview() {
 
             renderPreview();
         });
+
         // Color controls
         document.getElementById('selected-color').addEventListener('change', (e) => {
             if (selectedItemIndex >= 0) {
-                menuConfig.items[selectedItemIndex].color = e.target.value;
+                if (selectedType === 'menu') {
+                    menuConfig.items[selectedItemIndex].color = e.target.value;
+                } else {
+                    menuConfig.decorativeText[selectedItemIndex].color = e.target.value;
+                }
                 renderPreview();
             }
         });
@@ -112,28 +118,16 @@ function setupMainmenuPreview() {
             renderPreview();
         });
 
+        // Add decorative text
         document.getElementById('add-text-btn').addEventListener('click', () => {
             const defaultColor = document.getElementById('default-color').value;
 
-            menuConfig.items.push({
-                text: 'New Item',
+            menuConfig.decorativeText.push({
+                text: 'New Text',
                 x: 80,
                 y: 60,
                 color: defaultColor,
-                visible: true,
-                app: null
-            });
-
-            // Re-sort and reposition using existing function logic
-            menuConfig.items.sort((a, b) => a.text.localeCompare(b.text, undefined, {
-                numeric: true,
-                sensitivity: 'base'
-            }));
-
-            // Recalculate positions after sorting
-            menuConfig.items.forEach((item, i) => {
-                item.x = i < 8 ? 2 : 80;
-                item.y = 32 + (i % 8) * 8;
+                visible: true
             });
 
             renderPreview();
@@ -177,22 +171,26 @@ function setupMainmenuPreview() {
         // Properties panel
         document.getElementById('selected-text').addEventListener('input', (e) => {
             if (selectedItemIndex >= 0) {
-                menuConfig.items[selectedItemIndex].text = e.target.value;
+                if (selectedType === 'menu') {
+                    menuConfig.items[selectedItemIndex].text = e.target.value;
 
-                // Re-sort after text change
-                menuConfig.items.sort((a, b) => a.text.localeCompare(b.text, undefined, {
-                    numeric: true,
-                    sensitivity: 'base'
-                }));
+                    // Re-sort after text change
+                    menuConfig.items.sort((a, b) => a.text.localeCompare(b.text, undefined, {
+                        numeric: true,
+                        sensitivity: 'base'
+                    }));
 
-                // Recalculate grid offset X if auto grid enabled
-                if (autoGridEnabled) {
-                  const maxTextLength = Math.max(...menuConfig.items.map(item => item.text.length));
-                  const gapX = maxTextLength + 1;
-                  document.getElementById('grid-offset-x').value = gapX;
-                  document.getElementById('grid-offset-x-value').textContent = gapX;
-                  menuConfig.gridOffsetX = gapX;
-                  regenerateAutoGrid();
+                    // Recalculate grid offset X if auto grid enabled
+                    if (autoGridEnabled) {
+                        const maxTextLength = Math.max(...menuConfig.items.map(item => item.text.length));
+                        const gapX = maxTextLength + 1;
+                        document.getElementById('grid-offset-x').value = gapX;
+                        document.getElementById('grid-offset-x-value').textContent = gapX;
+                        menuConfig.gridOffsetX = gapX;
+                        regenerateAutoGrid();
+                    }
+                } else {
+                    menuConfig.decorativeText[selectedItemIndex].text = e.target.value;
                 }
 
                 renderPreview();
@@ -201,27 +199,39 @@ function setupMainmenuPreview() {
 
         document.getElementById('selected-x').addEventListener('input', (e) => {
             if (selectedItemIndex >= 0) {
-                menuConfig.items[selectedItemIndex].x = parseInt(e.target.value);
+                if (selectedType === 'menu') {
+                    menuConfig.items[selectedItemIndex].x = parseInt(e.target.value);
+                } else {
+                    menuConfig.decorativeText[selectedItemIndex].x = parseInt(e.target.value);
+                }
                 renderPreview();
             }
         });
 
         document.getElementById('selected-y').addEventListener('input', (e) => {
             if (selectedItemIndex >= 0) {
-                menuConfig.items[selectedItemIndex].y = parseInt(e.target.value);
+                if (selectedType === 'menu') {
+                    menuConfig.items[selectedItemIndex].y = parseInt(e.target.value);
+                } else {
+                    menuConfig.decorativeText[selectedItemIndex].y = parseInt(e.target.value);
+                }
                 renderPreview();
             }
         });
 
         document.getElementById('delete-item-btn').addEventListener('click', () => {
             if (selectedItemIndex >= 0) {
-                menuConfig.items.splice(selectedItemIndex, 1);
+                if (selectedType === 'menu') {
+                    menuConfig.items.splice(selectedItemIndex, 1);
 
-                // Re-sort after deletion
-                menuConfig.items.sort((a, b) => a.text.localeCompare(b.text, undefined, {
-                    numeric: true,
-                    sensitivity: 'base'
-                }));
+                    // Re-sort after deletion
+                    menuConfig.items.sort((a, b) => a.text.localeCompare(b.text, undefined, {
+                        numeric: true,
+                        sensitivity: 'base'
+                    }));
+                } else {
+                    menuConfig.decorativeText.splice(selectedItemIndex, 1);
+                }
 
                 selectedItemIndex = -1;
                 hidePropertiesPanel();
@@ -270,11 +280,11 @@ function setupMainmenuPreview() {
                 }
             }
 
-            // Grid/column mode - menu text selection and dragging
+            // Text selection and dragging
             selectedItemIndex = findItemAtPosition(x, y);
             if (selectedItemIndex >= 0) {
                 isDragging = true;
-                const item = menuConfig.items[selectedItemIndex];
+                const item = selectedType === 'menu' ? menuConfig.items[selectedItemIndex] : menuConfig.decorativeText[selectedItemIndex];
                 dragOffset.x = x - item.x;
                 dragOffset.y = y - item.y;
                 showPropertiesPanel(selectedItemIndex);
@@ -300,16 +310,22 @@ function setupMainmenuPreview() {
                 newX = Math.round((newX - gridOffsX) / gridSizeX) * gridSizeX + gridOffsX;
                 newY = Math.round((newY - gridOffsY) / gridSizeY) * gridSizeY + gridOffsY;
 
-                if (autoGridEnabled && window.navigationMode === 'grid') {
-                    // Auto grid mode: move anchor and regenerate entire grid
-                    gridAnchorIndex = selectedItemIndex;
-                    menuConfig.items[selectedItemIndex].x = newX;
-                    menuConfig.items[selectedItemIndex].y = newY;
-                    regenerateAutoGrid();
+                if (selectedType === 'menu') {
+                    if (autoGridEnabled && window.navigationMode === 'grid') {
+                        // Auto grid mode: move anchor and regenerate entire grid
+                        gridAnchorIndex = selectedItemIndex;
+                        menuConfig.items[selectedItemIndex].x = newX;
+                        menuConfig.items[selectedItemIndex].y = newY;
+                        regenerateAutoGrid();
+                    } else {
+                        // Normal mode: move just this item
+                        menuConfig.items[selectedItemIndex].x = newX;
+                        menuConfig.items[selectedItemIndex].y = newY;
+                    }
                 } else {
-                    // Normal mode: move just this item
-                    menuConfig.items[selectedItemIndex].x = newX;
-                    menuConfig.items[selectedItemIndex].y = newY;
+                    // Decorative text: always move just this item (ignore auto-grid)
+                    menuConfig.decorativeText[selectedItemIndex].x = newX;
+                    menuConfig.decorativeText[selectedItemIndex].y = newY;
                 }
 
                 updatePropertiesPanel();
@@ -347,11 +363,26 @@ function setupMainmenuPreview() {
     }
 
     function findItemAtPosition(x, y) {
+        // Check decorative text first (they're drawn on top)
+        if (menuConfig.decorativeText) {
+            for (let i = menuConfig.decorativeText.length - 1; i >= 0; i--) {
+                const item = menuConfig.decorativeText[i];
+                if (item.visible &&
+                    x >= item.x && x < item.x + item.text.length * 6 &&
+                    y >= item.y && y < item.y + 8) {
+                    selectedType = 'decorative';
+                    return i;
+                }
+            }
+        }
+
+        // Check menu items
         for (let i = menuConfig.items.length - 1; i >= 0; i--) {
             const item = menuConfig.items[i];
             if (item.visible &&
                 x >= item.x && x < item.x + item.text.length * 6 &&
                 y >= item.y && y < item.y + 8) {
+                selectedType = 'menu';
                 return i;
             }
         }
@@ -360,7 +391,7 @@ function setupMainmenuPreview() {
 
     function showPropertiesPanel(index) {
         const panel = document.getElementById('properties-panel');
-        const item = menuConfig.items[index];
+        const item = selectedType === 'menu' ? menuConfig.items[index] : menuConfig.decorativeText[index];
 
         document.getElementById('selected-text').value = item.text;
         document.getElementById('selected-x').value = item.x;
@@ -377,7 +408,7 @@ function setupMainmenuPreview() {
 
     function updatePropertiesPanel() {
         if (selectedItemIndex >= 0) {
-            const item = menuConfig.items[selectedItemIndex];
+            const item = selectedType === 'menu' ? menuConfig.items[selectedItemIndex] : menuConfig.decorativeText[selectedItemIndex];
             document.getElementById('selected-x').value = item.x;
             document.getElementById('selected-y').value = item.y;
         }
@@ -436,7 +467,7 @@ function setupMainmenuPreview() {
         menuConfig.items.forEach((item, index) => {
             if (item.visible) {
                 // Highlight selected item (scale coordinates by 3)
-                if (index === selectedItemIndex) {
+                if (selectedType === 'menu' && index === selectedItemIndex) {
                     ctx.fillStyle = '#333333';
                     const selectionWidth = item.text.length * 6 * 3; // Each char is 6 logical pixels = 18 screen pixels
                     ctx.fillRect((item.x - 1) * 3, (item.y - 1) * 3, selectionWidth + 6, 30);
@@ -450,6 +481,27 @@ function setupMainmenuPreview() {
                 }
             }
         });
+
+        // Draw decorative text items
+        if (menuConfig.decorativeText) {
+            menuConfig.decorativeText.forEach((item, index) => {
+                if (item.visible) {
+                    // Highlight selected decorative text (scale coordinates by 3)
+                    if (selectedType === 'decorative' && index === selectedItemIndex) {
+                        ctx.fillStyle = '#333333';
+                        const selectionWidth = item.text.length * 6 * 3;
+                        ctx.fillRect((item.x - 1) * 3, (item.y - 1) * 3, selectionWidth + 6, 30);
+                    }
+
+                    // Draw decorative text (scale coordinates by 3)
+                    const gigatronColor = hexToGigatronColor(item.color);
+                    ctx.fillStyle = gigatronColorToHex(gigatronColor);
+                    for (let i = 0; i < item.text.length; i++) {
+                        ctx.fillText(item.text[i], (item.x + i * 6) * 3, item.y * 3);
+                    }
+                }
+            });
+        }
 
         drawGrid();
 
@@ -621,11 +673,11 @@ function createMainmenuPreviewHTML(apps) {
                         <input type="checkbox" id="auto-grid" ${autoGridEnabled ? 'checked' : ''} style="margin: 0;"> Auto Grid
                     </label>
                     <div style="display: flex; gap: 8px; align-items: center;">
-                        <input type="range" id="grid-size-x" min="1" max="${menuConfig.gridMaxCols || 1}" value="${menuConfig.gridCols || 1}" style="width: 30px; height: 6px; background: #555; outline: none; appearance: none; border-radius: 2px;">
+                        <input type="range" id="grid-size-x" min="1" max="${menuConfig.gridMaxCols || 1}" value="${menuConfig.gridCols || 1}" style="width: 50px; height: 12px; background: #333; outline: none; appearance: none; border-radius: 2px; border: 1px solid #666;">
                         <span id="grid-size-x-value" style="font-size: 12px; width: 15px;">${menuConfig.gridCols || 1}</span>
-                        <input type="range" id="grid-offset-x" min="1" max="20" value="${menuConfig.gridOffsetX || 8}" style="width: 30px; height: 6px; background: #555; outline: none; appearance: none; border-radius: 2px;">
+                        <input type="range" id="grid-offset-x" min="1" max="20" value="${menuConfig.gridOffsetX || 8}" style="width: 50px; height: 12px; background: #333; outline: none; appearance: none; border-radius: 2px; border: 1px solid #666;">
                         <span id="grid-offset-x-value" style="font-size: 12px; width: 15px;">${menuConfig.gridOffsetX || 8}</span>
-                        <input type="range" id="grid-offset-y" min="1" max="5" value="${menuConfig.gridOffsetY || 1}" style="width: 30px; height: 6px; background: #555; outline: none; appearance: none; border-radius: 2px;">
+                        <input type="range" id="grid-offset-y" min="1" max="5" value="${menuConfig.gridOffsetY || 1}" style="width: 50px; height: 12px; background: #333; outline: none; appearance: none; border-radius: 2px; border: 1px solid #666;">
                         <span id="grid-offset-y-value" style="font-size: 12px; width: 15px;">${menuConfig.gridOffsetY || 1}</span>
                     </div>
                     <button id="reset-btn" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; margin-left: auto; padding-right: 6px;">
