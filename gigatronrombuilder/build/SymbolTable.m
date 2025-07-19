@@ -406,5 +406,4 @@ const slots = &h5125
 const tinymaze = &h60f5
 const bowling = &h6468
 const Eliza = &h7688
-const Main = &h9859
-const sys_ReadRomDir = &ha212
+const sys_ReadRomDir = &h984b

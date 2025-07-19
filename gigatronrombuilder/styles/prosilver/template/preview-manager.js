@@ -156,15 +156,16 @@ function setupMainmenuPreview() {
             document.getElementById('grid-offset-y-value').style.display = display;
 
             if (enabled) {
-                // Restore saved values instead of recalculating
-                document.getElementById('grid-size-x').value = menuConfig.gridCols;
-                document.getElementById('grid-size-x-value').textContent = menuConfig.gridCols;
-                document.getElementById('grid-offset-x').value = menuConfig.gridOffsetX;
-                document.getElementById('grid-offset-x-value').textContent = menuConfig.gridOffsetX;
-                document.getElementById('grid-offset-y').value = menuConfig.gridOffsetY;
-                document.getElementById('grid-offset-y-value').textContent = menuConfig.gridOffsetY;
-                document.getElementById('grid-size-x').max = menuConfig.gridMaxCols;
-                regenerateAutoGrid();
+              // Restore saved values for grid size and Y offset
+              document.getElementById('grid-size-x').value = menuConfig.gridCols;
+              document.getElementById('grid-size-x-value').textContent = menuConfig.gridCols;
+              document.getElementById('grid-offset-y').value = menuConfig.gridOffsetY;
+              document.getElementById('grid-offset-y-value').textContent = menuConfig.gridOffsetY;
+              document.getElementById('grid-size-x').max = menuConfig.gridMaxCols;
+
+              // Always calculate grid X gap
+              calculateGridXGap();
+              regenerateAutoGrid();
             }
         });
 
@@ -174,20 +175,18 @@ function setupMainmenuPreview() {
                 if (selectedType === 'menu') {
                     menuConfig.items[selectedItemIndex].text = e.target.value;
 
-                    // Re-sort after text change
-                    menuConfig.items.sort((a, b) => a.text.localeCompare(b.text, undefined, {
-                        numeric: true,
-                        sensitivity: 'base'
-                    }));
+                    // Re-sort after text change (but not if any text is empty)
+                    if (!menuConfig.items.some(item => item.text === '')) {
+                      menuConfig.items.sort((a, b) => a.text.localeCompare(b.text, undefined, {
+                          numeric: true,
+                          sensitivity: 'base'
+                      }));
+                    }
 
                     // Recalculate grid offset X if auto grid enabled
                     if (autoGridEnabled) {
-                        const maxTextLength = Math.max(...menuConfig.items.map(item => item.text.length));
-                        const gapX = maxTextLength + 1;
-                        document.getElementById('grid-offset-x').value = gapX;
-                        document.getElementById('grid-offset-x-value').textContent = gapX;
-                        menuConfig.gridOffsetX = gapX;
-                        regenerateAutoGrid();
+                      calculateGridXGap();
+                      regenerateAutoGrid();
                     }
                 } else {
                     menuConfig.decorativeText[selectedItemIndex].text = e.target.value;
@@ -368,7 +367,7 @@ function setupMainmenuPreview() {
             for (let i = menuConfig.decorativeText.length - 1; i >= 0; i--) {
                 const item = menuConfig.decorativeText[i];
                 if (item.visible &&
-                    x >= item.x && x < item.x + item.text.length * 6 &&
+                    x >= item.x && x < item.x + Math.max(1, item.text.length) * 6 &&
                     y >= item.y && y < item.y + 8) {
                     selectedType = 'decorative';
                     return i;
@@ -380,7 +379,7 @@ function setupMainmenuPreview() {
         for (let i = menuConfig.items.length - 1; i >= 0; i--) {
             const item = menuConfig.items[i];
             if (item.visible &&
-                x >= item.x && x < item.x + item.text.length * 6 &&
+                x >= item.x && x < item.x + Math.max(1, item.text.length) * 6 &&
                 y >= item.y && y < item.y + 8) {
                 selectedType = 'menu';
                 return i;
@@ -415,29 +414,47 @@ function setupMainmenuPreview() {
     }
 
     function reset() {
+        // Reset all menuConfig properties to defaults
+        menuConfig.backgroundColor = '#000000';
+        menuConfig.defaultColor = '#00CC00';
+        menuConfig.cursor.x = 2;
+        menuConfig.cursor.y = 52;
+        menuConfig.cursor.color = '#CCCC00';
+        menuConfig.cursor.backgroundColor = '#000000';
+        menuConfig.gridCols = 1;
+        menuConfig.gridOffsetY = 1;
+        menuConfig.enableMusic = true;
+        menuConfig.enableBeep = true;
+        menuConfig.visualEffect = 'none';
+        menuConfig.cursorStyle = 'outline';
+        menuConfig.decorativeText = [];
+
+        // Reset item colors and text to original filenames
+        menuConfig.items.forEach(item => {
+            item.color = menuConfig.defaultColor;
+            if (item.app && item.app.filename) {
+                item.text = item.app.alias || item.app.filename.replace(/\.(gt1|gcl)$/i, '');
+            }
+        });
+
+        // Update UI elements
+        document.getElementById('default-color').value = menuConfig.defaultColor;
+        document.getElementById('bg-color').value = menuConfig.backgroundColor;
+        document.getElementById('cursor-color').value = menuConfig.cursor.color;
+        document.getElementById('cursor-bg-color').value = menuConfig.cursor.backgroundColor;
+        document.getElementById('enable-music').checked = menuConfig.enableMusic;
+        document.getElementById('enable-beep').checked = menuConfig.enableBeep;
+        document.getElementById('visual-effects').value = menuConfig.visualEffect;
+        document.getElementById('cursor-style').value = menuConfig.cursorStyle;
+
+        hidePropertiesPanel();
+        clearAllNavigationData();
+
         if (window.navigationMode === 'grid') {
-            // Reset item colors and color pickers to defaults
-            const defaultColor = '#00CC00';
-            menuConfig.items.forEach(item => {
-                item.color = defaultColor;
-            });
-            menuConfig.defaultColor = defaultColor;
-            menuConfig.backgroundColor = '#000000';
-            menuConfig.cursor.color = '#CCCC00';
-
-            // Update the color picker inputs
-            document.getElementById('default-color').value = defaultColor;
-            document.getElementById('bg-color').value = '#000000';
-            document.getElementById('cursor-color').value = '#CCCC00';
-
-            menuConfig.cursor.x = 2;
-            menuConfig.cursor.y = 52;
-            hidePropertiesPanel();
-            clearAllNavigationData();
-
             // Set auto grid defaults and regenerate if enabled
             if (autoGridEnabled) {
                 setAutoGridDefaults();
+                calculateGridXGap();
                 regenerateAutoGrid();
             } else {
                 // Reset to original 2-column layout
@@ -469,7 +486,7 @@ function setupMainmenuPreview() {
                 // Highlight selected item (scale coordinates by 3)
                 if (selectedType === 'menu' && index === selectedItemIndex) {
                     ctx.fillStyle = '#333333';
-                    const selectionWidth = item.text.length * 6 * 3; // Each char is 6 logical pixels = 18 screen pixels
+                    const selectionWidth = Math.max(1, item.text.length) * 6 * 3; // Each char is 6 logical pixels = 18 screen pixels
                     ctx.fillRect((item.x - 1) * 3, (item.y - 1) * 3, selectionWidth + 6, 30);
                 }
 
@@ -489,7 +506,7 @@ function setupMainmenuPreview() {
                     // Highlight selected decorative text (scale coordinates by 3)
                     if (selectedType === 'decorative' && index === selectedItemIndex) {
                         ctx.fillStyle = '#333333';
-                        const selectionWidth = item.text.length * 6 * 3;
+                        const selectionWidth = Math.max(1, item.text.length) * 6 * 3;
                         ctx.fillRect((item.x - 1) * 3, (item.y - 1) * 3, selectionWidth + 6, 30);
                     }
 
@@ -665,9 +682,10 @@ function createMainmenuPreviewHTML(apps) {
                     </label>
                     <label>
                         Cursor: <input type="color" id="cursor-color" value="${menuConfig.cursor.color}" style="width: 30px; height: 20px;">
+                        <input type="color" id="cursor-bg-color" value="${menuConfig.cursor.backgroundColor}" style="width: 30px; height: 20px; display: none;">
                     </label>
                     <button id="add-text-btn" style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; margin-left: auto;">
-                        Add Text
+                        Add
                     </button>
                     <label style="display: flex; align-items: center; gap: 5px;">
                         <input type="checkbox" id="auto-grid" ${autoGridEnabled ? 'checked' : ''} style="margin: 0;"> Auto Grid
@@ -712,7 +730,7 @@ function createPhase2LayoutHTML(apps, romVersion) {
                             <input type="radio" name="navigation" value="grid" checked style="margin-right: 8px;"> Grid
                         </label>
                         <label style="display: block; margin-bottom: 5px; color: #e0e0e0; cursor: pointer;">
-                            <input type="radio" name="navigation" value="column" style="margin-right: 8px;"> Column
+                            <input type="radio" name="navigation" value="column" style="margin-right: 8px;"> Sequence
                         </label>
                     </div>
 
@@ -720,10 +738,10 @@ function createPhase2LayoutHTML(apps, romVersion) {
                     <div style="margin-bottom: 10px;">
                         <h4 style="margin: 0 0 4px 0; color: #e0e0e0; font-size: 14px;">Audio:</h4>
                         <label style="display: block; margin-bottom: 5px; color: #e0e0e0; cursor: pointer;">
-                            <input type="checkbox" id="enable-music" checked style="margin-right: 8px;"> Music
+                            <input type="checkbox" id="enable-music" ${menuConfig.enableMusic ? 'checked' : ''} style="margin-right: 8px;"> Music
                         </label>
                         <label style="display: block; margin-bottom: 5px; color: #e0e0e0; cursor: pointer;">
-                            <input type="checkbox" id="enable-beep" checked style="margin-right: 8px;"> Beeps
+                            <input type="checkbox" id="enable-beep" ${menuConfig.enableBeep ? 'checked' : ''} style="margin-right: 8px;"> Beeps
                         </label>
                     </div>
 
@@ -731,13 +749,13 @@ function createPhase2LayoutHTML(apps, romVersion) {
                     <div style="margin-bottom: 8px;">
                         <h4 style="margin: 0 0 8px 0; color: #e0e0e0; font-size: 14px;">Visual Effects:</h4>
                         <select id="visual-effects" style="width: 96%; padding: 2px; background: #1a1a1a; color: #e0e0e0; border: 1px solid #444; border-radius: 2px; font-size: 12px;">
-                            <option value="none" selected>None</option>
-                            <option value="stars">Stars</option>
-                            <option value="fireworks">Fireworks</option>
-                            <option value="starfield">Starfield</option>
-                            <option value="fountain">Fountain</option>
-                            <option value="fire">Fire</option>
-                            <option value="snow">Snow</option>
+                            <option value="none" ${menuConfig.visualEffect === 'none' ? 'selected' : ''}>None</option>
+                            <option value="stars" ${menuConfig.visualEffect === 'stars' ? 'selected' : ''}>Stars</option>
+                            <option value="fireworks" ${menuConfig.visualEffect === 'fireworks' ? 'selected' : ''}>Fireworks</option>
+                            <option value="starfield" ${menuConfig.visualEffect === 'starfield' ? 'selected' : ''}>Starfield</option>
+                            <option value="fountain" ${menuConfig.visualEffect === 'fountain' ? 'selected' : ''}>Fountain</option>
+                            <option value="fire" ${menuConfig.visualEffect === 'fire' ? 'selected' : ''}>Fire</option>
+                            <option value="snow" ${menuConfig.visualEffect === 'snow' ? 'selected' : ''}>Snow</option>
                         </select>
                     </div>
 
@@ -745,12 +763,11 @@ function createPhase2LayoutHTML(apps, romVersion) {
                     <div style="margin-bottom: 10px;">
                         <h4 style="margin: 0 0 4px 0; color: #e0e0e0; font-size: 14px;">Cursor Style:</h4>
                         <select id="cursor-style" style="width: 96%; padding: 2px; background: #1a1a1a; color: #e0e0e0; border: 1px solid #444; border-radius: 2px; font-size: 12px;">
-                            <option value="outline">Outline</option>
-                            <option value="underline">Underline</option>
-                            <option value="inverse">Inverse</option>
-                            <option value="highlight">Highlight</option>
-                            <option value="blink">Blink</option>
-                            <option value="bright">Bright</option>
+                            <option value="outline" ${menuConfig.cursorStyle === 'outline' ? 'selected' : ''}>Outline</option>
+                            <option value="underline" ${menuConfig.cursorStyle === 'underline' ? 'selected' : ''}>Underline</option>
+                            <option value="flashing" ${menuConfig.cursorStyle === 'flashing' ? 'selected' : ''}>Flashing</option>
+                            <option value="inverse" ${menuConfig.cursorStyle === 'inverse' ? 'selected' : ''}>Inverse</option>
+                            <option value="selected" ${menuConfig.cursorStyle === 'selected' ? 'selected' : ''}>Selected</option>
                         </select>
                     </div>
                 </div>
@@ -775,10 +792,6 @@ function initializeMainmenuPreview() {
 }
 
 function setupModuleEventListeners() {
-    const musicCheckbox = document.getElementById('enable-music');
-    const beepCheckbox = document.getElementById('enable-beep');
-    const graphicsRadios = document.querySelectorAll('input[name="graphics"]');
-
     // Navigation mode handling
     const navigationRadios = document.querySelectorAll('input[name="navigation"]');
     navigationRadios.forEach(radio => {
@@ -792,4 +805,42 @@ function setupModuleEventListeners() {
             }
         });
     });
+
+    // Cursor style handling
+    const cursorStyleSelect = document.getElementById('cursor-style');
+    const cursorBgColorPicker = document.getElementById('cursor-bg-color');
+
+    cursorStyleSelect.addEventListener('change', function() {
+        menuConfig.cursorStyle = this.value;
+        if (this.value === 'selected') {
+            cursorBgColorPicker.style.display = 'inline-block';
+        } else {
+            cursorBgColorPicker.style.display = 'none';
+        }
+    });
+
+    // Music checkbox handling
+    const musicCheckbox = document.getElementById('enable-music');
+    musicCheckbox.addEventListener('change', function() {
+        menuConfig.enableMusic = this.checked;
+    });
+
+    // Beep checkbox handling
+    const beepCheckbox = document.getElementById('enable-beep');
+    beepCheckbox.addEventListener('change', function() {
+        menuConfig.enableBeep = this.checked;
+    });
+
+    // Visual effects dropdown handling
+    const visualEffectsSelect = document.getElementById('visual-effects');
+    visualEffectsSelect.addEventListener('change', function() {
+        menuConfig.visualEffect = this.value;
+    });
+
+    // Set initial cursor background color picker visibility
+    if (menuConfig.cursorStyle === 'selected') {
+        cursorBgColorPicker.style.display = 'inline-block';
+    } else {
+        cursorBgColorPicker.style.display = 'none';
+    }
 }

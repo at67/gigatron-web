@@ -30,7 +30,7 @@ function setAutoGridDefaults() {
     const numItems = menuConfig.items.length;
     const maxTextLength = Math.max(...menuConfig.items.map(item => item.text.length));
 
-    const optimalCols = Math.ceil(Math.sqrt(numItems));
+    const optimalCols = Math.floor(Math.sqrt(numItems));
 
     document.getElementById('grid-size-x').max = numItems;
     document.getElementById('grid-size-x').value = optimalCols;
@@ -69,4 +69,15 @@ function setupAutoGridEventHandlers() {
         menuConfig.gridOffsetY = parseInt(e.target.value);
         regenerateAutoGrid();
     });
+}
+
+function calculateGridXGap() {
+    if (!autoGridEnabled) return;
+
+    const maxTextLength = Math.max(...menuConfig.items.map(item => item.text.length));
+    const gapX = maxTextLength + 1;
+
+    document.getElementById('grid-offset-x').value = gapX;
+    document.getElementById('grid-offset-x-value').textContent = gapX;
+    menuConfig.gridOffsetX = gapX;
 }

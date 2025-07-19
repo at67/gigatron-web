@@ -6,9 +6,9 @@ function generateGbasSource(romVersion) {
 }
 
 function getUISettings() {
-    const musicEnabled = document.getElementById('enable-music')?.checked || false;
-    const beepEnabled = document.getElementById('enable-beep')?.checked || false;
-    const visualFx = document.getElementById('visual-effects')?.value || 'none';
+    const musicEnabled = menuConfig.enableMusic;
+    const beepEnabled = menuConfig.enableBeep;
+    const visualFx = menuConfig.visualEffect;
 
     return {
         enableMusic: musicEnabled,
@@ -24,12 +24,7 @@ function generateMainmenuCode(romVersion, options = {}) {
         visualEffect = VisualEffect.NONE,
     } = options;
 
-    const numApps = menuConfig.items.length;
-    const symbols = menuConfig.items.map(item => item.app ? (item.alias || item.app.filename.replace(/\.(gt1|gcl)$/i, '')) : item.text);
-
-    const gridCols = parseInt(document.getElementById('grid-size-x')?.value || 1);
-    const gridRows = Math.ceil(menuConfig.items.length / gridCols);
-    let code = generateBaseCode(numApps, symbols, romVersion, getMenuConfiguration(), gridCols, gridRows);
+    let code = generateBaseCode(romVersion);
     code += generateMainLoop(enableMusic, visualEffect);
 
     // Give branching optimisation in gtBASIC best chance of succeeding
@@ -63,7 +58,7 @@ function generateMenuArrays(menuConfig) {
         const item = menuConfig.items[i];
         menuX.push(item.x);
         menuY.push(item.y);
-        menuText.push(item.text);
+        menuText.push(item.text === '' ? ' ' : item.text); // empty menu text becomes a space
         symbols.push(item.app || { alias: null, filename: item.text + '.gt1' });
 
         const gigatronColor = hexToGigatronColor(item.color);
@@ -81,7 +76,7 @@ function generateMenuArrays(menuConfig) {
             const item = menuConfig.decorativeText[i];
             decoX.push(item.x);
             decoY.push(item.y);
-            decoText.push(item.text);
+            decoText.push(item.text === '' ? ' ' : item.text); // empty deco text becomes a space
 
             const gigatronColor = hexToGigatronColor(item.color);
             decoColours.push(gigatronColor);
@@ -150,11 +145,12 @@ function gigatronColorToHex(gigatronColor) {
     return '#' + rHex + gHex + bHex;
 }
 
-function getCursorStyle() {
-    return document.getElementById('cursor-style')?.value || 'outline';
-}
+function generateBaseCode(romVersion) {
+    const numApps = menuConfig.items.length;
+    const symbols = menuConfig.items.map(item => item.app ? (item.alias || item.app.filename.replace(/\.(gt1|gcl)$/i, '')) : item.text);
+    const gridCols = menuConfig.gridCols;
+    const gridRows = Math.ceil(menuConfig.items.length / gridCols);
 
-function generateBaseCode(numApps, symbols, romVersion, menuConfig, gridCols, gridRows) {
     const positions = generateMenuArrays(menuConfig);
 
     let code = '_runtimePath_ "../tools/runtime"\n' +
@@ -279,23 +275,46 @@ function generateEventHandlers(enableBeep) {
 }
 
 function generateCursorFunctions() {
-    return 'proc drawCursor, index, active\n' +
-           '    local x, y, w\n' +
-           '    if index &&= -1 then return\n' +
-           '    x = menuX(index)\n' +
-           '    y = menuY(index)\n' +
-           '    w = peek(addr(menuText$(index)))\n' +
-           '    w = (w LSL 2) + w + w\n' +
-           '    if active\n' +
-           '        set FG_COLOUR, ' + hexToGigatronColor(menuConfig.cursor.color) + ' OR &h40\n' +
-           '    else\n' +
-           '        set FG_COLOUR, ' + hexToGigatronColor(menuConfig.backgroundColor) + '\n' +
-           '    endif\n' +
-           '    line x-1, y-1, x+w, y-1\n' +
-           '    line x-1, y+8, x+w, y+8\n' +
-           '    line x-1, y-1, x-1, y+8\n' +
-           '    line x+w, y-1, x+w, y+8\n' +
-           'endproc\n';
+    const cursorStyle = menuConfig.cursorStyle;
+
+    let code = 'proc drawCursor, index, active\n' +
+               '    local x, y, w\n' +
+               '    if index &&= -1 then return\n' +
+               '    x = menuX(index)\n' +
+               '    y = menuY(index)\n' +
+               '    w = peek(addr(menuText$(index)))\n' +
+               '    w = (w LSL 2) + w + w\n';
+
+    // Paste cursor implementation body directly
+    code += getCursorImplementation(cursorStyle);
+
+    code += 'endproc\n';
+
+    return code;
+}
+
+function getCursorImplementation(cursorStyle) {
+    switch (cursorStyle) {
+        case 'underline':
+            return '    if active\n' +
+                   '        set FG_COLOUR, ' + hexToGigatronColor(menuConfig.cursor.color) + '\n' +
+                   '    else\n' +
+                   '        set FG_COLOUR, get("BG_COLOUR")\n' +
+                   '    endif\n' +
+                   '    line x, y+8, x+w-1, y+8\n';
+
+        case 'outline':
+        default:
+            return '    if active\n' +
+                   '        set FG_COLOUR, ' + hexToGigatronColor(menuConfig.cursor.color) + ' OR &h40\n' +
+                   '    else\n' +
+                   '        set FG_COLOUR, get("BG_COLOUR")\n' +
+                   '    endif\n' +
+                   '    line x-1, y-1, x+w, y-1\n' +
+                   '    line x-1, y+8, x+w, y+8\n' +
+                   '    line x-1, y-1, x-1, y+8\n' +
+                   '    line x+w, y-1, x+w, y+8\n';
+    }
 }
 
 function generateMusicModule() {

@@ -2,35 +2,35 @@
 
 var menuConfig = {
     items: [],
-    cursor: { x: 2, y: 52, color: '#CCCC00' },
+    cursor: { x: 2, y: 52, color: '#CCCC00', backgroundColor: '#000000' },
     backgroundColor: '#000000',
     gridCols: 1,
     gridOffsetX: 8,
     gridOffsetY: 1,
-    gridMaxCols: 1
+    gridMaxCols: 1,
+    defaultColor: '#00CC00',
+    decorativeText: [],
+    enableMusic: true,
+    enableBeep: true,
+    visualEffect: 'none',
+    cursorStyle: 'outline'
 };
 
 function createMenuConfigFromApps(apps) {
     const defaultColor = '#00CC00';
 
-    menuConfig = {
-        items: apps.map((app, i) => ({
-            text: app.alias || app.filename.replace(/\.(gt1|gcl)$/i, ''),
-            x: i < 8 ? 2 : 80,
-            y: 32 + (i % 8) * 8,
-            color: defaultColor,
-            visible: true,
-            app: app
-        })),
-        cursor: { x: 2, y: 52, color: '#CCCC00' },
-        backgroundColor: '#000000',
-        gridCols: 1,
-        gridOffsetX: 8,
-        gridOffsetY: 1,
-        gridMaxCols: apps.length,
-        defaultColor: '#00CC00',
-        decorativeText: []
-    };
+    // Only update properties that depend on the apps
+    menuConfig.items = apps.map((app, i) => ({
+        text: app.alias || app.filename.replace(/\.(gt1|gcl)$/i, ''),
+        x: i < 8 ? 2 : 80,
+        y: 32 + (i % 8) * 8,
+        color: menuConfig.defaultColor,
+        visible: true,
+        app: app
+    }));
+
+    // Update max columns based on number of apps
+    menuConfig.gridMaxCols = apps.length;
 
     menuConfig.items.sort((a, b) => a.text.localeCompare(b.text, undefined, {
         numeric: true,
