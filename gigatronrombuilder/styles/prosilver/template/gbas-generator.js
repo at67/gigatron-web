@@ -70,12 +70,35 @@ function generateMenuArrays(menuConfig) {
         menuColours.push(gigatronColor);
     }
 
+    // Generate decorative text arrays
+    const decoX = [];
+    const decoY = [];
+    const decoText = [];
+    const decoColours = [];
+
+    if (menuConfig.decorativeText) {
+        for (let i = 0; i < menuConfig.decorativeText.length; i++) {
+            const item = menuConfig.decorativeText[i];
+            decoX.push(item.x);
+            decoY.push(item.y);
+            decoText.push(item.text);
+
+            const gigatronColor = hexToGigatronColor(item.color);
+            decoColours.push(gigatronColor);
+        }
+    }
+
     return {
         menuX: 'dim menuX%(NUM_APPS-1) = ' + menuX.join(', '),
         menuY: 'dim menuY%(NUM_APPS-1) = ' + menuY.join(', '),
         menuColours: 'dim textColors%(NUM_APPS-1) = ' + menuColours.join(', '),
         menuText: menuText,
-        symbols: symbols
+        symbols: symbols,
+        decoX: decoX.length > 0 ? 'dim decoX%(NUM_DECO-1) = ' + decoX.join(', ') : '',
+        decoY: decoY.length > 0 ? 'dim decoY%(NUM_DECO-1) = ' + decoY.join(', ') : '',
+        decoColours: decoColours.length > 0 ? 'dim decoColors%(NUM_DECO-1) = ' + decoColours.join(', ') : '',
+        decoText: decoText,
+        decoLength: decoText.length
     };
 }
 
@@ -134,28 +157,52 @@ function getCursorStyle() {
 function generateBaseCode(numApps, symbols, romVersion, menuConfig, gridCols, gridRows) {
     const positions = generateMenuArrays(menuConfig);
 
-    return '_runtimePath_ "../tools/runtime"\n' +
-           '_runtimeStart_ &h7FFE\n' +
-           '_codeRomType_ ROM' + romVersion + '\n' +
-           '_enableRomCheck_ Off\n' +
-           '_stringWorkArea_ &h77A0\n' +
-           'module "SymbolTable.m"\n' +
-           'const NUM_APPS = ' + numApps + '\n' +
-           'const dim menuText$(NUM_APPS-1) = ' + positions.menuText.map(name => '"' + name + '"').join(', ') + '\n' +
-           'dim symbols(NUM_APPS-1) = ' + symbols.join(', ') + '\n' +
-           'const maxX = ' + gridCols + '\n' +
-           'const maxY = ' + gridRows + '\n' +
-           'x = 0 : y = x\n' +
-           'curIndex = -1 : newIndex = 0\n' +
-           positions.menuX + '\n' +
-           positions.menuY + '\n' +
-           positions.menuColours + '\n' +
-           'tscroll off\n' +
-           'tclip on\n' +
-           'set BG_COLOUR, ' + hexToGigatronColor(menuConfig.backgroundColor) + ' : mode 2 : cls\n' +
-           'for i = 0 to NUM_APPS - 1\n' +
-           '    set FG_COLOUR, textColors(i) : at menuX(i), menuY(i) : print menuText$(i)\n' +
-           'next i\n';
+    let code = '_runtimePath_ "../tools/runtime"\n' +
+               '_runtimeStart_ &h7FFE\n' +
+               '_codeRomType_ ROM' + romVersion + '\n' +
+               '_enableRomCheck_ Off\n' +
+               '_stringWorkArea_ &h77A0\n' +
+               'module "SymbolTable.m"\n' +
+               'const NUM_APPS = ' + numApps + '\n';
+
+    if (positions.decoLength > 0) {
+        code += 'const NUM_DECO = ' + positions.decoLength + '\n';
+        code += 'const dim decoText$(NUM_DECO-1) = ' + positions.decoText.map(name => '"' + name + '"').join(', ') + '\n';
+    }
+
+    code += 'const dim menuText$(NUM_APPS-1) = ' + positions.menuText.map(name => '"' + name + '"').join(', ') + '\n' +
+            'dim symbols(NUM_APPS-1) = ' + symbols.join(', ') + '\n' +
+            'const maxX = ' + gridCols + '\n' +
+            'const maxY = ' + gridRows + '\n' +
+            'x = 0 : y = x\n' +
+            'curIndex = -1 : newIndex = 0\n' +
+            positions.menuX + '\n' +
+            positions.menuY + '\n' +
+            positions.menuColours + '\n';
+
+    if (positions.decoLength > 0) {
+        code += positions.decoX + '\n' +
+                positions.decoY + '\n' +
+                positions.decoColours + '\n';
+    }
+
+    code += 'tscroll off\n' +
+            'tclip on\n' +
+            'set BG_COLOUR, ' + hexToGigatronColor(menuConfig.backgroundColor) + ' : mode 2 : cls\n';
+
+    // Draw decorative text first (underneath menu text)
+    if (positions.decoLength > 0) {
+        code += 'for i = 0 to NUM_DECO - 1\n' +
+                '    set FG_COLOUR, decoColors(i) : at decoX(i), decoY(i) : print decoText$(i)\n' +
+                'next i\n';
+    }
+
+    // Draw menu text on top
+    code += 'for i = 0 to NUM_APPS - 1\n' +
+             '    set FG_COLOUR, textColors(i) : at menuX(i), menuY(i) : print menuText$(i)\n' +
+             'next i\n';
+
+    return code;
 }
 
 function generateMainLoop(enableMusic, visualEffect) {

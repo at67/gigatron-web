@@ -58,7 +58,8 @@ function getMenuConfiguration() {
             y: menuConfig.cursor.y,
             color: menuConfig.cursor.color
         },
-        backgroundColor: menuConfig.backgroundColor
+        backgroundColor: menuConfig.backgroundColor,
+        decorativeText: menuConfig.decorativeText || []
     };
 }
 

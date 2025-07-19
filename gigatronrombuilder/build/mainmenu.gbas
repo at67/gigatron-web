@@ -4,25 +4,33 @@ _codeRomType_ ROMvX0
 _enableRomCheck_ Off
 _stringWorkArea_ &h77A0
 module "SymbolTable.m"
-const NUM_APPS = 12
-const dim menuText$(NUM_APPS-1) = "arecibo", "Circles", "Fill", "Flood", "Fonts", "Lines", "Pixels", "Points", "Polys", "Rects", "RectsF", "vblank"
-dim symbols(NUM_APPS-1) = arecibo_ROMvX0, CirclesF_ROMvX0, Fill_ROMvX0, Flood_ROMvX0, Fonts_ROMvX0, Lines_ROMvX0, Pixels_ROMvX0, Points_ROMvX0, Polys_ROMvX0, Rects_ROMvX0, RectsF_ROMvX0, vblank_ROMvX0
+const NUM_APPS = 5
+const NUM_DECO = 1
+const dim decoText$(NUM_DECO-1) = "Gigatron TTL ROMvX0"
+const dim menuText$(NUM_APPS-1) = "bowling", "Eliza", "Hello", "slots", "tinymaze"
+dim symbols(NUM_APPS-1) = bowling, Eliza, HelloWorld, slots, tinymaze
 const maxX = 2
-const maxY = 6
+const maxY = 3
 x = 0 : y = x
 curIndex = -1 : newIndex = 0
-dim menuX%(NUM_APPS-1) = 38, 86, 38, 86, 38, 86, 38, 86, 38, 86, 38, 86
-dim menuY%(NUM_APPS-1) = 16, 16, 32, 32, 48, 48, 64, 64, 80, 80, 96, 96
-dim textColors%(NUM_APPS-1) = &h1F, &h35, &h17, &h36, &h1D, &h37, &h3D, &h17, &h2C, &h39, &h0B, &h1E
+dim menuX%(NUM_APPS-1) = 38, 92, 38, 92, 38
+dim menuY%(NUM_APPS-1) = 48, 48, 64, 64, 80
+dim textColors%(NUM_APPS-1) = &h0C, &h0C, &h0C, &h0C, &h0C
+dim decoX%(NUM_DECO-1) = 20
+dim decoY%(NUM_DECO-1) = 8
+dim decoColors%(NUM_DECO-1) = &h0F
 tscroll off
 tclip on
 set BG_COLOUR, &h00 : mode 2 : cls
+for i = 0 to NUM_DECO - 1
+    set FG_COLOUR, decoColors(i) : at decoX(i), decoY(i) : print decoText$(i)
+next i
 for i = 0 to NUM_APPS - 1
     set FG_COLOUR, textColors(i) : at menuX(i), menuY(i) : print menuText$(i)
 next i
 play music, &h75a0, 3
 gosub resetAudio
-call initSnow
+call initFire
 repeat
    gosub get("BUTTON_STATE")
    if newIndex <> curIndex
@@ -30,82 +38,74 @@ repeat
       call drawCursor, newIndex, 1
       curIndex = newIndex
    endif
-call updateSnow
+call updateFire
 forever
-const NUM_SNOW_PARTICLES = 80
-const SNOW_ORG_X = 80
-const SNOW_ORG_Y = 60 + 8
-const GROUND_Y = 59
-dim snowColour%(3) = &h95, &hAA, &hBF, &hBF
-dim jitterOffset(7) = 0, 1, 0, -1, 0, -1, 0, 1
-dim xPos(NUM_SNOW_PARTICLES-1) = 0
-dim yPos(NUM_SNOW_PARTICLES-1) = 0
-dim yVel(NUM_SNOW_PARTICLES-1) = 0
-dim colour%(NUM_SNOW_PARTICLES-1) = 0
-proc initSnow
+const NUM_FIRE_PARTICLES = 64
+const FIRE_ORG_X = 80
+const FIRE_ORG_Y = 60 + 8
+dim xPos(NUM_FIRE_PARTICLES-1) = 0
+dim yPos(NUM_FIRE_PARTICLES-1) = 0
+dim xVel(NUM_FIRE_PARTICLES-1) = 0
+dim yVel(NUM_FIRE_PARTICLES-1) = 0
+dim life%(NUM_FIRE_PARTICLES-1) = 0
+dim colour%(63) = {&h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95,
+                   &h86, &h86, &h86, &h86, &h86, &h86, &h86, &h86, &h86, &h86, &h86, &h86, &h86, &h86, &h86,
+                   &h83, &h83, &h83, &h83, &h83, &h83, &h83, &h83, &h83, &h83,
+                   &h87, &h87, &h87, &h87, &h87, &h87, &h87, &h87, &h87, &h87,
+                   &h8F, &h8F, &h8F, &h8F, &h8B, &h8B, &h8B, &h8B, &h8B, &h8B, &h8B, &h8B, &h8B}
+proc initFire
     local i
-    snowTimer = -1
-    for i=0 &to NUM_SNOW_PARTICLES-1
-        call respawnSnowParticle, i
+    for i=0 to NUM_FIRE_PARTICLES-1
+        call respawnFireParticle, i
     next i
 endproc
-proc updateSnow
-    local i, xp, yp, yv, col, pxy
-    for i=0 to NUM_SNOW_PARTICLES-1
-        xp = xPos(i)
-        yp = yPos(i)
-        yv = yVel(i)
-        rxy.lo = xp.hi + SNOW_ORG_X
-        rxy.hi = yp.hi + SNOW_ORG_Y
-        if peek(rxy) AND &h80
-            poke rxy, get("BG_COLOUR")
-        endif
-        yp = yp + yv
-        if yp > 59*256
-            if rxy.hi < 127 then poke rxy, &h3F
-            call respawnSnowParticle, i
-            goto nextParticle
-        endif
-        pxy.hi = yp.hi + SNOW_ORG_Y
-        if pxy.hi > rxy.hi
-            xp.hi = xp.hi + jitterOffset(rxy.hi AND 7)
-        endif
-        pxy.lo = xp.hi + SNOW_ORG_X
-        pixel = peek(pxy)
-        if (pixel <> get("BG_COLOUR"))
-            if (pixel AND &hC0) = 0
-                if peek(rxy + &h0100) <> get("BG_COLOUR")
-                    poke rxy, &h3F
-                    call respawnSnowParticle, i
-                    goto nextParticle
-                else
-                    xp.hi = xp.hi - jitterOffset(rxy.hi AND 7)
-                    pxy.lo = xp.hi + SNOW_ORG_X
-                endif
+proc respawnFireParticle, i
+    xPos(i).hi = (rnd(0) AND 63) - 32
+    yPos(i).hi = 59
+    xVel(i) = (rnd(0) AND 511) - 256
+    yVel(i) = -((rnd(0) AND 511) + 256)
+    life(i) = (rnd(0) AND 31) + 40
+endproc
+proc updateFire
+    local i, xp, yp, yv, lf, pxy
+    for i=0 to NUM_FIRE_PARTICLES-1
+        lf = life(i)
+        if lf > 0
+            xp = xPos(i)
+            yp = yPos(i)
+            yv = yVel(i)
+            pxy.lo = xp.hi + FIRE_ORG_X
+            pxy.hi = yp.hi + FIRE_ORG_Y
+            if peek(pxy) AND &h80
+                poke pxy, get("BG_COLOUR")
             endif
+            xp = xp + xVel(i)
+            yp = yp + yv
+            yv = yv + 8
+            lf = lf - 1
+            if lf = 0
+                call respawnFireParticle, i
+                goto nextParticle
+            endif
+            if abs(yp) > 59*256
+                call respawnFireParticle, i
+                goto nextParticle
+            endif
+            if abs(xp) > 79*256
+                call respawnFireParticle, i
+                goto nextParticle
+            endif
+            pxy.lo = xp.hi + FIRE_ORG_X
+            pxy.hi = yp.hi + FIRE_ORG_Y
+            if peek(pxy) = get("BG_COLOUR")
+                poke pxy, colour(lf AND 63)
+            endif
+            xPos(i) = xp : yPos(i) = yp
+            yVel(i) = yv
+            life(i) = lf
         endif
-        if abs(xp) > 78*256
-            call respawnSnowParticle, i
-            goto nextParticle
-        endif
-        if (peek(pxy) AND &h40) == 0 then poke pxy, colour(i)
-        xPos(i) = xp : yPos(i) = yp
-        yVel(i) = yv
 nextParticle:
     next i
-    snowTimer = snowTimer + 1
-endproc
-proc respawnSnowParticle, i
-    local y
-    xPos(i).hi = rnd(144) - 72
-    if snowTimer = -1
-        y.hi = -rnd(20) - 39
-    else
-        y.hi = -59
-    endif
-    yPos(i) = y
-    yVel(i) = (rnd(0) AND 127) + 128
-    colour(i) = snowColour(rnd(0) AND 3)
 endproc
 execApp:
     cls
@@ -143,7 +143,7 @@ proc drawCursor, index, active
     w = peek(addr(menuText$(index)))
     w = (w LSL 2) + w + w
     if active
-        set FG_COLOUR, &h3F OR &h40
+        set FG_COLOUR, &h0F OR &h40
     else
         set FG_COLOUR, &h00
     endif
