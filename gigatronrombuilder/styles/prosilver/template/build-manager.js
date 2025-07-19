@@ -1,6 +1,11 @@
 // build-manager.js - Complete build process management
 
 function buildSymbolTable() {
+    // Disable file browser
+    if (window.fileBrowser) {
+        window.fileBrowser.setReadOnly(true);
+    }
+
     const romVersion = document.getElementById('base-rom-select').value;
     const selectedFiles = window.fileBrowser.selectedFiles;
     if (selectedFiles.length === 0) {
@@ -195,6 +200,11 @@ function showBuildResult(success, title, content, buildResponse = null) {
 
 function hideBuildResult() {
     document.getElementById('build-result-modal').style.display = 'none';
+
+    // Re-enable file browser when leaving preview
+    if (window.fileBrowser) {
+        window.fileBrowser.setReadOnly(false);
+    }
 }
 
 function showMainmenuEditor(buildResponse) {

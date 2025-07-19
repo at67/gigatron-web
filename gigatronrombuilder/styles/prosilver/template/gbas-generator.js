@@ -297,7 +297,7 @@ function getCursorImplementation(cursorStyle) {
     switch (cursorStyle) {
         case 'underline':
             return '    if active\n' +
-                   '        set FG_COLOUR, ' + hexToGigatronColor(menuConfig.cursor.color) + '\n' +
+                   '        set FG_COLOUR, ' + hexToGigatronColor(menuConfig.cursor.color) + ' OR &h40\n' +
                    '    else\n' +
                    '        set FG_COLOUR, get("BG_COLOUR")\n' +
                    '    endif\n' +

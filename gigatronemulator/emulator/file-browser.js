@@ -509,5 +509,40 @@ class FileBrowser
             }
         }
     }
+
+    setReadOnly(readOnly)
+    {
+        this.readOnly = readOnly;
+
+        // Disable/enable all checkboxes and radio buttons
+        const inputs = document.querySelectorAll('#file-tree input[type="checkbox"], #file-tree input[type="radio"]');
+        inputs.forEach(input =>
+        {
+            input.disabled = readOnly;
+        });
+
+        // Disable/enable search input
+        const searchInput = document.getElementById('search-input');
+        if(searchInput)
+        {
+            searchInput.disabled = readOnly;
+        }
+
+        // Add visual indication
+        const fileTree = document.getElementById('file-tree');
+        if(fileTree)
+        {
+            if(readOnly)
+            {
+                fileTree.style.opacity = '0.6';
+                fileTree.style.pointerEvents = 'none';
+            }
+            else
+            {
+                fileTree.style.opacity = '1';
+                fileTree.style.pointerEvents = 'auto';
+            }
+        }
+    }
 }
 
