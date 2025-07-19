@@ -303,6 +303,36 @@ function getCursorImplementation(cursorStyle) {
                    '    endif\n' +
                    '    line x, y+8, x+w-1, y+8\n';
 
+        case 'simple':
+            return '    if active\n' +
+                   '        set FG_COLOUR, ' + hexToGigatronColor(menuConfig.cursor.color) + ' OR &h40\n' +
+                   '    else\n' +
+                   '        set FG_COLOUR, get("BG_COLOUR")\n' +
+                   '    endif\n' +
+                   '    rect x-3, y+3, x-2, y+4\n';
+
+        case 'inverse':
+            return '    if active\n' +
+                   '        set BG_COLOUR, textColors(index) OR &h40\n' +
+                   '        set FG_COLOUR, ' + hexToGigatronColor(menuConfig.backgroundColor) + '\n' +
+                   '        at x, y : print menuText$(index)\n' +
+                   '        set BG_COLOUR, ' + hexToGigatronColor(menuConfig.backgroundColor) + '\n' +
+                   '    else\n' +
+                   '        set FG_COLOUR, textColors(index)\n' +
+                   '        at x, y : print menuText$(index)\n' +
+                   '    endif\n';
+
+        case 'selected':
+            return '    if active\n' +
+                   '        set BG_COLOUR, ' + hexToGigatronColor(menuConfig.cursor.backgroundColor) + ' OR &h40\n' +
+                   '        set FG_COLOUR, ' + hexToGigatronColor(menuConfig.cursor.color) + '\n' +
+                   '        at x, y : print menuText$(index)\n' +
+                   '        set BG_COLOUR, ' + hexToGigatronColor(menuConfig.backgroundColor) + '\n' +
+                   '    else\n' +
+                   '        set FG_COLOUR, textColors(index)\n' +
+                   '        at x, y : print menuText$(index)\n' +
+                   '    endif\n';
+
         case 'outline':
         default:
             return '    if active\n' +

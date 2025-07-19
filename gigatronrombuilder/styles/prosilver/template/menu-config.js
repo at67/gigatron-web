@@ -45,24 +45,6 @@ function createMenuConfigFromApps(apps) {
     return menuConfig;
 }
 
-function getMenuConfiguration() {
-    return {
-        items: menuConfig.items.map(item => ({
-            text: item.text,
-            x: item.x,
-            y: item.y,
-            color: item.color
-        })),
-        cursor: {
-            x: menuConfig.cursor.x,
-            y: menuConfig.cursor.y,
-            color: menuConfig.cursor.color
-        },
-        backgroundColor: menuConfig.backgroundColor,
-        decorativeText: menuConfig.decorativeText || []
-    };
-}
-
 function getMenuApps() {
     return window.fileBrowser.selectedFiles.filter(file => {
         const alias = file.alias;

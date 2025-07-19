@@ -80,17 +80,20 @@ function setupMainmenuPreview() {
     function setupControlEvents() {
         // Default color - applies to ALL items
         document.getElementById('default-color').addEventListener('change', (e) => {
-            const newColor = e.target.value;
+            const originalColor = e.target.value;
+            const gigatronColor = hexToGigatronColor(originalColor);
+            const roundedColor = gigatronColorToHex(gigatronColor);
+            e.target.value = roundedColor;
+            menuConfig.defaultColor = roundedColor;
 
             // Apply to all existing items
             menuConfig.items.forEach(item => {
-                item.color = newColor;
+                item.color = roundedColor;
             });
-            menuConfig.defaultColor = newColor;
 
             // Update selected item color picker if item is selected
             if (selectedItemIndex >= 0) {
-                document.getElementById('selected-color').value = newColor;
+                document.getElementById('selected-color').value = roundedColor;
             }
 
             renderPreview();
@@ -99,22 +102,44 @@ function setupMainmenuPreview() {
         // Color controls
         document.getElementById('selected-color').addEventListener('change', (e) => {
             if (selectedItemIndex >= 0) {
+                const originalColor = e.target.value;
+                const gigatronColor = hexToGigatronColor(originalColor);
+                const roundedColor = gigatronColorToHex(gigatronColor);
+                e.target.value = roundedColor;
+
                 if (selectedType === 'menu') {
-                    menuConfig.items[selectedItemIndex].color = e.target.value;
+                    menuConfig.items[selectedItemIndex].color = roundedColor;
                 } else {
-                    menuConfig.decorativeText[selectedItemIndex].color = e.target.value;
+                    menuConfig.decorativeText[selectedItemIndex].color = roundedColor;
                 }
                 renderPreview();
             }
         });
 
         document.getElementById('bg-color').addEventListener('change', (e) => {
-            menuConfig.backgroundColor = e.target.value;
+            const originalColor = e.target.value;
+            const gigatronColor = hexToGigatronColor(originalColor);
+            const roundedColor = gigatronColorToHex(gigatronColor);
+            e.target.value = roundedColor;
+            menuConfig.backgroundColor = roundedColor;
             renderPreview();
         });
 
         document.getElementById('cursor-color').addEventListener('change', (e) => {
-            menuConfig.cursor.color = e.target.value;
+            const originalColor = e.target.value;
+            const gigatronColor = hexToGigatronColor(originalColor);
+            const roundedColor = gigatronColorToHex(gigatronColor);
+            e.target.value = roundedColor;
+            menuConfig.cursor.color = roundedColor;
+            renderPreview();
+        });
+
+        document.getElementById('cursor-bg-color').addEventListener('change', (e) => {
+            const originalColor = e.target.value;
+            const gigatronColor = hexToGigatronColor(originalColor);
+            const roundedColor = gigatronColorToHex(gigatronColor);
+            e.target.value = roundedColor;
+            menuConfig.cursor.backgroundColor = roundedColor;
             renderPreview();
         });
 
@@ -765,7 +790,7 @@ function createPhase2LayoutHTML(apps, romVersion) {
                         <select id="cursor-style" style="width: 96%; padding: 2px; background: #1a1a1a; color: #e0e0e0; border: 1px solid #444; border-radius: 2px; font-size: 12px;">
                             <option value="outline" ${menuConfig.cursorStyle === 'outline' ? 'selected' : ''}>Outline</option>
                             <option value="underline" ${menuConfig.cursorStyle === 'underline' ? 'selected' : ''}>Underline</option>
-                            <option value="flashing" ${menuConfig.cursorStyle === 'flashing' ? 'selected' : ''}>Flashing</option>
+                            <option value="simple" ${menuConfig.cursorStyle === 'simple' ? 'selected' : ''}>Simple</option>
                             <option value="inverse" ${menuConfig.cursorStyle === 'inverse' ? 'selected' : ''}>Inverse</option>
                             <option value="selected" ${menuConfig.cursorStyle === 'selected' ? 'selected' : ''}>Selected</option>
                         </select>
