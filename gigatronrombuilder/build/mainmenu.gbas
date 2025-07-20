@@ -1,19 +1,19 @@
 _runtimePath_ "../tools/runtime"
 _runtimeStart_ &h7FFE
-_codeRomType_ ROMvX0
+_codeRomType_ ROMv6
 _enableRomCheck_ Off
 _stringWorkArea_ &h77A0
 module "SymbolTable.m"
-const NUM_APPS = 5
-const dim menuText$(NUM_APPS-1) = "bowling", "Eliza", "HelloWorld", "slots", "tinymaze"
-dim symbols(NUM_APPS-1) = bowling, Eliza, HelloWorld, slots, tinymaze
+const NUM_APPS = 8
+const dim menuText$(NUM_APPS-1) = "Apple-1_v3", "Credits_v4", "gtForth", "gtmine_v1", "Horizon_c_v2", "Invader_vX0", "MainMenu_v6", "PucMon_ROMv5a"
+dim symbols(NUM_APPS-1) = Apple-1_v3, Credits_v4, gtForth, gtmine_v1, Horizon_c_v2, Invader_vX0, MainMenu_v6, PucMon_ROMv5a
 const maxX = 1
-const maxY = 5
+const maxY = 8
 x = 0 : y = x
 curIndex = -1 : newIndex = 0
-dim menuX%(NUM_APPS-1) = 56, 56, 56, 56, 56
-dim menuY%(NUM_APPS-1) = 24, 40, 56, 72, 88
-dim textColors%(NUM_APPS-1) = &h0C, &h0C, &h0C, &h0C, &h0C
+dim menuX%(NUM_APPS-1) = 2, 2, 2, 2, 2, 2, 2, 2
+dim menuY%(NUM_APPS-1) = 32, 48, 56, 64, 72, 80, 88, 40
+dim textColors%(NUM_APPS-1) = &h0C, &h0C, &h0C, &h0C, &h0C, &h0C, &h0C, &h0C
 tscroll off
 tclip on
 set BG_COLOUR, &h00 : mode 2 : cls
@@ -22,7 +22,7 @@ for i = 0 to NUM_APPS - 1
 next i
 play music, &h75a0, 3
 gosub resetAudio
-call initSnow
+call initStars
 repeat
    gosub get("BUTTON_STATE")
    if newIndex <> curIndex
@@ -30,82 +30,64 @@ repeat
       call drawCursor, newIndex, 1
       curIndex = newIndex
    endif
-call updateSnow
+call updateStars
 forever
-const NUM_SNOW_PARTICLES = 80
-const SNOW_ORG_X = 80
-const SNOW_ORG_Y = 60 + 8
-const GROUND_Y = 59
-dim snowColour%(3) = &h95, &hAA, &hBF, &hBF
-dim jitterOffset(7) = 0, 1, 0, -1, 0, -1, 0, 1
-dim xPos(NUM_SNOW_PARTICLES-1) = 0
-dim yPos(NUM_SNOW_PARTICLES-1) = 0
-dim yVel(NUM_SNOW_PARTICLES-1) = 0
-dim colour%(NUM_SNOW_PARTICLES-1) = 0
-proc initSnow
+const NUM_STARS = 48
+const STARS_ORG_X = 80
+const STARS_ORG_Y = 60 + 8
+dim xPos(NUM_STARS-1) = 0
+dim yPos(NUM_STARS-1) = 0
+dim xVel(NUM_STARS-1) = 0
+dim yVel(NUM_STARS-1) = 0
+dim star%(NUM_STARS-1) = 0
+dim colour%(31) = {&h00, &h00, &h00, &h00, &h00, &h00, &h00, &h00, &h95,
+                   &h95, &h95, &h95, &h95, &h95, &h95, &h95, &h95,
+                   &hAA, &hAA, &hAA, &hAA, &hAA, &hAA, &hAA, &hAA,
+                   &hBF, &hBF, &hBF, &hBF, &hBF, &hBF, &hBF}
+proc initStars
     local i
-    snowTimer = -1
-    for i=0 &to NUM_SNOW_PARTICLES-1
-        call respawnSnowParticle, i
+    for i=0 to NUM_STARS-1
+        call newStar, i
     next i
 endproc
-proc updateSnow
-    local i, xp, yp, yv, col, pxy
-    for i=0 to NUM_SNOW_PARTICLES-1
-        xp = xPos(i)
-        yp = yPos(i)
-        yv = yVel(i)
-        rxy.lo = xp.hi + SNOW_ORG_X
-        rxy.hi = yp.hi + SNOW_ORG_Y
-        if peek(rxy) AND &h80
-            poke rxy, get("BG_COLOUR")
+proc newStar, i
+    star(i) = 0
+    xPos(i) = 0
+    yPos(i) = 0
+    repeat
+        xv = (rnd(0) AND 2047) - 1024
+        yv = (rnd(0) AND 2047) - 1024
+    until abs(xv) > 200  OR  abs(yv) > 200
+    xVel(i) = xv : xp = xv
+    yVel(i) = yv : yp = yv
+endproc
+proc updateStars
+    local i, ss, pxy
+    for i=0 to NUM_STARS-1
+        xp = xPos(i) : xv = xVel(i)
+        yp = yPos(i) : yv = yVel(i)
+        pxy.lo = xp.hi + STARS_ORG_X
+        pxy.hi = yp.hi + STARS_ORG_Y
+        if (peek(pxy) AND &h80)
+            poke pxy, get("BG_COLOUR")
         endif
+        xp = xp + xv
         yp = yp + yv
-        if yp > 59*256
-            if rxy.hi < 127 then poke rxy, &h3F
-            call respawnSnowParticle, i
-            goto nextParticle
+        if abs(yp) > 59*256
+            call newStar, i
         endif
-        pxy.hi = yp.hi + SNOW_ORG_Y
-        if pxy.hi > rxy.hi
-            xp.hi = xp.hi + jitterOffset(rxy.hi AND 7)
+        if abs(xp) > 79*256
+            call newStar, i
         endif
-        pxy.lo = xp.hi + SNOW_ORG_X
-        pixel = peek(pxy)
-        if (pixel <> get("BG_COLOUR"))
-            if (pixel AND &hC0) = 0
-                if peek(rxy + &h0100) <> get("BG_COLOUR")
-                    poke rxy, &h3F
-                    call respawnSnowParticle, i
-                    goto nextParticle
-                else
-                    xp.hi = xp.hi - jitterOffset(rxy.hi AND 7)
-                    pxy.lo = xp.hi + SNOW_ORG_X
-                endif
-            endif
+        ss = star(i)
+        pxy.lo = xp.hi + STARS_ORG_X
+        pxy.hi = yp.hi + STARS_ORG_Y
+        if peek(pxy) = get("BG_COLOUR")
+            if ss > 7 then poke pxy, colour(min(ss, 31))
+            star(i) = ss + 1
         endif
-        if abs(xp) > 78*256
-            call respawnSnowParticle, i
-            goto nextParticle
-        endif
-        if (peek(pxy) AND &h40) == 0 then poke pxy, colour(i)
         xPos(i) = xp : yPos(i) = yp
-        yVel(i) = yv
-nextParticle:
     next i
-    snowTimer = snowTimer + 1
-endproc
-proc respawnSnowParticle, i
-    local y
-    xPos(i).hi = rnd(144) - 72
-    if snowTimer = -1
-        y.hi = -rnd(20) - 39
-    else
-        y.hi = -59
-    endif
-    yPos(i) = y
-    yVel(i) = (rnd(0) AND 127) + 128
-    colour(i) = snowColour(rnd(0) AND 3)
 endproc
 execApp:
     cls
@@ -143,14 +125,14 @@ proc drawCursor, index, active
     w = peek(addr(menuText$(index)))
     w = (w LSL 2) + w + w
     if active
-        set BG_COLOUR, &h21 OR &h40
-        set FG_COLOUR, &h1F
-        at x, y : print menuText$(index)
-        set BG_COLOUR, &h00
+        set FG_COLOUR, &h0F OR &h40
     else
-        set FG_COLOUR, textColors(index)
-        at x, y : print menuText$(index)
+        set FG_COLOUR, get("BG_COLOUR")
     endif
+    line x-1, y-1, x+w, y-1
+    line x-1, y+8, x+w, y+8
+    line x-1, y-1, x-1, y+8
+    line x+w, y-1, x+w, y+8
 endproc
 def byte(&h75a0) = &h90, &h3c, &h91, &h40, &h92, &h43, &h93, &h48, &h0c, &h80, &h81, &h82, &h83, &h01, &h90, &h3c,
 def byte         = &h91, &h40, &h92, &h43, &h93, &h48, &h24, &h80, &h81, &h82, &h83, &hd0, &h00, &h00

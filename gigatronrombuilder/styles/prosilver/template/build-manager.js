@@ -60,6 +60,18 @@ function generateManifest(romVersion, selectedFiles) {
     return manifest;
 }
 
+function getRomScriptName(romVersion) {
+    const selectElement = document.getElementById('base-rom-select');
+    const selectedOption = selectElement.options[selectElement.selectedIndex];
+    const displayText = selectedOption.textContent;
+
+    // Convert display text to script filename
+    if (displayText === 'ROMv5a_6502') return 'v5a_6502';
+    if (displayText === 'ROMv6_6502') return 'v6_6502';
+
+    return romVersion;
+}
+
 function sendBuildRequest(romVersion, selectedFiles, manifest, symbolsOnly = false) {
     var xhr = new XMLHttpRequest();
     xhr.open('POST', '/app.php/gigatronrombuilder/build', true);
@@ -89,7 +101,7 @@ function sendBuildRequest(romVersion, selectedFiles, manifest, symbolsOnly = fal
     };
 
     var data = {
-        rom_version: romVersion,
+        rom_version: getRomScriptName(romVersion),
         manifest: manifest,
         selected_files: selectedFiles.map(f => f.path),
         symbols_only: symbolsOnly
@@ -121,7 +133,7 @@ function sendMainmenuBuildRequest(romVersion, selectedFiles, manifest, gbasSourc
     const customRomName = document.getElementById('rom-name')?.value || 'ROMv5a.rom';
 
     var data = {
-        rom_version: romVersion,
+        rom_version: getRomScriptName(romVersion),
         manifest: manifest,
         gbas_source: gbasSource,
         rom_name: customRomName

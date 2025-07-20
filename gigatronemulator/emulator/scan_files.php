@@ -1,4 +1,5 @@
 <?php
+
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
@@ -55,6 +56,12 @@ function scanDirectory($dir, $basePath = '', $extensions = []) {
                     'modified' => filemtime($fullPath),
                     'extension' => $extension
                 ];
+
+                // Add GT1 size
+                if ($extension === 'gt1') {
+                    require_once __DIR__ . '/../../gigatronshowcase/controller/security.php';
+                    $fileInfo['gt1_size'] = calculateGT1Size($fullPath) * 2;
+                }
 
                 // Load metadata if available
                 $metaPath = $fullPath . '.meta';

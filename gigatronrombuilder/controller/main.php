@@ -18,10 +18,15 @@ class main
     public function handle()
     {
         // ADMIN ONLY CHECK
+        //global $phpbb_container;
+        //$auth = $phpbb_container->get('auth');
+        //if (!$auth->acl_get('a_')) {
+        //    throw new \phpbb\exception\http_exception(403, 'NOT_AUTHORISED');
+        //}
+        // REGISTERED MEMBERS ONLY CHECK
         global $phpbb_container;
         $auth = $phpbb_container->get('auth');
-        if (!$auth->acl_get('a_'))
-        {
+        if (!$auth->acl_get('u_')) {
             throw new \phpbb\exception\http_exception(403, 'NOT_AUTHORISED');
         }
 

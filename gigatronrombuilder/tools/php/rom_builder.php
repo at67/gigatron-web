@@ -46,7 +46,8 @@ class RomBuilder {
             if ($custom_manifest !== null) {
                 try {
                     $parsed = parse_ini_string($custom_manifest, true);
-                    $section = "ROM$rom_version";
+                    $base_rom_version = explode('_', $rom_version)[0]; // for 6502 ROM's
+                    $section = "ROM$base_rom_version";
                     $apps_string = $parsed[$section]['apps'];
                     $apps = $this->parseCustomApps($apps_string);
                     $apps = array_merge($apps, $app_overrides);
@@ -156,7 +157,8 @@ class RomBuilder {
         }
 
         $manifest = parse_ini_file($manifest_file, true);
-        $section = "ROM$rom_version";
+        $base_rom_version = explode('_', $rom_version)[0]; // for 6502 ROM's
+        $section = "ROM$base_rom_version";
 
         if (!isset($manifest[$section])) {
             throw new Exception("ROM version $rom_version not found in manifest");

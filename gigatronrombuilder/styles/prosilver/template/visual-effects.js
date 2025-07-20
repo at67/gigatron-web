@@ -71,7 +71,7 @@ function generateStarsModule() {
 }
 
 function generateStarfieldModule() {
-    return 'const NUM_STARS = 64\n' +
+    return 'const NUM_STARS = 48\n' +
            'const STARFIELD_ORG_X = 80\n' +
            'const STARFIELD_ORG_Y = 60 + 8\n' +
            'dim xPos(NUM_STARS-1) = 0\n' +

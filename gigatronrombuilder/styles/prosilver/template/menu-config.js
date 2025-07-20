@@ -1,5 +1,14 @@
 // menu-config.js - Menu configuration, sorting, and positioning
 
+// ROM free space constants (in bytes)
+const ROM_FREE_SPACE = {
+    'v5a': 122880,
+    'v5a_6502': 120832,
+    'v6': 121856,
+    'v6_6502': 119808,
+    'vX0': 96768
+};
+
 var menuConfig = {
     items: [],
     cursor: { x: 2, y: 52, color: '#CCCC00', backgroundColor: '#000000' },
