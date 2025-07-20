@@ -275,3 +275,49 @@ function showPhase2Modal(apps, buildResponse) {
 
     modal.style.display = 'block';
 }
+
+function getFreeSpace() {
+    const romVersion = document.getElementById('base-rom-select').value;
+    const selectedFiles = window.fileBrowser.selectedFiles;
+    const manifest = generateManifest(romVersion, selectedFiles);
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/app.php/gigatronrombuilder/getRomFreeSpace', true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            if (response.success && response.output) {
+                try {
+                    var sizeData = JSON.parse(response.output);
+                    if (sizeData.success && sizeData.bytes_free !== undefined) {
+                        updateFreeSpaceDisplay(sizeData.bytes_free);
+                    }
+                } catch (e) {
+                    console.log('Failed to parse size data:', e);
+                }
+            }
+        }
+    };
+
+    var data = {
+        rom_version: getRomScriptName(romVersion),
+        manifest: manifest
+    };
+
+    xhr.send(JSON.stringify(data));
+}
+
+function updateFreeSpaceDisplay(bytesFree) {
+    const freeSpaceDisplay = document.getElementById('free-space-display');
+
+    // Color code based on remaining space
+    let color = '#00ff00'; // Green
+    if (bytesFree < 16384) color = '#ff0000';        // Red
+    else if (bytesFree < 32768) color = '#ff8000';   // Orange
+    else if (bytesFree < 65536) color = '#ffff00';   // Yellow
+
+    freeSpaceDisplay.style.color = color;
+    freeSpaceDisplay.textContent = `Free Space: ${bytesFree.toLocaleString()} bytes`;
+}

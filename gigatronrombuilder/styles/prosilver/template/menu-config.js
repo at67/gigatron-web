@@ -2,11 +2,11 @@
 
 // ROM free space constants (in bytes)
 const ROM_FREE_SPACE = {
-    'v5a': 122880,
-    'v5a_6502': 120832,
-    'v6': 121856,
-    'v6_6502': 119808,
-    'vX0': 96768
+    'v5a': 123080,
+    'v5a_6502': 121032,
+    'v6': 122056,
+    'v6_6502': 120008,
+    'vX0': 96968
 };
 
 var menuConfig = {

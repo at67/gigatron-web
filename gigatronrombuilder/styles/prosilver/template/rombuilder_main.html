@@ -93,87 +93,76 @@ function removeFile(index) {
 
 // Update status display when files are selected
 function updateStatusDisplay() {
-    const romSelect = document.getElementById('base-rom-select');
-    const romDisplay = document.getElementById('selected-rom-display');
-    const filesList = document.getElementById('selected-files-list');
+   const romSelect = document.getElementById('base-rom-select');
+   const romDisplay = document.getElementById('selected-rom-display');
+   const filesList = document.getElementById('selected-files-list');
 
-    // Update ROM display - preserve ROM prefix
-    romDisplay.textContent = 'ROM' + romSelect.value;
+   // Update ROM display - preserve ROM prefix
+   romDisplay.textContent = 'ROM' + romSelect.value;
 
-    // Update free space display
-    const freeSpaceDisplay = document.getElementById('free-space-display');
-    if (window.fileBrowser && window.fileBrowser.selectedFiles) {
-        // Calculate total GT1 size of selected files
-        const totalGT1Size = window.fileBrowser.selectedFiles.reduce((total, file) => {
-            return total + (file.gt1_size || 0);
-        }, 0);
+   // Update free space display
+   if (window.fileBrowser && window.fileBrowser.selectedFiles) {
+       // Get ROM display text to determine correct free space
+       const selectedOption = romSelect.options[romSelect.selectedIndex];
+       const displayText = selectedOption.textContent;
+       let romKey = romSelect.value;
+       if (displayText === 'ROMv5a_6502') romKey = 'v5a_6502';
+       if (displayText === 'ROMv6_6502') romKey = 'v6_6502';
 
-        // Get ROM display text to determine correct free space
-        const selectedOption = romSelect.options[romSelect.selectedIndex];
-        const displayText = selectedOption.textContent;
-        let romKey = romSelect.value;
-        if (displayText === 'ROMv5a_6502') romKey = 'v5a_6502';
-        if (displayText === 'ROMv6_6502') romKey = 'v6_6502';
-        const freeSpace = ROM_FREE_SPACE[romKey] - totalGT1Size;
+       if (window.fileBrowser.selectedFiles.length > 0) {
+           getFreeSpace();
+       } else {
+           // Show default free space when no files selected
+           const freeSpace = ROM_FREE_SPACE[romKey];
+           updateFreeSpaceDisplay(freeSpace);
+       }
+   }
 
-        // Color code based on remaining space
-        let color = '#00ff00'; // Green
-        if (freeSpace < 8192) color = '#ff0000';        // Red
-        else if (freeSpace < 16384) color = '#ff8000';  // Orange
-        else if (freeSpace < 32768) color = '#ffff00';  // Yellow
+   // Update files list with alias dropdowns
+   if (window.fileBrowser.selectedFiles.length > 0) {
+       var html = '';
 
-        freeSpaceDisplay.style.color = color;
-        freeSpaceDisplay.textContent = `Free Space: ${freeSpace.toLocaleString()} bytes`;
-    }
+       // Track which aliases are already used
+       var usedAliases = {};
+       for (var j = 0; j < window.fileBrowser.selectedFiles.length; j++) {
+           if (window.fileBrowser.selectedFiles[j].alias) {
+               usedAliases[window.fileBrowser.selectedFiles[j].alias] = j;
+           }
+       }
 
-    // Update files list with alias dropdowns
-    if (window.fileBrowser.selectedFiles.length > 0) {
-        var html = '';
+       for (var i = 0; i < window.fileBrowser.selectedFiles.length; i++) {
+           var file = window.fileBrowser.selectedFiles[i];
+           var currentAlias = file.alias || '';
 
-        // Track which aliases are already used
-        var usedAliases = {};
-        for (var j = 0; j < window.fileBrowser.selectedFiles.length; j++) {
-            if (window.fileBrowser.selectedFiles[j].alias) {
-                usedAliases[window.fileBrowser.selectedFiles[j].alias] = j;
-            }
-        }
+           // Build each option separately for clarity
+           var noneOption = '<option value=""' + (currentAlias === '' ? ' selected' : '') + '>(none)</option>';
+           var bootOption = '<option value="Boot"' + (currentAlias === 'Boot' ? ' selected' : '') + (('Boot' in usedAliases && usedAliases['Boot'] !== i) ? ' disabled' : '') + '>Boot</option>';
+           var mainOption = '<option value="Main"' + (currentAlias === 'Main' ? ' selected' : '') + (('Main' in usedAliases && usedAliases['Main'] !== i) ? ' disabled' : '') + '>Main</option>';
+           var resetOption = '<option value="Reset"' + (currentAlias === 'Reset' ? ' selected' : '') + (('Reset' in usedAliases && usedAliases['Reset'] !== i) ? ' disabled' : '') + '>Reset</option>';
+           var eggOption = '<option value="Egg"' + (currentAlias === 'Egg' ? ' selected' : '') + (('Egg' in usedAliases && usedAliases['Egg'] !== i) ? ' disabled' : '') + '>Egg</option>';
 
-        for (var i = 0; i < window.fileBrowser.selectedFiles.length; i++) {
-            var file = window.fileBrowser.selectedFiles[i];
-            var currentAlias = file.alias || '';
+           var aliasOptions = noneOption + bootOption + mainOption + resetOption + eggOption;
 
-            // Build each option separately for clarity
-            var noneOption = '<option value=""' + (currentAlias === '' ? ' selected' : '') + '>(none)</option>';
-            var bootOption = '<option value="Boot"' + (currentAlias === 'Boot' ? ' selected' : '') + (('Boot' in usedAliases && usedAliases['Boot'] !== i) ? ' disabled' : '') + '>Boot</option>';
-            var mainOption = '<option value="Main"' + (currentAlias === 'Main' ? ' selected' : '') + (('Main' in usedAliases && usedAliases['Main'] !== i) ? ' disabled' : '') + '>Main</option>';
-            var resetOption = '<option value="Reset"' + (currentAlias === 'Reset' ? ' selected' : '') + (('Reset' in usedAliases && usedAliases['Reset'] !== i) ? ' disabled' : '') + '>Reset</option>';
-            var eggOption = '<option value="Egg"' + (currentAlias === 'Egg' ? ' selected' : '') + (('Egg' in usedAliases && usedAliases['Egg'] !== i) ? ' disabled' : '') + '>Egg</option>';
+           var aliasSelect = '<select class="alias-select" data-file-index="' + i + '" style="margin-left: 10px; background: #1a1a1a; color: #e0e0e0; border: 1px solid #444; padding: 2px;">' + aliasOptions + '</select>';
+           html += '<div style="margin-bottom: 4px; display: flex; align-items: center;">' +
+                   '<button onclick="removeFile(' + i + ')" style="background: #dc3545; color: white; border: none; border-radius: 3px; padding: 2px 6px; cursor: pointer; font-size: 12px;">×</button>' +
+                   aliasSelect +
+                   '<span style="flex: 1; margin-left: 10px;">' + file.filename + '</span>' +
+                   '</div>';
+       }
+       filesList.innerHTML = html;
 
-            var aliasOptions = noneOption + bootOption + mainOption + resetOption + eggOption;
-
-            var aliasSelect = '<select class="alias-select" data-file-index="' + i + '" style="margin-left: 10px; background: #1a1a1a; color: #e0e0e0; border: 1px solid #444; padding: 2px;">' + aliasOptions + '</select>';
-            html += '<div style="margin-bottom: 4px; display: flex; align-items: center;">' +
-                    '<button onclick="removeFile(' + i + ')" style="background: #dc3545; color: white; border: none; border-radius: 3px; padding: 2px 6px; cursor: pointer; font-size: 12px;">×</button>' +
-                    aliasSelect +
-                    '<span style="flex: 1; margin-left: 10px;">' + file.filename + '</span>' +
-                    '</div>';
-        }
-        filesList.innerHTML = html;
-
-        // Add event listeners for alias changes
-        document.querySelectorAll('.alias-select').forEach(select => {
-            select.addEventListener('change', function() {
-                var fileIndex = parseInt(this.dataset.fileIndex);
-                var alias = this.value || null;
-                window.fileBrowser.selectedFiles[fileIndex].alias = alias;
-
-                // Refresh the display to update disabled states
-                updateStatusDisplay();
-            });
-        });
-    } else {
-        filesList.innerHTML = '<div style="color: #888;">No files selected</div>';
-    }
+       // Add event listeners for alias changes
+       document.querySelectorAll('.alias-select').forEach(select => {
+           select.addEventListener('change', function() {
+               var fileIndex = parseInt(this.dataset.fileIndex);
+               var alias = this.value || null;
+               window.fileBrowser.selectedFiles[fileIndex].alias = alias;
+           });
+       });
+   } else {
+       filesList.innerHTML = '<div style="color: #888;">No files selected</div>';
+   }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -188,8 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (displayText === 'ROMv5a_6502') romKey = 'v5a_6502';
     if (displayText === 'ROMv6_6502') romKey = 'v6_6502';
     const freeSpace = ROM_FREE_SPACE[romKey];
-    freeSpaceDisplay.style.color = '#00ff00';
-    freeSpaceDisplay.textContent = `Free Space: ${freeSpace.toLocaleString()} bytes`;
+    updateFreeSpaceDisplay(freeSpace);
 
     // Listen for ROM changes, clear selections when ROM changes
     document.getElementById('base-rom-select').addEventListener('change', function() {
@@ -209,7 +197,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const originalUpdate = window.fileBrowser.updateLoadingStatus;
     window.fileBrowser.updateLoadingStatus = function() {
         originalUpdate.call(this);
-        updateStatusDisplay();
+
+        // Only update the non-size parts of status display
+        const romSelect = document.getElementById('base-rom-select');
+        const romDisplay = document.getElementById('selected-rom-display');
+        romDisplay.textContent = 'ROM' + romSelect.value;
     };
 });
 

@@ -18,7 +18,7 @@ class RomBuilder {
         }
     }
 
-    public function buildRom($rom_version, $app_overrides = [], $custom_manifest = null, $symbols_only = false, $custom_rom_name = null) {
+    public function buildRom($rom_version, $app_overrides = [], $custom_manifest = null, $custom_rom_name = null, $symbols_only = false, $size_only = false) {
         $script_name = "ROM{$rom_version}.asm.py";
         $script_path = $this->romsrc_dir . '/' . $script_name;
 
@@ -38,7 +38,9 @@ class RomBuilder {
 
             // Build the command
             $command = "python3 $script_name";
-            if ($symbols_only) {
+            if ($size_only) {
+                $command .= " --size-only";
+            } elseif ($symbols_only) {
                 $command .= " --symbols-only";
             }
 
@@ -105,6 +107,14 @@ class RomBuilder {
             }
 
             $output = explode("\n", trim($output_str . $error_str));
+            if ($size_only && $exit_code === 0) {
+                $json_line = trim($output_str);
+                $size_data = json_decode($json_line, true);
+
+                if ($size_data) {
+                    $result['size_data'] = $size_data;
+                }
+            }
 
             $result = [
                 'success' => $exit_code === 0,

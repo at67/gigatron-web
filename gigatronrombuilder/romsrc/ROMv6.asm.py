@@ -167,14 +167,21 @@ import argparse
 parser = argparse.ArgumentParser(description='Build Gigatron ROM')
 parser.add_argument('--symbols-only', action='store_true', 
                     help='Generate symbol table only, skip ROM generation')
+parser.add_argument('--size-only', action='store_true', 
+                    help='Calculate size only, skip ROM generation')
 parser.add_argument('applications', nargs='*', help='Application files to include')
 args = parser.parse_args()
 
 SYMBOLS_ONLY = args.symbols_only
+SIZE_ONLY = args.size_only
 
 # Configure asm.py for symbols-only mode
 if SYMBOLS_ONLY:
     setSymbolsOnlyMode(True)
+
+# Configure asm.py for size-only mode
+if SIZE_ONLY:
+    setSizeOnlyMode(True)
 
 # Variable WITH_SPI_BITS defines the number of potential MISO bits in
 # bytes returned by a RAM&IO expansion board (in range 1 to 4). The
@@ -209,7 +216,8 @@ syncBits = hSync+vSync # Both pulses negative
 
 # When the XOUT register is in the circuit, the rising edge triggers its update.
 # The loop can therefore not be agnostic to the horizontal pulse polarity.
-assert syncBits & hSync != 0
+if not SIZE_ONLY:
+  assert syncBits & hSync != 0
 
 # VGA 640x480 defaults (to be adjusted below!)
 vFront = 10     # Vertical front porch
@@ -283,9 +291,11 @@ sample          = zpByte()
 # value is low and doesn't overflow with 4 channels added to it.
 # There is an alternative, but it requires pull-down diodes on the data bus:
 #       st [sample],[sample]
-assert 4*63 + sample < 256
+if not SIZE_ONLY:
+  assert 4*63 + sample < 256
 # We pin this reset/address value to 3, so `sample' swings from 3 to 255
-assert sample == 3
+if not SIZE_ONLY:
+  assert sample == 3
 
 # Former bootCount and bootCheck (<= ROMv3)
 zpReserved      = zpByte() # Recycled and still unused. Candidate future uses:
@@ -353,7 +363,8 @@ romType         = zpByte(1)
 #  xxxxx000     1 channel at quadruple update rate (page 1)
 # The main application for this is to free up the high bytes of page 2,3,4.
 channelMask = symbol('channelMask_v4')
-assert romType == channelMask
+if not SIZE_ONLY:
+  assert romType == channelMask
 
 # SYS function arguments and results/scratch
 sysFn           = zpByte(2)
@@ -458,14 +469,17 @@ def runVcpu(n, ref=None, returnTo=None):
     n = (127 + maxTicks) * 2 + overhead
 
   n -= overhead
-  assert n > 0
+  if not SIZE_ONLY:
+    assert n > 0
 
   if n % 2 == 1:
     nop()                       # Tick alignment
     n -= 1
-  assert n % 2 == 0
+  if not SIZE_ONLY:
+    assert n % 2 == 0
 
-  print('runVcpu at $%04x net cycles %3s info %s' % (pc(), n, ref))
+  if not SIZE_ONLY:
+    print('runVcpu at $%04x net cycles %3s info %s' % (pc(), n, ref))
 
   if returnTo != 0x100:
     if returnTo is None:
@@ -475,12 +489,15 @@ def runVcpu(n, ref=None, returnTo=None):
 
   n //= 2
   n -= maxTicks                 # First instruction always runs
-  assert n < 128
+  if not SIZE_ONLY:
+    assert n < 128
 
   ld([vCpuSelect],Y)            #2
   jmp(Y,'ENTER')                #3
   ld(n)                         #4
-assert runVcpu_overhead ==       5
+  
+if not SIZE_ONLY:  
+  assert runVcpu_overhead ==       5
 
 #-----------------------------------------------------------------------
 #
@@ -645,8 +662,9 @@ st([ledState_v2])               # Setting to 1..126 means "stopped"
 romTypeValue = symbol('romTypeValue_ROMv6')
 
 label('SYS_Reset_88')
-assert pc()>>8 == 0
-assert (romTypeValue & 7) == 0
+if not SIZE_ONLY:
+  assert pc()>>8 == 0
+  assert (romTypeValue & 7) == 0
 ld(romTypeValue)                #15 Set ROM type/version and clear channel mask
 st([romType])                   #16
 ld(0)                           #17
@@ -656,7 +674,8 @@ st([Y,lo('videoTop_v5')])       #20 Show all 120 pixel lines
 st([Y,vIRQ_v5])                 #21 Disable vIRQ dispatch
 st([Y,vIRQ_v5+1])               #22
 st([soundTimer])                #23 soundTimer
-assert userCode&255 == 0
+if not SIZE_ONLY:
+  assert userCode&255 == 0
 st([vLR])                       #24 vLR
 ld(userCode>>8)                 #25
 st([vLR+1])                     #26
@@ -700,7 +719,8 @@ ld(-48/2)                       #45
 #-----------------------------------------------------------------------
 
 align(0x80, size=0x80)
-assert pc() == 0x80
+if not SIZE_ONLY:
+  assert pc() == 0x80
 
 ld(hi('REENTER'),Y)             #15 slot 0x80
 jmp(Y,'REENTER')                #16
@@ -1019,7 +1039,8 @@ ld(hi('REENTER'),Y)             #19
 jmp(Y,'REENTER')                #20
 ld(-24/2)                       #21
 
-assert pc()&255 == 0
+if not SIZE_ONLY:
+  assert pc()&255 == 0
 
 #-----------------------------------------------------------------------
 #
@@ -1371,7 +1392,8 @@ fillers(until=0xff)
 # Return point for vCPU slices during visible screen area
 #-----------------------------------------------------------------------
 
-assert pc() == 0x1ff            # Enables runVcpu() to re-enter into the next page
+if not SIZE_ONLY:
+  assert pc() == 0x1ff            # Enables runVcpu() to re-enter into the next page
 bra('sound3')                   #200,0 <New scan line start>
 
 #-----------------------------------------------------------------------
@@ -1573,7 +1595,8 @@ suba(1)                         #5
 ld(hi('vBlankStart'),Y)         #6
 jmp(Y,[vReturn])                #7 To video driver
 ld(0)                           #8 AC should be 0 already. Still..
-assert vCPU_overhead ==          9
+if not SIZE_ONLY:
+  assert vCPU_overhead ==          9
 
 # Instruction LDWI: Load immediate word constant (vAC=D), 20 cycles
 label('LDWI')
@@ -2002,7 +2025,8 @@ st([vTmp])                      #12
 # Instruction RET: Function return (vPC=vLR-2), 16 cycles
 label('RET')
 ld([vLR])                       #10
-assert pc()&255 == 0
+if not SIZE_ONLY:
+  assert pc()&255 == 0
 
 #-----------------------------------------------------------------------
 #
@@ -2395,7 +2419,8 @@ jmp(Y,'vRTI#25')                #23
 st([vAC])                       #24
 
 # vRTI entry point
-assert(pc()&255 == 251)         # The landing offset 251 for LUP trampoline is fixed
+if not SIZE_ONLY:
+  assert(pc()&255 == 251)         # The landing offset 251 for LUP trampoline is fixed
 ld([vIrqSave+0])                #13
 st([vPC])                       #14
 ld([vIrqSave+1])                #15
@@ -2439,11 +2464,13 @@ for ix in range(255):
   pattern = ['x' if i<n else '1' if ix&(1<<i) else '0' for i in range(8)]
   ld(ix>>n); C('0b%s >> %d' % (''.join(reversed(pattern)), n))
 
-assert pc()&255 == 255
+if not SIZE_ONLY:
+  assert pc()&255 == 255
 bra([vTmp])                     # Jumps back into next page
 
 label('SYS_LSRW1_48')
-assert pc()&255 == 0            # First instruction on this page *must* be a nop
+if not SIZE_ONLY:
+  assert pc()&255 == 0            # First instruction on this page *must* be a nop
 nop()                           #15
 ld(hi('shiftTable'),Y)          #16 Logical shift right 1 bit (X >> 1)
 ld('.sysLsrw1a')                #17 Shift low byte
@@ -3120,7 +3147,8 @@ xora([vAC])                     #25
 xora((1975>>8)^(1975&255))      #26 Poor man\'s 1975 detection
 bne(pc()+3)                     #27
 bra(pc()+3)                     #28
-assert videoZ == 0x0100
+if not SIZE_ONLY:
+  assert videoZ == 0x0100
 st([vReturn])                   #29 DISABLE video/audio/serial/etc
 nop()                           #29(!) Ignore and return
 jmp(Y,'REENTER')                #30
@@ -4638,7 +4666,8 @@ def basicLine(address, number, text):
   head = [] if number is None else [number&255, number>>8]
   body = [] if text is None else [ord(c) for c in text] + [0]
   s = head + body
-  assert len(s) > 0
+  if not SIZE_ONLY:
+    assert len(s) > 0
   for i, byte in enumerate([address>>8, address&255, len(s)]+s):
     comment = repr(chr(byte)) if i >= 3+len(head) else None
     program.putInRomTable(byte, comment=comment)
@@ -4674,7 +4703,8 @@ if pc()&255 >= 251:                     # Don't start in a trampoline region
   align(0x100)
 
 for application in args.applications:
-  print()
+  if not SIZE_ONLY:
+    print()
 
   # Determine label
   if '=' in application:
@@ -4684,7 +4714,9 @@ for application in args.applications:
     # Label derived from filename itself
     name = application.rsplit('.', 1)[0] # Remove extension
     name = name.rsplit('/', 1)[-1]       # Remove path
-  print('Processing file %s label %s' % (application, name))
+    
+  if not SIZE_ONLY:
+    print('Processing file %s label %s' % (application, name))
 
   C('+-----------------------------------+')
   C('| %-33s |' % application)
@@ -4692,7 +4724,9 @@ for application in args.applications:
 
   # Pre-compiled GT1 files
   if application.endswith(('.gt1', '.gt1x')):
-    print('Load type .gt1 at $%04x' % pc())
+    if not SIZE_ONLY:
+      print('Load type .gt1 at $%04x' % pc())
+      
     with open(application, 'rb') as f:
       raw = bytearray(f.read())
     insertRomDir(name)
@@ -4714,7 +4748,9 @@ for application in args.applications:
   # to ordinary GCL variable names "xx A=".)
   #----------------------------------------------------------------
   elif application.endswith('.gcl'):
-    print('Compile type .gcl at $%04x' % pc())
+    if not SIZE_ONLY:
+      print('Compile type .gcl at $%04x' % pc())
+      
     insertRomDir(name)
     label(name)
     program = gcl.Program(name)
@@ -4726,13 +4762,17 @@ for application in args.applications:
 
   # Application-specific SYS extensions
   elif application.endswith('.py'):
-    print('Include type .py at $%04x' % pc())
+    if not SIZE_ONLY:
+      print('Include type .py at $%04x' % pc())
+      
     label(name)
     importlib.import_module(name)
 
   # GTB files
   elif application.endswith('.gtb'):
-    print('Link type .gtb at $%04x' % pc())
+    if not SIZE_ONLY:
+      print('Link type .gtb at $%04x' % pc())
+      
     zpReset(userVars)
     label(name)
     program = gcl.Program(name)
@@ -4760,12 +4800,17 @@ for application in args.applications:
     basicLine(symbol('Buffer'), address, None)  # End of program
     program.putInRomTable(0)
     program.end()
-    print(' Lines', i)
+    
+    if not SIZE_ONLY:
+      print(' Lines', i)
 
   # Simple sequential RGB file (for Racer horizon image)
   elif application.endswith('-256x16.rgb'):
     width, height = 256, 16
-    print('Convert type .rgb/sequential at $%04x' % pc())
+    
+    if not SIZE_ONLY:
+      print('Convert type .rgb/sequential at $%04x' % pc())
+      
     f = open(application, 'rb')
     raw = bytearray(f.read())
     f.close()
@@ -4785,13 +4830,18 @@ for application in args.applications:
       ld(packed[i])
       if pc()&255 == 251:
         trampoline()
-    print(' Pixels %dx%d' % (width, height))
+        
+    if not SIZE_ONLY:
+      print(' Pixels %dx%d' % (width, height))
 
   # Random access RGB files (for Pictures application)
   elif application.endswith('-160x120.rgb'):
     if pc()&255 > 0:
       trampoline()
-    print('Convert type .rgb/parallel at $%04x' % pc())
+
+    if not SIZE_ONLY:
+      print('Convert type .rgb/parallel at $%04x' % pc())
+      
     f = open(application, 'rb')
     raw = f.read()
     f.close()
@@ -4814,11 +4864,15 @@ for application in args.applications:
           trampoline3a()
         else:
           trampoline3b()
-    print(' Pixels %dx%d' % (width, height))
+
+    if not SIZE_ONLY:
+      print(' Pixels %dx%d' % (width, height))
 
   # XXX Provisionally bring ROMv1 egg back as placeholder for Pictures
   elif application.endswith(('/gigatron.rgb', '/packedPictures.rgb')):
-    print(('Convert type gigatron.rgb at $%04x' % pc()))
+    if not SIZE_ONLY:
+      print(('Convert type gigatron.rgb at $%04x' % pc()))
+      
     f = open(application, 'rb')
     raw = bytearray(f.read())
     f.close()
@@ -4830,11 +4884,13 @@ for application in args.applications:
         trampoline()
 
   else:
-    print('Application assert: ', application)
-    assert False
+    if not SIZE_ONLY:
+      print('Application assert: ', application)
+      assert False
 
   C('End of %s, size %d' % (application, pc() - symbol(name)))
-  print(' Size %s' % (pc() - symbol(name)))
+  if not SIZE_ONLY:
+    print(' Size %s' % (pc() - symbol(name)))
 
 #-----------------------------------------------------------------------
 # ROM directory
@@ -4866,7 +4922,8 @@ ld(hi('REENTER'),Y)             #39 Return
 jmp(Y,'REENTER')                #40
 ld(-44/2)                       #41
 
-print()
+if not SIZE_ONLY:
+  print()
 
 #-----------------------------------------------------------------------
 # End of embedded applications
@@ -4878,9 +4935,7 @@ if pc()&255 > 0:
 #-----------------------------------------------------------------------
 # Finish assembly
 #-----------------------------------------------------------------------
-if SYMBOLS_ONLY:
-    print('Symbol table generation complete')
-    exit(0)
-    
 end()
-writeRomFiles(argv[0])
+
+if not (SYMBOLS_ONLY  or  SIZE_ONLY):
+  writeRomFiles(argv[0])

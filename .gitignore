@@ -21,5 +21,6 @@ Thumbs.db
 *.pro.user
 qt2.xml
 .*.stash
+build/
 __pycache__/
 build-emulator-WASM_c-Debug/

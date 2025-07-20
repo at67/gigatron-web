@@ -52,7 +52,7 @@ class main
             $app_overrides = []; // or extract from $data if needed
             $symbols_only = isset($data['symbols_only']) ? $data['symbols_only'] : false;
 
-            $result = $builder->buildRom($rom_version, $app_overrides, $custom_manifest, $symbols_only);
+            $result = $builder->buildRom($rom_version, $app_overrides, $custom_manifest, null, $symbols_only, false);
         }
         catch (\Exception $e)
         {
@@ -99,17 +99,41 @@ class main
                 $updated_manifest = rtrim($custom_manifest, '"') . ",\n      Main=../build/" . basename($compile_result['gt1_file']) . '"';
 
                 // DEBUG: Add manifest info to output
-                $debug_output = "DEBUG INFO:\n";
-                $debug_output .= "Original manifest:\n" . $custom_manifest . "\n\n";
-                $debug_output .= "Updated manifest:\n" . $updated_manifest . "\n\n";
-                $debug_output .= "GT1 file: " . $compile_result['gt1_file'] . "\n\n";
+                $debug_output = "Manifest:\n" . $updated_manifest . "\n\n";
 
                 // Prepend debug and GBAS compilation output to the ROM build output
-                $result = $builder->buildRom($rom_version, [], $updated_manifest, false, $rom_name);
+                $result = $builder->buildRom($rom_version, [], $updated_manifest, $rom_name, false, false);
                 $result['output'] = $debug_output . "GBAS Compilation:\n" . $compile_result['output'] . "\n\nROM Build:\n" . $result['output'];
             }
         }
         catch(\Exception $e)
+        {
+            $result = ['success' => false, 'error' => $e->getMessage()];
+        }
+
+        $response = new \Symfony\Component\HttpFoundation\JsonResponse($result);
+        return $response;
+    }
+
+    public function getRomFreeSpace()
+    {
+        // Get the JSON data
+        $json = file_get_contents('php://input');
+        $data = json_decode($json, true);
+
+        try
+        {
+            require_once(__DIR__ . '/../tools/php/rom_builder.php');
+            $builder = new \RomBuilder();
+
+            // Extract variables from the request data
+            $rom_version = $data['rom_version'] ?? '';
+            $custom_manifest = $data['manifest'] ?? null;
+            $app_overrides = [];
+
+            $result = $builder->buildRom($rom_version, $app_overrides, $custom_manifest, null, false, true);
+        }
+        catch (\Exception $e)
         {
             $result = ['success' => false, 'error' => $e->getMessage()];
         }

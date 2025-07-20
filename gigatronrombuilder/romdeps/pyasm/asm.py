@@ -25,10 +25,18 @@ gtBasicSymbolsFile = open('SymbolTable.m', 'w')
 # Symbol-only mode flag
 _symbolsOnlyMode = False
 
+# Size-only mode flag
+_sizeOnlyMode = False
+
 def setSymbolsOnlyMode(enabled):
     """Enable or disable symbols-only mode"""
     global _symbolsOnlyMode
     _symbolsOnlyMode = enabled
+
+def setSizeOnlyMode(enabled):
+    """Enable or disable size-only mode"""
+    global _sizeOnlyMode
+    _sizeOnlyMode = enabled
     
 #------------------------------------------------------------------------
 #       Public interface
@@ -245,19 +253,29 @@ def end():
   """Resolve symbols and write output"""
   for name, where in _refsL:
     if name in _symbols:
-      _rom1[where] += _symbols[name] # Addition allows some label tricks
+      _rom1[where] += _symbols[name]
       _rom1[where] &= 255
-    elif not _symbolsOnlyMode:
+    elif not _symbolsOnlyMode and not _sizeOnlyMode:  # <-- Add this check
       highlight('Error: Undefined symbol %s' % repr(name))
 
   for name, where in _refsH:
     if name in _symbols:
       _rom1[where] += _symbols[name] >> 8
-    elif not _symbolsOnlyMode:
+    elif not _symbolsOnlyMode and not _sizeOnlyMode:  # <-- Add this check
       highlight('Error: Undefined symbol %s' % repr(name))
 
   align(1)
 
+  # Exit early for size-only mode with size information
+  if _sizeOnlyMode:
+    print(json.dumps({
+      'success': True,
+      'bytes_free': (_maxRomSize - _romSize) * 2,
+      'bytes_used': _romSize * 2,
+      'bytes_total': _maxRomSize * 2
+    }))
+    return
+        
 #------------------------------------------------------------------------
 #       Behind the scenes
 #------------------------------------------------------------------------
@@ -507,10 +525,13 @@ def _emit(opcode, operand):
   global _romSize, _maxRomSize
   lineno = inspect.getframeinfo(_listing).lineno if has(_listing) else None
   if _romSize >= _maxRomSize:
-      disassembly = disassemble(opcode, operand)
+    disassembly = disassemble(opcode, operand)
+    if not _sizeOnlyMode:
       print('%04x %02x%02x  %s' % (_romSize, opcode, operand, disassembly))
       highlight('Error: Program size limit exceeded')
-      _maxRomSize = 0x10000 # Extend to full address space to prevent more of the same errors
+      
+    _maxRomSize = 0x10000 # Extend to full address space to prevent more of the same errors
+      
   _rom0.append(opcode)
   _rom1.append(operand)
   _linenos.append(lineno)
@@ -529,8 +550,9 @@ def _emit(opcode, operand):
     opcode & _maskBus == _busRAM and\
     opcode & _maskCc in [ _jGT, _jLT, _jNE ] : #, _jEQ, _jGE, _jLE ]: # XXX Only check jGT, jLT, jNE?
     disassembly = disassemble(opcode, operand)
-    print('%04x %02x%02x  %s' % (_romSize, opcode, operand, disassembly))
-    highlight('Warning: large propagation delay (conditional branch with RAM on bus)')
+    if not _sizeOnlyMode:
+      print('%04x %02x%02x  %s' % (_romSize, opcode, operand, disassembly))
+      highlight('Warning: large propagation delay (conditional branch with RAM on bus)')
 
 def loadBindings(symfile):
   # Load JSON file into symbol table
@@ -563,7 +585,9 @@ def writeRomFiles(sourceFile):
 
   # Disassemble for readability
   filename = stem + '.lst'
-  print('Create file', filename)
+  if not _sizeOnlyMode:
+    print('Create file', filename)
+    
   with open(filename, 'w', encoding='utf-8') as file:
     address = 0
     repeats, previous, line0 = 0, None, None
@@ -675,7 +699,9 @@ def writeRomFiles(sourceFile):
 
   # 16-bit version for 27C1024, little endian
   filename = stem + '.rom'
-  print('Create file', filename)
+  if not _sizeOnlyMode:
+    print('Create file', filename)
+    
   _rom2 = bytearray()
   for x, y in zip(_rom0, _rom1):
     _rom2.append(x)
@@ -687,9 +713,10 @@ def writeRomFiles(sourceFile):
   with open(filename, 'wb') as file:
     file.write(_rom2)
 
-  print('ROM bytes %d words %d' % (len(_rom2), len(_rom2)//2))
-  print('Words used %d unused %d' % (_romSize, _maxRomSize-_romSize))
-  print('Assembly OK')
+  if not _sizeOnlyMode:
+    print('Create file', filename)
+    print('Create file', filename)
+    print('ROM bytes %d words %d' % (len(_rom2), len(_rom2)//2))
 
 # print() wrapper to highlights message on terminal with ANSI escape codes
 def highlight(*args):
@@ -697,13 +724,17 @@ def highlight(*args):
   if sys.stdout.isatty():
     ansiBold   = '\033[1m'
     ansiNormal = '\033[0m'
-    print(ansiBold + line + ansiNormal)
+    if not _sizeOnlyMode:
+      print(ansiBold + line + ansiNormal)
   else:
-    print(line)
+    if not _sizeOnlyMode:
+      print(line)
 
   # Exit on first error
   if line.upper().startswith('ERROR'):
-    print('Assembly failed')
+    if not _sizeOnlyMode:
+      print('Assembly failed')
+      
     sys.exit(1)
 
 # Conditional compilation

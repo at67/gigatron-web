@@ -17,3 +17,7 @@ at67_gigatronrombuilder_download:
 at67_gigatronrombuilder_serve_rom:
     path: /gigatronrombuilder/serve_rom/{filename}
     defaults: { _controller: at67.gigatronrombuilder.controller.main:serveRom }
+
+at67_gigatronrombuilder_getRomFreeSpace:
+    path: /gigatronrombuilder/getRomFreeSpace
+    defaults: { _controller: at67.gigatronrombuilder.controller.main:getRomFreeSpace }

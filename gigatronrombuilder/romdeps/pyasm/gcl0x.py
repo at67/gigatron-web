@@ -94,16 +94,16 @@ class Program:
       self.dumpVars()
 
   def dumpVars(self):
-    print(' Variables count %d bytes %d end $%04x' % (len(self.vars), 2*len(self.vars), zpByte(0)))
+    #print(' Variables count %d bytes %d end $%04x' % (len(self.vars), 2*len(self.vars), zpByte(0)))
     line = ' :'
     for var in sorted(self.vars.keys()):
       if var in self.lengths and self.lengths[var]:
         var += ' [%s]' % self.lengths[var]
       if len(line + var) + 1 > 72:
-        print(line)
+        #print(line)
         line = ' :'
       line += ' ' + var
-    print(line)
+    #print(line)
 
   def word(self, word):
     # Process a GCL word and emit its corresponding vCPU code
@@ -488,11 +488,11 @@ class Program:
   def closeSegment(self):
     # Register length of GT1 segment
     if self.vPC != self.segStart:
-      print(' Segment at $%04x size %3d used %3d unused %3d' % (
-        self.segStart,
-        self.segEnd - self.segStart,
-        self.vPC - self.segStart,
-        self.segEnd - self.vPC))
+      #print(' Segment at $%04x size %3d used %3d unused %3d' % (
+      #  self.segStart,
+      #  self.segEnd - self.segStart,
+      #  self.vPC - self.segStart,
+      #  self.segEnd - self.vPC))
       length = self.vPC - self.segStart
       assert 1 <= length <= 256
       define('__%s_seg%d__' % (self.name, self.segId), length)
