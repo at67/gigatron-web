@@ -154,10 +154,11 @@ function generateBaseCode(romVersion) {
     const positions = generateMenuArrays(menuConfig);
 
     let code = '_runtimePath_ "../tools/runtime"\n' +
-               '_runtimeStart_ &h7FFE\n' +
+               '_runtimeStart_ &h7DFF\n' +
+               '_arraysStart_ &h7DFF\n' +
                '_codeRomType_ ROM' + romVersion + '\n' +
                '_enableRomCheck_ Off\n' +
-               '_stringWorkArea_ &h77A0\n' +
+               '_stringWorkArea_ &h7EA0\n' +
                'module "' + (menuConfig.symbolTableName || 'SymbolTable.m') + '"\n' +
                'const NUM_APPS = ' + numApps + '\n';
 
@@ -169,8 +170,19 @@ function generateBaseCode(romVersion) {
     code += 'const dim menuText$(NUM_APPS-1) = ' + positions.menuText.map(name => '"' + name + '"').join(', ') + '\n' +
             'dim symbols(NUM_APPS-1) = ' + symbols.join(', ') + '\n' +
             'const maxX = ' + gridCols + '\n' +
-            'const maxY = ' + gridRows + '\n' +
-            'x = 0 : y = x\n' +
+            'const maxY = ' + gridRows + '\n';
+
+            // Add font loading if not system font
+            let fontCode = '';
+            if (menuConfig.selectedFont && menuConfig.selectedFont !== 'system') {
+                const fgColor = hexToGigatronColor(menuConfig.defaultColor);
+                const bgColor = hexToGigatronColor(menuConfig.backgroundColor);
+                const fgbgColor = '&h' + fgColor.substring(2) + bgColor.substring(2); // Remove &h prefix and combine
+
+                code += 'load font, ../res/font/' + menuConfig.selectedFont + '/' + menuConfig.selectedFont + '.tga, 0, ' + fgbgColor + '\n' + 'set FONT_ID, 0\n';
+            }
+
+    code += 'x = 0 : y = x\n' +
             'curIndex = -1 : newIndex = 0\n' +
             positions.menuX + '\n' +
             positions.menuY + '\n' +
@@ -205,7 +217,7 @@ function generateMainLoop(enableMusic, visualEffect) {
     let loop = '';
 
     if (enableMusic) {
-        loop += 'play music, &h75a0, 3\n' +
+        loop += 'play music, &h7Fa0, 3\n' +
                 'gosub resetAudio\n';
     }
 
@@ -242,36 +254,41 @@ function generateMainLoop(enableMusic, visualEffect) {
 }
 
 function generateEventHandlers(enableBeep) {
-    const beepCall = enableBeep ? 'gosub beep' : 'set BUTTON_STATE, &hEF';
+    const beepCall = enableBeep ? 'gosub beep\n        gosub getIndex' : 'gosub getIndex';
 
     return 'execApp:\n' +
            '    cls\n' +
            '    exec symbols(curIndex.lo), &h0200\n' +
            'return\n' +
+           'getIndex:\n' +
+           '    newIndex = y * maxX + x\n' +
+           '    if newIndex >= NUM_APPS then newIndex = NUM_APPS-1\n' +
+           '    set BUTTON_STATE, &hEF\n' +
+           'return\n' +
            "'button A\n" +
            '127:    ' + beepCall + '\n' +
            '        gosub execApp\n' +
-           '        return\n' +
+           'return\n' +
            "'right\n" +
            '254:    inc x.lo\n' +
            '        if x = maxX then x = 0\n' +
            '        ' + beepCall + '\n' +
-           '        return\n' +
+           'return\n' +
            "'left\n" +
            '253:    x = x - 1\n' +
            '        if x < 0 then x = maxX - 1\n' +
            '        ' + beepCall + '\n' +
-           '        return\n' +
+           'return\n' +
            "'down\n" +
            '251:    inc y.lo\n' +
            '        if y = maxY then y = 0\n' +
            '        ' + beepCall + '\n' +
-           '        return\n' +
+           'return\n' +
            "'up\n" +
            '247:    y = y - 1\n' +
            '        if y < 0 then y = maxY - 1\n' +
            '        ' + beepCall + '\n' +
-           '        return\n';
+           'return\n';
 }
 
 function generateCursorFunctions() {
@@ -348,7 +365,7 @@ function getCursorImplementation(cursorStyle) {
 }
 
 function generateMusicModule() {
-    return 'def byte(&h75a0) = &h90, &h3c, &h91, &h40, &h92, &h43, &h93, &h48, &h0c, &h80, &h81, &h82, &h83, &h01, &h90, &h3c,\n' +
+    return 'def byte(&h7FA0) = &h90, &h3c, &h91, &h40, &h92, &h43, &h93, &h48, &h0c, &h80, &h81, &h82, &h83, &h01, &h90, &h3c,\n' +
            'def byte         = &h91, &h40, &h92, &h43, &h93, &h48, &h24, &h80, &h81, &h82, &h83, &hd0, &h00, &h00\n' +
            'resetAudio:\n' +
            '    asm\n' +
@@ -361,10 +378,7 @@ function generateMusicModule() {
 
 function generateBeepModule() {
     return 'beep:\n' +
-           '    newIndex = y * maxX + x\n' +
-           '    if newIndex >= NUM_APPS then newIndex = NUM_APPS-1\n' +
            '    sound on, 1, 8200\n' +
            '    set SOUND_TIMER, 2\n' +
-           '    set BUTTON_STATE, &hEF\n' +
            'return\n';
 }

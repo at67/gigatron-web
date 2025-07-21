@@ -23,7 +23,8 @@ var menuConfig = {
     enableBeep: true,
     visualEffect: 'none',
     cursorStyle: 'selected',
-    symbolTableName: 'SymbolTable.m'
+    symbolTableName: 'SymbolTable.m',
+    selectedFont: 'system'
 };
 
 function getUniquePrefix() {

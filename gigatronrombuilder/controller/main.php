@@ -241,5 +241,30 @@ class main
             return $response;
         }
     }
+
+    public function serveFont($fontName, $fileName)
+    {
+        try {
+            $fontPath = __DIR__ . '/../res/font/' . $fontName . '/' . $fileName;
+
+            if (!file_exists($fontPath)) {
+                throw new \Exception("Font file not found");
+            }
+
+            $response = new \Symfony\Component\HttpFoundation\BinaryFileResponse($fontPath);
+
+            // Set appropriate content type based on file extension
+            if (pathinfo($fileName, PATHINFO_EXTENSION) === 'map') {
+                $response->headers->set('Content-Type', 'text/plain');
+            } else {
+                $response->headers->set('Content-Type', 'image/png');
+            }
+
+            return $response;
+
+        } catch (\Exception $e) {
+            throw new \phpbb\exception\http_exception(404, 'Font not found');
+        }
+    }
 }
 

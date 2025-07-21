@@ -1,6 +1,124 @@
 // Access build functions
 window.buildROM = window.buildROM || buildROM;
 
+// Font management
+const fontImages = {};
+const fontMappings = {};
+
+async function loadFont(fontName) {
+    if (fontName === 'system') {
+        renderPreview(); // Render immediately for system font
+        return;
+    }
+
+    // If already loaded, render immediately
+    if (fontImages[fontName] && fontMappings[fontName]) {
+        renderPreview();
+        return;
+    }
+
+    try {
+        // Load the mapping file first
+        const mapResponse = await fetch(`/app.php/gigatronrombuilder/font/${fontName}/${fontName}.map`);
+        const mapText = await mapResponse.text();
+
+        // Parse the mapping file
+        const mapping = {};
+        mapText.split('\n').forEach(line => {
+            const parts = line.trim().split(' ');
+            if (parts.length === 2) {
+                const asciiCode = parseInt(parts[0]);
+                const fontIndex = parseInt(parts[1]);
+                mapping[asciiCode] = fontIndex;
+            }
+        });
+        fontMappings[fontName] = mapping;
+
+        // Load the font image
+        const img = new Image();
+        img.onload = () => {
+            fontImages[fontName] = img;
+            renderPreview(); // Only render when font is fully loaded
+        };
+        img.onerror = () => {
+            console.warn(`Failed to load font image: ${fontName}`);
+            renderPreview(); // Render with fallback
+        };
+        img.src = `/app.php/gigatronrombuilder/font/${fontName}/${fontName}.png`;
+
+    } catch (error) {
+        console.warn(`Failed to load font: ${fontName}`, error);
+        renderPreview(); // Render with fallback
+    }
+}
+
+function mapCharToFont(char, fontName) {
+    if (fontName === 'system') return 0;
+
+    const mapping = fontMappings[fontName];
+    if (!mapping) return 39; // Default to index 39 if no mapping
+
+    const asciiCode = char.charCodeAt(0);
+    return mapping[asciiCode] !== undefined ? mapping[asciiCode] : 39;
+}
+
+function drawFontChar(ctx, char, x, y, fontName, color) {
+    if (fontName === 'system') {
+        // Use existing system font rendering
+        ctx.fillStyle = color;
+        ctx.fillText(char, x * 3, y * 3);
+        return;
+    }
+
+    const fontImg = fontImages[fontName];
+    if (!fontImg) {
+        // Fallback to system font if custom font not loaded
+        ctx.fillStyle = color;
+        ctx.fillText(char, x * 3, y * 3);
+        return;
+    }
+
+    const charIndex = mapCharToFont(char, fontName);
+    const col = charIndex % 8;
+    const row = Math.floor(charIndex / 8);
+
+    // Create a temporary canvas for this character
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = 18; // 6 * 3
+    tempCanvas.height = 24; // 8 * 3
+    const tempCtx = tempCanvas.getContext('2d');
+
+    // Draw the white character from font sheet, scaled up
+    tempCtx.drawImage(fontImg, col * 6, row * 8, 6, 8, 0, 0, 18, 24);
+
+    // Get image data to manually apply color
+    const imageData = tempCtx.getImageData(0, 0, 18, 24);
+    const data = imageData.data;
+
+    // Parse the color (assumes format like "#00cc00")
+    const colorMatch = color.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+    if (colorMatch) {
+        const r = parseInt(colorMatch[1], 16);
+        const g = parseInt(colorMatch[2], 16);
+        const b = parseInt(colorMatch[3], 16);
+
+        // Apply color to white pixels only
+        for (let i = 0; i < data.length; i += 4) {
+            if (data[i] > 128) { // If pixel is bright (white-ish)
+                data[i] = r;     // Red
+                data[i + 1] = g; // Green
+                data[i + 2] = b; // Blue
+                // Alpha stays the same
+            }
+        }
+
+        tempCtx.putImageData(imageData, 0, 0);
+    }
+
+    // Draw the colored character to main canvas
+    ctx.drawImage(tempCanvas, x * 3, y * 3);
+}
+
 function setupMainmenuPreview() {
     const canvas = document.getElementById('preview-canvas');
     const ctx = canvas.getContext('2d');
@@ -521,11 +639,12 @@ function setupMainmenuPreview() {
                     ctx.fillRect((item.x - 1) * 3, (item.y - 1) * 3, selectionWidth + 6, 30);
                 }
 
-                // Draw text (scale coordinates by 3)
+                // Draw text with selected font (scale coordinates by 3)
+                const selectedFont = document.getElementById('font-select')?.value || 'system';
                 const gigatronColor = hexToGigatronColor(item.color);
-                ctx.fillStyle = gigatronColorToHex(gigatronColor);
+                const color = gigatronColorToHex(gigatronColor);
                 for (let i = 0; i < item.text.length; i++) {
-                    ctx.fillText(item.text[i], (item.x + i * 6) * 3, item.y * 3);
+                    drawFontChar(ctx, item.text[i], item.x + i * 6, item.y, selectedFont, color);
                 }
             }
         });
@@ -541,11 +660,12 @@ function setupMainmenuPreview() {
                         ctx.fillRect((item.x - 1) * 3, (item.y - 1) * 3, selectionWidth + 6, 30);
                     }
 
-                    // Draw decorative text (scale coordinates by 3)
+                    // Draw decorative text with selected font (scale coordinates by 3)
+                    const selectedFont = document.getElementById('font-select')?.value || 'system';
                     const gigatronColor = hexToGigatronColor(item.color);
-                    ctx.fillStyle = gigatronColorToHex(gigatronColor);
+                    const color = gigatronColorToHex(gigatronColor);
                     for (let i = 0; i < item.text.length; i++) {
-                        ctx.fillText(item.text[i], (item.x + i * 6) * 3, item.y * 3);
+                        drawFontChar(ctx, item.text[i], item.x + i * 6, item.y, selectedFont, color);
                     }
                 }
             });
@@ -801,6 +921,21 @@ function createPhase2LayoutHTML(apps, romVersion) {
                             <option value="underline" ${menuConfig.cursorStyle === 'underline' ? 'selected' : ''}>Underline</option>
                         </select>
                     </div>
+
+                    <!-- Font Selection -->
+                    <div style="margin-bottom: 10px;">
+                        <h4 style="margin: 0 0 4px 0; color: #e0e0e0; font-size: 14px;">Font:</h4>
+                        <select id="font-select" style="width: 96%; padding: 2px; background: #1a1a1a; color: #e0e0e0; border: 1px solid #444; border-radius: 2px; font-size: 12px;">
+                            <option value="system" ${(menuConfig.selectedFont === 'system' || !menuConfig.selectedFont) ? 'selected' : ''}>System</option>
+                            <option value="Adv" ${menuConfig.selectedFont === 'Adv' ? 'selected' : ''}>Adventure</option>
+                            <option value="Bold" ${menuConfig.selectedFont === 'Bold' ? 'selected' : ''}>Bold</option>
+                            <option value="Goth" ${menuConfig.selectedFont === 'Goth' ? 'selected' : ''}>Gothic</option>
+                            <option value="Prac" ${menuConfig.selectedFont === 'Prac' ? 'selected' : ''}>Practical</option>
+                            <option value="Scifi" ${menuConfig.selectedFont === 'Scifi' ? 'selected' : ''}>Sci-Fi</option>
+                            <option value="Script" ${menuConfig.selectedFont === 'Script' ? 'selected' : ''}>Script</option>
+                            <option value="Sinc" ${menuConfig.selectedFont === 'Sinc' ? 'selected' : ''}>Sinclair</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -824,6 +959,7 @@ function initializeMainmenuPreview() {
 
 function setupModuleEventListeners() {
     // Navigation mode handling
+    setTimeout(updateCursorStyleOptions, 100);
     const navigationRadios = document.querySelectorAll('input[name="navigation"]');
     navigationRadios.forEach(radio => {
         radio.addEventListener('change', function() {
@@ -873,5 +1009,33 @@ function setupModuleEventListeners() {
         cursorBgColorPicker.style.display = 'inline-block';
     } else {
         cursorBgColorPicker.style.display = 'none';
+    }
+
+    // Font selection handling
+    const fontSelect = document.getElementById('font-select');
+    if (fontSelect) {
+        fontSelect.addEventListener('change', function() {
+            menuConfig.selectedFont = this.value;
+            loadFont(this.value);
+            updateCursorStyleOptions();
+        });
+    }
+
+    function updateCursorStyleOptions() {
+        const cursorStyleSelect = document.getElementById('cursor-style');
+        const isSystemFont = !menuConfig.selectedFont || menuConfig.selectedFont === 'system';
+
+        // Enable/disable options based on font
+        Array.from(cursorStyleSelect.options).forEach(option => {
+            if (option.value === 'selected' || option.value === 'inverse') {
+                option.disabled = !isSystemFont;
+            }
+        });
+
+        // If current selection is disabled, switch to a valid option
+        if (!isSystemFont && (menuConfig.cursorStyle === 'selected' || menuConfig.cursorStyle === 'inverse')) {
+            menuConfig.cursorStyle = 'outline';
+            cursorStyleSelect.value = 'outline';
+        }
     }
 }

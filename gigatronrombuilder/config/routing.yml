@@ -21,3 +21,7 @@ at67_gigatronrombuilder_serve_rom:
 at67_gigatronrombuilder_getRomFreeSpace:
     path: /gigatronrombuilder/getRomFreeSpace
     defaults: { _controller: at67.gigatronrombuilder.controller.main:getRomFreeSpace }
+
+at67_gigatronrombuilder_font:
+    path: /gigatronrombuilder/font/{fontName}/{fileName}
+    defaults: { _controller: at67.gigatronrombuilder.controller.main:serveFont }
