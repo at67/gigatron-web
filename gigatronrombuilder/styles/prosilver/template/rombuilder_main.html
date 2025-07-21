@@ -32,8 +32,17 @@
             <div id="status-display" style="background: #2d2d2d; border: 2px solid #444; border-radius: 8px; color: #e0e0e0; width: 100%; height: 620px; display: flex; flex-direction: column; overflow: hidden; position: relative;">
                 <!-- ROM Status (Top 1/5) -->
                 <div style="padding: 10px; border-bottom: 1px solid #444; flex-shrink: 0;">
-                    <div style="font-weight: normal; margin-bottom: 8px; font-size: 13px;">Selected ROM:</div>
-                    <div id="selected-rom-display" style="font-size: 16px;">ROMv6</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px;">
+                        <span style="font-weight: normal;">Selected ROM: <span id="selected-rom-display" style="font-size: 16px;">ROMv6</span></span>
+                        <span style="color: #666; cursor: pointer; position: relative; font-size: 11px;"
+                              onmouseover="this.querySelector('.about-tooltip').style.display='block'"
+                              onmouseout="this.querySelector('.about-tooltip').style.display='none'">
+                            about
+                            <div class="about-tooltip" style="display: none; position: absolute; top: 15px; right: 0; background: #333; color: #ccc; padding: 6px 8px; border-radius: 4px; font-size: 11px; white-space: nowrap; z-index: 1000; border: 1px solid #555; box-shadow: 2px 2px 4px rgba(0,0,0,0.5);">
+                                Gigatron Showcase coded by at67, based on work by Marcel van Kervinck and Walter Belgers
+                            </div>
+                        </span>
+                    </div>
                     <div id="free-space-display" style="font-size: 14px; margin-top: 8px; color: #00ff00;">Free Space: 121,856 bytes</div>
                 </div>
 
@@ -53,7 +62,7 @@
                 </div>
 
                 <!-- Build Result Modal -->
-                <div id="build-result-modal" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000;">
+                <div id="build-result-modal" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1;">
                     <div style="background: #2d2d2d; border: 2px solid #444; border-radius: 8px; margin: 10px; height: calc(100% - 20px); display: flex; flex-direction: column;">
                         <div id="modal-title" style="padding: 15px; border-bottom: 1px solid #444; color: #e0e0e0; font-weight: bold; font-size: 16px;">
                             Build Status
