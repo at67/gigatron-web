@@ -35,6 +35,28 @@ class main
         return $this->helper->render('rombuilder_main.html', 'Gigatron ROM Builder');
     }
 
+    private function getUniquePrefix()
+    {
+        global $phpbb_container;
+
+        // Get the request service from phpBB container
+        $request = $phpbb_container->get('request');
+
+        // Enable superglobals temporarily
+        $request->enable_super_globals();
+
+        // Start session if not already started
+        if (!isset($_SESSION)) {
+            session_start();
+        }
+
+        if (!isset($_SESSION['build_unique_id'])) {
+            $_SESSION['build_unique_id'] = $this->user->data['username'] . '_' . time();
+        }
+
+        return $_SESSION['build_unique_id'];
+    }
+
     public function build()
     {
         // Get the JSON data
@@ -51,8 +73,9 @@ class main
             $custom_manifest = $data['manifest'] ?? null;
             $app_overrides = []; // or extract from $data if needed
             $symbols_only = isset($data['symbols_only']) ? $data['symbols_only'] : false;
-
-            $result = $builder->buildRom($rom_version, $app_overrides, $custom_manifest, null, $symbols_only, false);
+            $unique_prefix = $this->getUniquePrefix();
+            $result = $builder->buildRom($rom_version, $app_overrides, $custom_manifest, null, $symbols_only, false, $unique_prefix);
+            $result['unique_prefix'] = $unique_prefix;
         }
         catch (\Exception $e)
         {
@@ -76,8 +99,9 @@ class main
             $custom_manifest = $data['manifest'] ?? null;
             $rom_name = $data['rom_name'] ?? null;
 
-            // Write GBAS source to file
-            $gbas_file = __DIR__ . '/../build/mainmenu.gbas';
+            // Write GBAS source to file with unique prefix
+            $unique_prefix = $this->getUniquePrefix();
+            $gbas_file = __DIR__ . '/../build/' . $unique_prefix . '_mainmenu.gbas';
             file_put_contents($gbas_file, $gbas_source);
 
             // Compile GBAS to GT1
@@ -96,13 +120,14 @@ class main
                 $builder = new \RomBuilder();
 
                 // Remove the closing quote, add comma + Main entry, then add closing quote back
-                $updated_manifest = rtrim($custom_manifest, '"') . ",\n      Main=../build/" . basename($compile_result['gt1_file']) . '"';
+                $updated_manifest = rtrim($custom_manifest, '"') . ",\n      Main=../build/" . $unique_prefix . "_mainmenu.gt1" . '"';
 
                 // DEBUG: Add manifest info to output
                 $debug_output = "Manifest:\n" . $updated_manifest . "\n\n";
 
                 // Prepend debug and GBAS compilation output to the ROM build output
-                $result = $builder->buildRom($rom_version, [], $updated_manifest, $rom_name, false, false);
+                $result = $builder->buildRom($rom_version, [], $updated_manifest, $rom_name, false, false, $unique_prefix);
+                $result['unique_prefix'] = $unique_prefix;
                 $result['output'] = $debug_output . "GBAS Compilation:\n" . $compile_result['output'] . "\n\nROM Build:\n" . $result['output'];
             }
         }

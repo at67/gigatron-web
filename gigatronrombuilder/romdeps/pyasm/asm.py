@@ -714,9 +714,9 @@ def writeRomFiles(sourceFile):
     file.write(_rom2)
 
   if not _sizeOnlyMode:
-    print('Create file', filename)
-    print('Create file', filename)
     print('ROM bytes %d words %d' % (len(_rom2), len(_rom2)//2))
+    print('Words used %d unused %d' % (_romSize, _maxRomSize-_romSize))
+    print('Assembly OK')
 
 # print() wrapper to highlights message on terminal with ANSI escape codes
 def highlight(*args):

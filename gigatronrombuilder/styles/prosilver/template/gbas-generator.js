@@ -158,7 +158,7 @@ function generateBaseCode(romVersion) {
                '_codeRomType_ ROM' + romVersion + '\n' +
                '_enableRomCheck_ Off\n' +
                '_stringWorkArea_ &h77A0\n' +
-               'module "SymbolTable.m"\n' +
+               'module "' + (menuConfig.symbolTableName || 'SymbolTable.m') + '"\n' +
                'const NUM_APPS = ' + numApps + '\n';
 
     if (positions.decoLength > 0) {

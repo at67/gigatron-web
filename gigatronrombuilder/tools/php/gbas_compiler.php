@@ -1,9 +1,4 @@
 <?php
-/**
- * GBAS Compiler Functions
- * Handles compilation of .gbas files to .gt1 files
- */
-
 class GbasCompiler {
     private $gtbasic_path;
     private $build_dir;
@@ -13,14 +8,7 @@ class GbasCompiler {
         $this->gtbasic_path = $build_dir . '/gtbasic';
     }
 
-    /**
-     * Compile a GBAS file to GT1
-     *
-     * @param string $gbas_file Path to .gbas file
-     * @param string $output_dir Directory for output (optional)
-     * @return array Result with success/error info
-     */
-    public function compile($gbas_file, $output_dir = null) {
+    public function compile($gbas_file) {
         // Change to build directory for compilation
         $old_cwd = getcwd();
         chdir($this->build_dir);
@@ -70,17 +58,11 @@ class GbasCompiler {
         }
     }
 
-    /**
-     * Determine GT1 filename from GBAS filename
-     */
     private function findGt1File($gbas_file) {
         $path_info = pathinfo($gbas_file);
         return $path_info['dirname'] . '/' . $path_info['filename'] . '.gt1';
     }
 
-    /**
-     * Parse error type from exit code and output
-     */
     private function parseErrorType($exit_code, $output) {
         switch ($exit_code) {
             case 1:
@@ -98,9 +80,6 @@ class GbasCompiler {
         }
     }
 
-    /**
-     * Extract human-readable error message
-     */
     private function extractErrorMessage($output) {
         $lines = explode("\n", $output);
         $errors = [];

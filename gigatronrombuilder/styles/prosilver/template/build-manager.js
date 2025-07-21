@@ -82,6 +82,11 @@ function sendBuildRequest(romVersion, selectedFiles, manifest, symbolsOnly = fal
             if (xhr.status === 200) {
                 var response = JSON.parse(xhr.responseText);
                 if (response.success) {
+                    // Store unique prefix for later use
+                    if (response.unique_prefix) {
+                        window.uniquePrefix = response.unique_prefix;
+                    }
+
                     const hasMainAlias = window.fileBrowser.selectedFiles.some(file => file.alias === 'Main');
 
                     if (hasMainAlias) {
@@ -245,7 +250,7 @@ function showPhase2Modal(apps, buildResponse) {
     contentElement.parentElement.style.overflow = 'visible';
     contentElement.style.overflow = 'visible';
 
-    // FIX: Remove pre tag formatting that causes spacing issues
+    // Remove pre tag formatting that causes spacing issues
     contentElement.style.whiteSpace = 'normal';
     contentElement.style.fontFamily = 'inherit';
 

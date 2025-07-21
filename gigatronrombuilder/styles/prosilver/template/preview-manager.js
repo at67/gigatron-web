@@ -22,6 +22,12 @@ function setupMainmenuPreview() {
     setupControlEvents();
     setupCanvasEvents();
 
+    // Initialize auto-grid if enabled
+    if (autoGridEnabled) {
+        calculateGridXGap();
+        regenerateAutoGrid();
+    }
+
     // Initial render
     renderPreview();
 
@@ -451,7 +457,7 @@ function setupMainmenuPreview() {
         menuConfig.enableMusic = true;
         menuConfig.enableBeep = true;
         menuConfig.visualEffect = 'none';
-        menuConfig.cursorStyle = 'outline';
+        menuConfig.cursorStyle = 'selected';
         menuConfig.decorativeText = [];
 
         // Reset item colors and text to original filenames
@@ -788,11 +794,11 @@ function createPhase2LayoutHTML(apps, romVersion) {
                     <div style="margin-bottom: 10px;">
                         <h4 style="margin: 0 0 4px 0; color: #e0e0e0; font-size: 14px;">Cursor Style:</h4>
                         <select id="cursor-style" style="width: 96%; padding: 2px; background: #1a1a1a; color: #e0e0e0; border: 1px solid #444; border-radius: 2px; font-size: 12px;">
+                            <option value="selected" ${menuConfig.cursorStyle === 'selected' ? 'selected' : ''}>Selected</option>
+                            <option value="inverse" ${menuConfig.cursorStyle === 'inverse' ? 'selected' : ''}>Inverse</option>
+                            <option value="simple" ${menuConfig.cursorStyle === 'simple' ? 'selected' : ''}>Simple</option>
                             <option value="outline" ${menuConfig.cursorStyle === 'outline' ? 'selected' : ''}>Outline</option>
                             <option value="underline" ${menuConfig.cursorStyle === 'underline' ? 'selected' : ''}>Underline</option>
-                            <option value="simple" ${menuConfig.cursorStyle === 'simple' ? 'selected' : ''}>Simple</option>
-                            <option value="inverse" ${menuConfig.cursorStyle === 'inverse' ? 'selected' : ''}>Inverse</option>
-                            <option value="selected" ${menuConfig.cursorStyle === 'selected' ? 'selected' : ''}>Selected</option>
                         </select>
                     </div>
                 </div>

@@ -11,7 +11,7 @@ const ROM_FREE_SPACE = {
 
 var menuConfig = {
     items: [],
-    cursor: { x: 2, y: 52, color: '#CCCC00', backgroundColor: '#000000' },
+    cursor: { x: 2, y: 52, color: '#CCCC00', backgroundColor: '#400040' },
     backgroundColor: '#000000',
     gridCols: 1,
     gridOffsetX: 8,
@@ -22,8 +22,13 @@ var menuConfig = {
     enableMusic: true,
     enableBeep: true,
     visualEffect: 'none',
-    cursorStyle: 'outline'
+    cursorStyle: 'selected',
+    symbolTableName: 'SymbolTable.m'
 };
+
+function getUniquePrefix() {
+    return window.uniquePrefix || '';
+}
 
 function createMenuConfigFromApps(apps) {
     const defaultColor = '#00CC00';
@@ -50,6 +55,8 @@ function createMenuConfigFromApps(apps) {
         item.x = i < 8 ? 2 : 80;
         item.y = 32 + (i % 8) * 8;
     });
+
+    menuConfig.symbolTableName = getUniquePrefix() + '_SymbolTable.m';
 
     return menuConfig;
 }

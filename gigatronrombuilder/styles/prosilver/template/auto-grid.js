@@ -1,6 +1,6 @@
 // auto-grid.js - Auto grid positioning and slider management
 
-var autoGridEnabled = false;
+var autoGridEnabled = true;
 var gridAnchorIndex = 0;
 
 function regenerateAutoGrid() {

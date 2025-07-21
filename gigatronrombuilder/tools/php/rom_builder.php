@@ -18,7 +18,7 @@ class RomBuilder {
         }
     }
 
-    public function buildRom($rom_version, $app_overrides = [], $custom_manifest = null, $custom_rom_name = null, $symbols_only = false, $size_only = false) {
+    public function buildRom($rom_version, $app_overrides = [], $custom_manifest = null, $custom_rom_name = null, $symbols_only = false, $size_only = false, $unique_prefix = null) {
         $script_name = "ROM{$rom_version}.asm.py";
         $script_path = $this->romsrc_dir . '/' . $script_name;
 
@@ -125,11 +125,15 @@ class RomBuilder {
 
             if ($exit_code === 0) {
                 // Move generated files to build directory
-                $this->moveOutputFiles($rom_version, $custom_rom_name);
+                if ($exit_code === 0 && !$size_only) {
+                    $this->moveOutputFiles($rom_version, $custom_rom_name, $unique_prefix);
+                }
 
-                // Use custom ROM name if provided
-                $rom_filename = $custom_rom_name ? $custom_rom_name : "ROM{$rom_version}.rom";
-                $lst_filename = $custom_rom_name ? str_replace('.rom', '.lst', $custom_rom_name) : "ROM{$rom_version}.lst";
+                // Generate unique filenames
+                $base_rom_name = $custom_rom_name ? $custom_rom_name : "ROM{$rom_version}.rom";
+                $base_lst_name = $custom_rom_name ? str_replace('.rom', '.lst', $custom_rom_name) : "ROM{$rom_version}.lst";
+                $rom_filename = $unique_prefix ? $unique_prefix . "_" . $base_rom_name : $base_rom_name;
+                $lst_filename = $unique_prefix ? $unique_prefix . "_" . $base_lst_name : $base_lst_name;
                 $result['rom_file'] = $this->build_dir . "/" . $rom_filename;
                 $result['lst_file'] = $this->build_dir . "/" . $lst_filename;
             }
@@ -185,15 +189,18 @@ class RomBuilder {
         return array_merge($trimmed_apps, $overrides);
     }
 
-    private function moveOutputFiles($rom_version, $custom_rom_name = null) {
+    private function moveOutputFiles($rom_version, $custom_rom_name = null, $unique_prefix = null) {
         $default_rom_file = "ROM{$rom_version}.rom";
         $final_rom_name = $custom_rom_name ? $custom_rom_name : $default_rom_file;
         $final_lst_name = $custom_rom_name ? str_replace('.rom', '.lst', $custom_rom_name) : "ROM{$rom_version}.lst";
+        $rom_filename = $unique_prefix ? $unique_prefix . "_" . $final_rom_name : $final_rom_name;
+        $lst_filename = $unique_prefix ? $unique_prefix . "_" . $final_lst_name : $final_lst_name;
+        $symbol_filename = $unique_prefix ? $unique_prefix . "_SymbolTable.m" : "SymbolTable.m";
 
         $files_to_move = [
-            $default_rom_file => $final_rom_name,
-            "ROM{$rom_version}.lst" => $final_lst_name,
-            "SymbolTable.m" => "SymbolTable.m"
+            $default_rom_file => $rom_filename,
+            "ROM{$rom_version}.lst" => $lst_filename,
+            "SymbolTable.m" => $symbol_filename
         ];
 
         foreach ($files_to_move as $source_file => $dest_file) {
