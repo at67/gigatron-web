@@ -583,7 +583,7 @@ function setupMainmenuPreview() {
         menuConfig.cursor.backgroundColor = '#000000';
         menuConfig.gridCols = 1;
         menuConfig.gridOffsetY = 1;
-        menuConfig.enableRamSize = true;
+        menuConfig.enableRamSize = false;
         menuConfig.enableMusic = true;
         menuConfig.enableBeep = true;
         menuConfig.visualEffect = 'none';
