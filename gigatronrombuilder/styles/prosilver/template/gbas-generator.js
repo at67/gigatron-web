@@ -162,6 +162,12 @@ function generateBaseCode(romVersion) {
                'module "' + (menuConfig.symbolTableName || 'SymbolTable.m') + '"\n' +
                'const NUM_APPS = ' + numApps + '\n';
 
+    if (menuConfig.enableRamSize) {
+        code += 'def byte(&h7FFF) = 1\n';
+        code += 'POKE &hFFFF, &h00\n';
+        code += 'found64K = PEEK(&h7fff)\n';
+    }
+
     if (positions.decoLength > 0) {
         code += 'const NUM_DECO = ' + positions.decoLength + '\n';
         code += 'const dim decoText$(NUM_DECO-1) = ' + positions.decoText.map(name => '"' + name + '"').join(', ') + '\n';
@@ -203,6 +209,16 @@ function generateBaseCode(romVersion) {
         code += 'for i = 0 to NUM_DECO - 1\n' +
                 '    set FG_COLOUR, decoColors(i) : at decoX(i), decoY(i) : print decoText$(i)\n' +
                 'next i\n';
+    }
+
+    // RAM size
+    if (menuConfig.enableRamSize) {
+        code += 'at decoX(0) + ' + menuConfig.decorativeText[0].text.length * 6 + ', decoY(0)\n' +
+                'if found64K\n' +
+                '    print "64K"\n' +
+                'else\n' +
+                '    print "32K"\n' +
+                'endif\n';
     }
 
     // Draw menu text on top

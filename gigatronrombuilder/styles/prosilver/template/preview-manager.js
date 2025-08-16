@@ -146,6 +146,9 @@ function setupMainmenuPreview() {
         regenerateAutoGrid();
     }
 
+    // Initialize RAM size label
+    updateRamSizeLabel();
+
     // Initial render
     renderPreview();
 
@@ -546,6 +549,14 @@ function setupMainmenuPreview() {
         document.getElementById('selected-y').value = item.y;
         document.getElementById('selected-color').value = item.color;
 
+        // Hide delete button for RAM size label when enabled
+        const deleteBtn = document.getElementById('delete-item-btn');
+        if (menuConfig.enableRamSize && selectedType === 'decorative' && index === 0) {
+            deleteBtn.style.display = 'none';
+        } else {
+            deleteBtn.style.display = 'block';
+        }
+
         panel.style.display = 'block';
     }
 
@@ -572,6 +583,7 @@ function setupMainmenuPreview() {
         menuConfig.cursor.backgroundColor = '#000000';
         menuConfig.gridCols = 1;
         menuConfig.gridOffsetY = 1;
+        menuConfig.enableRamSize = true;
         menuConfig.enableMusic = true;
         menuConfig.enableBeep = true;
         menuConfig.visualEffect = 'none';
@@ -591,6 +603,7 @@ function setupMainmenuPreview() {
         document.getElementById('bg-color').value = menuConfig.backgroundColor;
         document.getElementById('cursor-color').value = menuConfig.cursor.color;
         document.getElementById('cursor-bg-color').value = menuConfig.cursor.backgroundColor;
+        document.getElementById('enable-ram-size').checked = menuConfig.enableRamSize;
         document.getElementById('enable-music').checked = menuConfig.enableMusic;
         document.getElementById('enable-beep').checked = menuConfig.enableBeep;
         document.getElementById('visual-effects').value = menuConfig.visualEffect;
@@ -616,6 +629,8 @@ function setupMainmenuPreview() {
             // Column mode - just clear columns
             window.navigationColumns.length = 0;
         }
+
+        updateRamSizeLabel();
 
         renderPreview();
     }
@@ -785,6 +800,29 @@ function renderPreview() {
     }
 }
 
+function updateRamSizeLabel() {
+    if (menuConfig.enableRamSize) {
+        // Insert "RAM:" at index 0 if not already there
+        if (!menuConfig.decorativeText[0] || menuConfig.decorativeText[0].text !== 'RAM:') {
+            menuConfig.decorativeText.unshift({
+                text: 'RAM:',
+                x: 62,
+                y: 112,
+                color: menuConfig.defaultColor,
+                visible: true
+            });
+        }
+    } else {
+        // Remove "RAM:" from index 0 if it's there
+        if (menuConfig.decorativeText[0] && menuConfig.decorativeText[0].text === 'RAM:') {
+            menuConfig.decorativeText.shift();
+        }
+    }
+    if (typeof renderPreview === 'function') {
+        renderPreview();
+    }
+}
+
 function createMainmenuPreviewHTML(apps) {
     // Only initialize if menuConfig is empty or doesn't match app count
     if (!menuConfig.items || menuConfig.items.length !== apps.length) {
@@ -872,6 +910,14 @@ function createPhase2LayoutHTML(apps, romVersion) {
                     <div style="margin-bottom: 10px;">
                         <h4 style="margin: 0 0 4px 0; color: #e0e0e0; font-size: 14px;">ROM Name:</h4>
                         <input type="text" id="rom-name" value="ROM` + romVersion + `.rom" style="width: 96%; padding: 2px; background: #1a1a1a; color: #e0e0e0; border: 1px solid #444; border-radius: 2px; font-size: 12px;">
+                    </div>
+
+                    <!-- System -->
+                    <div style="margin-bottom: 10px;">
+                        <h4 style="margin: 0 0 4px 0; color: #e0e0e0; font-size: 14px;">System:</h4>
+                        <label style="display: block; margin-bottom: 5px; color: #e0e0e0; cursor: pointer;">
+                            <input type="checkbox" id="enable-ram-size" ${menuConfig.enableRamSize ? 'checked' : ''} style="margin-right: 8px;"> Ram Size
+                        </label>
                     </div>
 
                     <!-- Navigation Setup -->
@@ -984,6 +1030,13 @@ function setupModuleEventListeners() {
         } else {
             cursorBgColorPicker.style.display = 'none';
         }
+    });
+
+    // Ram Size checkbox handling
+    const ramSizeCheckbox = document.getElementById('enable-ram-size');
+    ramSizeCheckbox.addEventListener('change', function() {
+        menuConfig.enableRamSize = this.checked;
+        updateRamSizeLabel();
     });
 
     // Music checkbox handling

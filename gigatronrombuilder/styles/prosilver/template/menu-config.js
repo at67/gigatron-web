@@ -19,6 +19,7 @@ var menuConfig = {
     gridMaxCols: 1,
     defaultColor: '#00CC00',
     decorativeText: [],
+    enableRamSize: true,
     enableMusic: true,
     enableBeep: true,
     visualEffect: 'none',
