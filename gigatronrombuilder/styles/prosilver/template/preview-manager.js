@@ -802,8 +802,8 @@ function renderPreview() {
 
 function updateRamSizeLabel() {
     if (menuConfig.enableRamSize) {
-        // Insert "RAM:" at index 0 if not already there
-        if (!menuConfig.decorativeText[0] || menuConfig.decorativeText[0].text !== 'RAM:') {
+        // Ensure RAM label exists at index 0
+        if (menuConfig.decorativeText.length === 0 || !menuConfig.decorativeText[0]) {
             menuConfig.decorativeText.unshift({
                 text: 'RAM:',
                 x: 62,
@@ -813,8 +813,8 @@ function updateRamSizeLabel() {
             });
         }
     } else {
-        // Remove "RAM:" from index 0 if it's there
-        if (menuConfig.decorativeText[0] && menuConfig.decorativeText[0].text === 'RAM:') {
+        // Remove index 0 if RAM size is disabled
+        if (menuConfig.decorativeText.length > 0) {
             menuConfig.decorativeText.shift();
         }
     }
