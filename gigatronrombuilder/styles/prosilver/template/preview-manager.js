@@ -126,12 +126,12 @@ function setupMainmenuPreview() {
     let selectedType = 'menu'; // 'menu' or 'decorative'
     let isDragging = false;
     let dragOffset = { x: 0, y: 0 };
-    let columnColors = ['#00ff00', '#ffff00', '#ffa500', '#00ffff', '#ff69b4', '#ff0000', '#0000ff', '#800080', '#ffc0cb', '#90ee90'];
-    let maxColumns = 10;
+    let sequenceColors = ['#00ff00', '#ffff00', '#ffa500', '#00ffff', '#ff69b4', '#ff0000', '#0000ff', '#800080', '#ffc0cb', '#90ee90'];
+    let maxSequences = 10;
 
     // Expose to global scope
     window.navigationMode = window.navigationMode || 'grid';
-    window.navigationColumns = [];
+    window.navigationSequences = [];
 
     // Setup canvas
     ctx.imageSmoothingEnabled = false;
@@ -152,53 +152,53 @@ function setupMainmenuPreview() {
     // Initial render
     renderPreview();
 
-    function addToNewColumn(itemIndex) {
-        if (window.navigationColumns.length >= maxColumns) {
-            return; // Max columns reached
+    function addToNewSequence(itemIndex) {
+        if (window.navigationSequences.length >= maxSequences) {
+            return; // Max sequences reached
         }
 
-        // Remove item from any existing column first
-        removeFromColumn(itemIndex);
+        // Remove item from any existing sequence first
+        removeFromSequence(itemIndex);
 
-        // Create new column with this item
-        window.navigationColumns.push([itemIndex]);
+        // Create new sequence with this item
+        window.navigationSequences.push([itemIndex]);
     }
 
-    function addToExistingColumn(itemIndex) {
-        if (window.navigationColumns.length === 0) {
-            // No columns exist, create first one
-            addToNewColumn(itemIndex);
+    function addToExistingSequence(itemIndex) {
+        if (window.navigationSequences.length === 0) {
+            // No sequence exists, create first one
+            addToNewSequence(itemIndex);
             return;
         }
 
-        // Remove item from any existing column first
-        removeFromColumn(itemIndex);
+        // Remove item from any existing sequence first
+        removeFromSequence(itemIndex);
 
-        // Add to the last column
-        const lastColumnIndex = window.navigationColumns.length - 1;
-        window.navigationColumns[lastColumnIndex].push(itemIndex);
+        // Add to the last sequence
+        const lastSequenceIndex = window.navigationSequences.length - 1;
+        window.navigationSequences[lastSequenceIndex].push(itemIndex);
     }
 
-    function removeFromColumn(itemIndex) {
-        for (let colIndex = 0; colIndex < window.navigationColumns.length; colIndex++) {
-            const itemPosition = window.navigationColumns[colIndex].indexOf(itemIndex);
+    function removeFromSequence(itemIndex) {
+        for (let seqIndex = 0; seqIndex < window.navigationSequences.length; seqIndex++) {
+            const itemPosition = window.navigationSequences[seqIndex].indexOf(itemIndex);
             if (itemPosition !== -1) {
-                window.navigationColumns[colIndex].splice(itemPosition, 1);
+                window.navigationSequences[seqIndex].splice(itemPosition, 1);
 
-                // Remove empty columns
-                if (window.navigationColumns[colIndex].length === 0) {
-                    window.navigationColumns.splice(colIndex, 1);
+                // Remove empty sequences
+                if (window.navigationSequences[seqIndex].length === 0) {
+                    window.navigationSequences.splice(seqIndex, 1);
                 }
                 break;
             }
         }
     }
 
-    function getItemColumnInfo(itemIndex) {
-        for (let colIndex = 0; colIndex < window.navigationColumns.length; colIndex++) {
-            const itemPosition = window.navigationColumns[colIndex].indexOf(itemIndex);
+    function getItemSequenceInfo(itemIndex) {
+        for (let seqIndex = 0; seqIndex < window.navigationSequences.length; seqIndex++) {
+            const itemPosition = window.navigationSequences[seqIndex].indexOf(itemIndex);
             if (itemPosition !== -1) {
-                return { columnIndex: colIndex, position: itemPosition };
+                return { sequenceIndex: seqIndex, position: itemPosition };
             }
         }
         return null;
@@ -410,22 +410,22 @@ function setupMainmenuPreview() {
             const y = Math.floor((e.clientY - rect.top) / 3);
             const clickedIndex = findItemAtPosition(x, y);
 
-            if (window.navigationMode === 'column' && clickedIndex >= 0) {
+            if (window.navigationMode === 'sequence' && clickedIndex >= 0) {
                 if (e.ctrlKey && e.button === 0) {
-                    // CTRL + LEFT CLICK - start new column
-                    addToNewColumn(clickedIndex);
+                    // CTRL + LEFT CLICK - start new sequence
+                    addToNewSequence(clickedIndex);
                     renderPreview();
                     return;
                 }
                 if (e.shiftKey && e.button === 0) {
-                    // SHIFT + LEFT CLICK - add to existing column
-                    addToExistingColumn(clickedIndex);
+                    // SHIFT + LEFT CLICK - add to existing sequence
+                    addToExistingSequence(clickedIndex);
                     renderPreview();
                     return;
                 }
                 if (e.button === 2) {
-                    // RIGHT CLICK - remove from columns
-                    removeFromColumn(clickedIndex);
+                    // RIGHT CLICK - remove from sequence
+                    removeFromSequence(clickedIndex);
                     renderPreview();
                     return;
                 }
@@ -619,15 +619,15 @@ function setupMainmenuPreview() {
                 calculateGridXGap();
                 regenerateAutoGrid();
             } else {
-                // Reset to original 2-column layout
+                // Reset to original 2-sequence layout
                 menuConfig.items.forEach((item, i) => {
                     item.x = i < 8 ? 2 : 80;
                     item.y = 32 + (i % 8) * 8;
                 });
             }
-        } else if (window.navigationMode === 'column') {
-            // Column mode - just clear columns
-            window.navigationColumns.length = 0;
+        } else if (window.navigationMode === 'sequence') {
+            // Sequence mode - just clear sequences
+            window.navigationSequences.length = 0;
         }
 
         updateRamSizeLabel();
@@ -688,8 +688,8 @@ function setupMainmenuPreview() {
 
         drawGrid();
 
-        if (window.navigationMode === 'column') {
-            drawColumnVisuals();
+        if (window.navigationMode === 'sequence') {
+            drawSequenceVisuals();
         }
 
         updateModeVisibility();
@@ -736,29 +736,29 @@ function setupMainmenuPreview() {
         }
     }
 
-    function drawColumnVisuals() {
+    function drawSequenceVisuals() {
         const ctx = canvas.getContext('2d');
 
-        // Draw column connections and highlights
-        for (let colIndex = 0; colIndex < window.navigationColumns.length; colIndex++) {
-            const column = window.navigationColumns[colIndex];
-            const color = columnColors[colIndex % columnColors.length];
+        // Draw sequence connections and highlights
+        for (let seqIndex = 0; seqIndex < window.navigationSequences.length; seqIndex++) {
+            const sequence = window.navigationSequences[seqIndex];
+            const color = sequenceColors[seqIndex % sequenceColors.length];
 
-            // Highlight all items in this column
+            // Highlight all items in this sequence
             ctx.fillStyle = color + '40'; // Add transparency
-            for (let itemIndex of column) {
+            for (let itemIndex of sequence) {
                 const item = menuConfig.items[itemIndex];
                 ctx.fillRect((item.x - 1) * 3, (item.y - 1) * 3, (item.text.length * 6 + 2) * 3, 10 * 3);
             }
 
-            // Draw connections within column
+            // Draw connections within sequence
             ctx.strokeStyle = color;
             ctx.setLineDash([3, 3]);
             ctx.lineWidth = 2;
 
-            for (let i = 0; i < column.length - 1; i++) {
-                const fromItem = menuConfig.items[column[i]];
-                const toItem = menuConfig.items[column[i + 1]];
+            for (let i = 0; i < sequence.length - 1; i++) {
+                const fromItem = menuConfig.items[sequence[i]];
+                const toItem = menuConfig.items[sequence[i + 1]];
 
                 // Center-to-center connections
                 const fromX = (fromItem.x + (fromItem.text.length * 6) / 2) * 3;
@@ -778,15 +778,15 @@ function setupMainmenuPreview() {
     }
 
     function updateModeVisibility() {
-        const isColumnMode = window.navigationMode === 'column';
+        const isSequenceMode = window.navigationMode === 'sequence';
 
         // Hide auto grid checkbox
-        document.getElementById('auto-grid').parentElement.style.display = isColumnMode ? 'none' : 'flex';
+        document.getElementById('auto-grid').parentElement.style.display = isSequenceMode ? 'none' : 'flex';
 
         // Hide all 4 individual slider containers
-        document.getElementById('grid-size-x').parentElement.style.display = isColumnMode ? 'none' : 'flex';
-        document.getElementById('grid-offset-x').parentElement.style.display = isColumnMode ? 'none' : 'flex';
-        document.getElementById('grid-offset-y').parentElement.style.display = isColumnMode ? 'none' : 'flex';
+        document.getElementById('grid-size-x').parentElement.style.display = isSequenceMode ? 'none' : 'flex';
+        document.getElementById('grid-offset-x').parentElement.style.display = isSequenceMode ? 'none' : 'flex';
+        document.getElementById('grid-offset-y').parentElement.style.display = isSequenceMode ? 'none' : 'flex';
     }
 
     // Expose to global scope
@@ -922,12 +922,21 @@ function createPhase2LayoutHTML(apps, romVersion) {
 
                     <!-- Navigation Setup -->
                     <div style="margin-bottom: 10px;">
-                        <h4 style="margin: 0 0 4px 0; color: #e0e0e0; font-size: 14px;">Navigation Setup:</h4>
+                        <h4 style="margin: 0 0 4px 0; color: #e0e0e0; font-size: 14px;">
+                            Navigation Setup:
+                            <span style="color: #999; cursor: pointer; position: relative; font-size: 11px; border: 1px solid #555; padding: 1px 4px; border-radius: 2px; margin-left: 8px;"
+                                  onmouseover="var tooltip = this.querySelector('.nav-help-tooltip'); var rect = this.getBoundingClientRect(); tooltip.style.top = (rect.bottom + 5) + 'px'; tooltip.style.left = rect.left + 'px'; if(window.navigationMode === 'sequence') { tooltip.innerHTML = 'Ctrl-Left Click: Start Sequence • Shift-Left Click: Add to Sequence • Right Click: Delete from Sequence'; } else { tooltip.innerHTML = 'Left Click: Change Position • Double Click: Edit Text'; } tooltip.style.display = 'block';"
+                                  onmouseout="this.querySelector('.nav-help-tooltip').style.display='none'">
+                                ?
+                                <div class="nav-help-tooltip" style="display: none; position: fixed; background: #333; color: #ccc; padding: 6px 8px; border-radius: 4px; font-size: 11px; white-space: nowrap; z-index: 10000; border: 1px solid #555; box-shadow: 2px 2px 4px rgba(0,0,0,0.5);">
+                                </div>
+                            </span>
+                        </h4>
                         <label style="display: block; margin-bottom: 5px; color: #e0e0e0; cursor: pointer;">
                             <input type="radio" name="navigation" value="grid" checked style="margin-right: 8px;"> Grid
                         </label>
                         <label style="display: block; margin-bottom: 5px; color: #e0e0e0; cursor: pointer;">
-                            <input type="radio" name="navigation" value="column" style="margin-right: 8px;"> Sequence
+                            <input type="radio" name="navigation" value="sequence" style="margin-right: 8px;"> Sequence
                         </label>
                     </div>
 
@@ -1010,7 +1019,7 @@ function setupModuleEventListeners() {
     navigationRadios.forEach(radio => {
         radio.addEventListener('change', function() {
             // Set global navigation mode first
-            window.navigationMode = this.value; // 'grid', 'column'
+            window.navigationMode = this.value; // 'grid', 'sequence'
 
             // Trigger preview refresh
             if (typeof renderPreview === 'function') {
