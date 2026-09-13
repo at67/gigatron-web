@@ -288,7 +288,7 @@
                 <div class="button-group">
                     <a href="/app.php/gigatronshowcase/download/gt1/{{ GT1.path }}" class="download-btn" onclick="setTimeout(() => window.location.reload(), 1000)">📥 {{ GT1.filename }}</a>
                     <a href="{{ U_EMULATOR }}?autoload_rom={{ GT1.preferred_rom|default('ROMv6') }}.rom&autoload_gt1={{ GT1.path }}" class="emulator-btn">🎮 Emulator</a>
-                    {% if (CURRENT_USERNAME == AUTHOR) or IS_ADMIN %}
+                    {% if (CURRENT_USERNAME|lower == AUTHOR|lower) or IS_ADMIN %}
                     <a href="{{ U_EMULATOR_SCREENSHOT }}" class="emulator-btn">📷 Screenshot</a>
                     <a href="{{ U_EDIT_GT1 }}" class="emulator-btn">✏️ Edit</a>
                     <a href="{{ U_DELETE_GT1 }}" class="btn-danger">🗑️ Delete</a>

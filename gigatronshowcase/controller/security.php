@@ -36,22 +36,22 @@ function verifyUserFileAccess($category, $urlAuthor, $filename, $folder, $root_p
         ];
 
     } else {
-        // Regular user: verify they actually own the file via filesystem
-        $userOwnedPath = $root_path . 'ext/at67/gigatronemulator/gt1/' . $category . '/' . $trustedUsername . '/' . $filepath;
-
-        // User can only access files that exist in their own directory
-        if (!file_exists($userOwnedPath)) {
+        // Regular user: verify the URL author is their own name (prevent URL manipulation).
+        // Compared case-insensitively: an author folder may differ in case from the
+        // display name. phpBB's username_clean uniqueness means no two accounts differ
+        // by case alone, so this cannot match a different user.
+        if (strcasecmp($urlAuthor, $trustedUsername) !== 0) {
             throw new \phpbb\exception\http_exception(403, 'You can only access your own GT1 applications');
         }
 
-        // Verify the URL points to user's own file (prevent URL manipulation)
-        if ($userOwnedPath !== $targetFilePath) {
+        // User can only access files that exist in their own directory
+        if (!file_exists($targetFilePath)) {
             throw new \phpbb\exception\http_exception(403, 'You can only access your own GT1 applications');
         }
 
         return [
-            'file_path' => $userOwnedPath,
-            'actual_author' => $trustedUsername,
+            'file_path' => $targetFilePath,
+            'actual_author' => $urlAuthor,
             'trusted_username' => $trustedUsername,
             'is_admin' => false,
             'user_owns_file' => true

@@ -118,7 +118,7 @@ class gt1
         $isAdmin = $auth->acl_get('a_');
         $currentUsername = $user->data['username'];
 
-        if (!$isAdmin && $currentUsername !== $author) {
+        if (!$isAdmin && strcasecmp($currentUsername, $author) !== 0) {
             return new \Symfony\Component\HttpFoundation\JsonResponse(['success' => false, 'error' => 'Not authorized'], 403);
         }
 

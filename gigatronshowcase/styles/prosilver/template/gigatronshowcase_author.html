@@ -178,7 +178,7 @@
     <div class="author-header">
         <div class="author-title">
             <a href="/app.php/gigatronshowcase/author/{{ AUTHOR }}" style="color: #105289; text-decoration: none;">{{ AUTHOR }}</a> - {{ CATEGORY|title }}
-            {% if (CURRENT_USERNAME == AUTHOR) or IS_ADMIN %}
+            {% if (CURRENT_USERNAME|lower == AUTHOR|lower) or IS_ADMIN %}
             <a href="{{ U_UPLOAD_TO_CATEGORY }}" class="btn btn-blue">📤 Upload GT1</a>
             {% endif %}
         </div>
@@ -186,7 +186,7 @@
     </div>
 
     <!-- Featured Selection Info (only show to owner/admin) -->
-    {% if (CURRENT_USERNAME == AUTHOR) or IS_ADMIN %}
+    {% if (CURRENT_USERNAME|lower == AUTHOR|lower) or IS_ADMIN %}
     <div class="featured-info">
         Left-click on any screenshot to enter details page : Right-click to make it your featured GT1.
     </div>
@@ -204,7 +204,7 @@
         {% endif %}
             <div class="card"
                  data-gt1-path="{{ gt1.path }}"
-                 {% if (CURRENT_USERNAME == AUTHOR) or IS_ADMIN %}
+                 {% if (CURRENT_USERNAME|lower == AUTHOR|lower) or IS_ADMIN %}
                  oncontextmenu="selectFeatured(event, '{{ gt1.path }}'); return false;"
                  {% endif %}>
                 <div class="card-screenshot">
@@ -233,7 +233,7 @@
 
 <script>
 // Only add featured selection for owner/admin
-{% if (CURRENT_USERNAME == AUTHOR) or IS_ADMIN %}
+{% if (CURRENT_USERNAME|lower == AUTHOR|lower) or IS_ADMIN %}
 
 // Set initial featured GT1 based on current selection
 document.addEventListener('DOMContentLoaded', function() {
