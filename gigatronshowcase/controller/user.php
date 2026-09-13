@@ -39,7 +39,7 @@ class user
         // Get author screenshots for featured selection (if category is selected)
         $authorScreenshots = array();
         if ($category !== null) {
-            $authorScreenshots = $this->getAuthorScreenshots($category, $this->user->data['username']);
+            $authorScreenshots = $this->getAuthorScreenshots($category, strtolower($this->user->data['username']));
         }
 
         $this->template->assign_vars(array(
@@ -122,8 +122,11 @@ class user
         $filename = $this->sanitizeFilename($title) . '.gt1';
         $username = $this->user->data['username'];
 
+        // Author folders are always lowercase; display name casing may differ
+        $authorDir = strtolower($username);
+
         // Check if file already exists
-        $targetDir = $this->root_path . 'ext/at67/gigatronemulator/gt1/' . $category . '/' . $username . '/';
+        $targetDir = $this->root_path . 'ext/at67/gigatronemulator/gt1/' . $category . '/' . $authorDir . '/';
         $targetFile = $targetDir . $filename;
         if (file_exists($targetFile)) {
             $this->template->assign_var('ERROR', 'A GT1 with this title already exists. Please choose a different title.');
@@ -175,7 +178,7 @@ class user
             // Redirect to the new GT1 page
             $redirectUrl = $this->helper->route('at67_gigatronshowcase_gt1_file', array(
                 'category' => $category,
-                'author' => $username,
+                'author' => $authorDir,
                 'filename' => $filename
             ));
 
@@ -216,7 +219,7 @@ class user
         } catch (\phpbb\exception\http_exception $e) {
             $redirectUrl = $this->helper->route('at67_gigatronshowcase_author', array(
                 'category' => $category,
-                'author' => $this->user->data['username']
+                'author' => strtolower($this->user->data['username'])
             ));
             return new \Symfony\Component\HttpFoundation\RedirectResponse($redirectUrl);
         }
@@ -299,7 +302,7 @@ class user
         } catch (\phpbb\exception\http_exception $e) {
             $redirectUrl = $this->helper->route('at67_gigatronshowcase_author', array(
                 'category' => $category,
-                'author' => $this->user->data['username']
+                'author' => strtolower($this->user->data['username'])
             ));
             return new \Symfony\Component\HttpFoundation\RedirectResponse($redirectUrl);
         }
@@ -473,7 +476,7 @@ class user
         } catch (\phpbb\exception\http_exception $e) {
             $redirectUrl = $this->helper->route('at67_gigatronshowcase_author', array(
                 'category' => $category,
-                'author' => $this->user->data['username']
+                'author' => strtolower($this->user->data['username'])
             ));
             return new \Symfony\Component\HttpFoundation\RedirectResponse($redirectUrl);
         }
@@ -550,7 +553,7 @@ class user
         } catch (\phpbb\exception\http_exception $e) {
             $redirectUrl = $this->helper->route('at67_gigatronshowcase_author', array(
                 'category' => $category,
-                'author' => $this->user->data['username']
+                'author' => strtolower($this->user->data['username'])
             ));
             return new \Symfony\Component\HttpFoundation\RedirectResponse($redirectUrl);
         }
