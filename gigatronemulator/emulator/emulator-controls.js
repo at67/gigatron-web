@@ -422,6 +422,10 @@ function stopEmulator()
         cancelAnimationFrame(intervalId);
         intervalId = null;
     }
+
+    // Drop queued audio so it fades out now instead of playing on and running dry
+    resetAudio();
+
     console.log("Emulator stopped");
 }
 
@@ -483,7 +487,8 @@ function drawFrame()
 
 function runLoop(currentTime)
 {
-    const deltaTime = Math.min(currentTime - lastTime, MAX_DELTA_TIME);
+    // The first timestamp can be earlier than the performance.now() taken at start
+    const deltaTime = Math.max(0.0, Math.min(currentTime - lastTime, MAX_DELTA_TIME));
     lastTime = currentTime;
 
     // Switching between the audio and wall clocks restarts the audio fill from scratch
@@ -509,7 +514,11 @@ function runLoop(currentTime)
         framesToRun = Math.floor(accumulatedTime / FRAME_TIME_MS);
     }
     framesToRun = Math.min(framesToRun, MAX_FRAMES_PER_UPDATE);
-    if(!audioPaced) accumulatedTime -= framesToRun*FRAME_TIME_MS;
+    if(!audioPaced)
+    {
+        // Bounded, so sustained slow callbacks can't build up a long burst of catch up
+        accumulatedTime = Math.min(accumulatedTime - framesToRun*FRAME_TIME_MS, MAX_FRAMES_PER_UPDATE*FRAME_TIME_MS);
+    }
 
     for(let i=0; i<framesToRun; i++)
     {

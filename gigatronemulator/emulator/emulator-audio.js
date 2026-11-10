@@ -10,7 +10,7 @@ const SAMPLE_BUFFER_SIZE = 260; // samples per Gigatron frame, (130 x2 to get th
 const SAMPLE_RATE = SAMPLE_BUFFER_SIZE*59.98;
 
 // The audio clock paces the emulator, frames are emulated until the worklet holds this much audio
-const AUDIO_TARGET_FILL = Math.round(SAMPLE_RATE*0.060);
+const AUDIO_TARGET_FILL = Math.round(SAMPLE_RATE*0.030);
 
 // Wall time without the audio clock advancing before the emulator falls back to pacing by the wall clock
 const AUDIO_STALL_TIME = 50;
@@ -110,9 +110,10 @@ function gigatronAudioWorklet()
                 output[i] = this.held;
             }
 
+            // The consumed count includes this block, so report the time at the end of it
             if(++this.quanta % REPORT_INTERVAL === 0)
             {
-                this.port.postMessage({epoch: this.epoch, consumed: this.consumed, time: currentTime,
+                this.port.postMessage({epoch: this.epoch, consumed: this.consumed, time: currentTime + output.length/sampleRate,
                                        underruns: this.underruns, underrunSamples: this.underrunSamples, overflowSamples: this.overflowSamples});
             }
 
@@ -239,8 +240,6 @@ function initAudio()
         const workletUrl = URL.createObjectURL(new Blob([`(${gigatronAudioWorklet.toString()})();`], {type: 'application/javascript'}));
         audioContext.audioWorklet.addModule(workletUrl).then(() =>
         {
-            URL.revokeObjectURL(workletUrl);
-
             audioWorkletNode = new AudioWorkletNode(audioContext, 'gigatron-audio', {numberOfInputs: 0, numberOfOutputs: 1, outputChannelCount: [1]});
             audioWorkletNode.port.onmessage = (event) => onAudioReport(event.data);
             audioWorkletNode.connect(gainNode);
@@ -248,6 +247,9 @@ function initAudio()
         }).catch((error) =>
         {
             console.error('Audio worklet failed to load:', error);
+        }).finally(() =>
+        {
+            URL.revokeObjectURL(workletUrl);
         });
     }
     else
