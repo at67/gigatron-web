@@ -149,6 +149,10 @@ function setupMainmenuPreview() {
     // Initialize RAM size label
     updateRamSizeLabel();
 
+    // Expose this editor's renderer before the first render; loadFont draws through the global hook,
+    // which would otherwise still point at the previous editor's detached canvas
+    window.renderPreviewFunction = renderPreview;
+
     // Initial render, via the selected font so a custom font is loaded before drawing (loadFont renders in every case)
     loadFont(menuConfig.selectedFont || 'system');
 
@@ -789,8 +793,6 @@ function setupMainmenuPreview() {
         document.getElementById('grid-offset-y').parentElement.style.display = isSequenceMode ? 'none' : 'flex';
     }
 
-    // Expose to global scope
-    window.renderPreviewFunction = renderPreview;
 }
 
 // Global render function
