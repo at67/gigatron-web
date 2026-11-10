@@ -9,13 +9,18 @@ let userMutedState = false;
 const SAMPLE_BUFFER_SIZE = 260; // samples per Gigatron frame, (130 x2 to get the sample rate over 8000Hz for some browsers)
 const SAMPLE_RATE = SAMPLE_BUFFER_SIZE*59.98;
 
-// The audio clock paces the emulator, frames are emulated until the worklet holds the target fill; it starts low and
-// grows a step for every report with new underruns, so each device settles on the smallest fill that works for it
-const AUDIO_TARGET_MIN = Math.round(SAMPLE_RATE*0.030);
-const AUDIO_TARGET_MAX = Math.round(SAMPLE_RATE*0.100);
-const AUDIO_TARGET_STEP = Math.round(SAMPLE_RATE*0.010);
-let audioTargetFill = AUDIO_TARGET_MIN;
-let lastUnderruns = 0;
+// The audio clock paces the emulator, frames are emulated until the worklet holds the target fill; the target is a
+// peak hold of the frame callback gap plus a margin, so slow devices and devices that hitch repeatedly get more
+// buffering; each new peak is held for a while, then released slowly so the emulator only runs fractionally slower
+const AUDIO_TARGET_MIN = 30.0;      // milliseconds
+const AUDIO_TARGET_MAX = 100.0;     // milliseconds
+const AUDIO_TARGET_MARGIN = 20.0;   // milliseconds above the peak gap
+const AUDIO_PEAK_HOLD = 5000.0;     // milliseconds a peak is held, every new peak restarts it
+const AUDIO_PEAK_RELEASE = 5.0;     // milliseconds per second the peak falls once the hold has expired
+const AUDIO_PAUSE_GAP = 100.0;      // gaps this long are the page being paused, (hidden tab), not hitches
+let audioGapPeak = 1000.0/30.0;     // starts high and settles down, rather than underrunning while it settles up
+let audioPeakAge = 0.0;
+let audioTargetFill = Math.round(SAMPLE_RATE*AUDIO_TARGET_MIN/1000.0);
 
 // Wall time without the audio clock advancing before the emulator falls back to pacing by the wall clock
 const AUDIO_STALL_TIME = 50;
@@ -285,14 +290,6 @@ function onAudioReport(report)
     audioStats.underrunSamples = report.underrunSamples;
     audioStats.overflowSamples = report.overflowSamples;
 
-    // New underruns since the last report grow the target fill by one step
-    if(report.underruns > lastUnderruns)
-    {
-        lastUnderruns = report.underruns;
-        audioTargetFill = Math.min(audioTargetFill + AUDIO_TARGET_STEP, AUDIO_TARGET_MAX);
-        audioStats.targetMs = Math.round(audioTargetFill*1000/SAMPLE_RATE);
-    }
-
     // Ignore fill reports from before the last flush, or before the first frame was sent after it
     if(report.epoch === audioEpoch  &&  audioSamplesSent > 0)
     {
@@ -314,6 +311,27 @@ function isAudioClockRunning()
     }
 
     return wallTime - lastAudioClockWall <= AUDIO_STALL_TIME;
+}
+
+// Called with every frame callback gap in milliseconds
+function updateAudioTarget(gap)
+{
+    if(gap < 0.0  ||  gap >= AUDIO_PAUSE_GAP) return;
+
+    if(gap >= audioGapPeak)
+    {
+        audioGapPeak = gap;
+        audioPeakAge = 0.0;
+    }
+    else
+    {
+        audioPeakAge += gap;
+        if(audioPeakAge > AUDIO_PEAK_HOLD) audioGapPeak = Math.max(gap, audioGapPeak - AUDIO_PEAK_RELEASE*gap/1000.0);
+    }
+
+    const targetMs = Math.max(AUDIO_TARGET_MIN, Math.min(audioGapPeak + AUDIO_TARGET_MARGIN, AUDIO_TARGET_MAX));
+    audioTargetFill = Math.round(SAMPLE_RATE*targetMs/1000.0);
+    audioStats.targetMs = Math.round(targetMs);
 }
 
 // Samples queued in the worklet that have not been played yet

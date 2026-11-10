@@ -488,8 +488,10 @@ function drawFrame()
 function runLoop(currentTime)
 {
     // The first timestamp can be earlier than the performance.now() taken at start
-    const deltaTime = Math.max(0.0, Math.min(currentTime - lastTime, MAX_DELTA_TIME));
+    const gap = currentTime - lastTime;
+    const deltaTime = Math.max(0.0, Math.min(gap, MAX_DELTA_TIME));
     lastTime = currentTime;
+    updateAudioTarget(gap);
 
     // Switching between the audio and wall clocks restarts the audio fill from scratch
     const audioPaced = isAudioClockRunning();
