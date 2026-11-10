@@ -9,8 +9,13 @@ let userMutedState = false;
 const SAMPLE_BUFFER_SIZE = 260; // samples per Gigatron frame, (130 x2 to get the sample rate over 8000Hz for some browsers)
 const SAMPLE_RATE = SAMPLE_BUFFER_SIZE*59.98;
 
-// The audio clock paces the emulator, frames are emulated until the worklet holds this much audio
-const AUDIO_TARGET_FILL = Math.round(SAMPLE_RATE*0.030);
+// The audio clock paces the emulator, frames are emulated until the worklet holds the target fill; it starts low and
+// grows a step for every report with new underruns, so each device settles on the smallest fill that works for it
+const AUDIO_TARGET_MIN = Math.round(SAMPLE_RATE*0.030);
+const AUDIO_TARGET_MAX = Math.round(SAMPLE_RATE*0.100);
+const AUDIO_TARGET_STEP = Math.round(SAMPLE_RATE*0.010);
+let audioTargetFill = AUDIO_TARGET_MIN;
+let lastUnderruns = 0;
 
 // Wall time without the audio clock advancing before the emulator falls back to pacing by the wall clock
 const AUDIO_STALL_TIME = 50;
@@ -26,7 +31,7 @@ let lastAudioClock = -1;
 let lastAudioClockWall = 0;
 
 // Reported by the worklet, (type audioStats in the console)
-let audioStats = {underruns: 0, underrunSamples: 0, overflowSamples: 0};
+let audioStats = {underruns: 0, underrunSamples: 0, overflowSamples: 0, targetMs: 30};
 
 
 // Runs on the audio thread, its source text is loaded through a Blob URL; it is never called on the main thread
@@ -130,6 +135,9 @@ function handleVisibilityChange()
     if(document.hidden)
     {
         autoMute();
+
+        // The page stops emulating while hidden, flush so running dry isn't counted as an underrun
+        resetAudio();
     }
     else
     {
@@ -276,6 +284,14 @@ function onAudioReport(report)
     audioStats.underruns = report.underruns;
     audioStats.underrunSamples = report.underrunSamples;
     audioStats.overflowSamples = report.overflowSamples;
+
+    // New underruns since the last report grow the target fill by one step
+    if(report.underruns > lastUnderruns)
+    {
+        lastUnderruns = report.underruns;
+        audioTargetFill = Math.min(audioTargetFill + AUDIO_TARGET_STEP, AUDIO_TARGET_MAX);
+        audioStats.targetMs = Math.round(audioTargetFill*1000/SAMPLE_RATE);
+    }
 
     // Ignore fill reports from before the last flush, or before the first frame was sent after it
     if(report.epoch === audioEpoch  &&  audioSamplesSent > 0)

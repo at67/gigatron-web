@@ -504,7 +504,7 @@ function runLoop(currentTime)
     if(audioPaced)
     {
         // The audio clock paces emulation, run whole frames until the worklet holds the target fill
-        const deficit = AUDIO_TARGET_FILL - getAudioFill();
+        const deficit = audioTargetFill - getAudioFill();
         if(deficit > 0) framesToRun = Math.ceil(deficit / SAMPLE_BUFFER_SIZE);
     }
     else
