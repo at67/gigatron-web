@@ -1251,6 +1251,11 @@ namespace Compiler
         }
 
         filename = Assembler::getIncludePath() + filename;
+        if(!Loader::isWebPathAllowed(filename))
+        {
+            Cpu::reportError(Cpu::ComError, stderr, "Compiler::initialiseMacros() : access denied to '%s'\n", filename.c_str());
+            return false;
+        }
         std::ifstream infile(filename);
 
         if(!infile.is_open())
@@ -2611,6 +2616,11 @@ namespace Compiler
         size_t slash = path.find_last_of("\\/");
         path = (slash != std::string::npos) ? path.substr(0, slash) : ".";
         std::string modulePath = path + "/" + moduleFile;
+        if(!Loader::isWebPathAllowed(modulePath))
+        {
+            Cpu::reportError(Cpu::ComError, stderr, "Compiler::loadModule() : access denied to module %s\n", moduleName.c_str());
+            return false;
+        }
 
         // Open module
         std::ifstream infile(modulePath);

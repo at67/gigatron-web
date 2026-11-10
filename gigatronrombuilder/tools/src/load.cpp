@@ -65,6 +65,11 @@ namespace Load
         size_t slash = filepath.find_last_of("\\/");
         filepath = (slash != std::string::npos) ? filepath.substr(0, slash) : ".";
         filename = filepath + "/" + filename;
+        if(!Loader::isWebPathAllowed(filename))
+        {
+            Cpu::reportError(Cpu::KwdError, stderr, "Keywords::loadRaw() : '%s:%d' : access denied to '%s' : %s\n", codeLine._moduleName.c_str(), codeLineStart, filename.c_str(), codeLine._text.c_str());
+            return false;
+        }
 
         // Parse optional consts or address
         int constAddrIndex = -1;
@@ -227,6 +232,11 @@ namespace Load
         size_t slash = filepath.find_last_of("\\/");
         filepath = (slash != std::string::npos) ? filepath.substr(0, slash) : ".";
         filename = filepath + "/" + filename;
+        if(!Loader::isWebPathAllowed(filename))
+        {
+            Cpu::reportError(Cpu::KwdError, stderr, "Keywords::loadWave() : '%s:%d' : access denied to '%s' : %s\n", codeLine._moduleName.c_str(), codeLineStart, filename.c_str(), codeLine._text.c_str());
+            return false;
+        }
 
         // Parse optional address
         uint16_t address = RAM_AUDIO_START;
@@ -337,6 +347,11 @@ namespace Load
         size_t slash = filepath.find_last_of("\\/");
         filepath = (slash != std::string::npos) ? filepath.substr(0, slash) : ".";
         filename = filepath + "/" + filename;
+        if(!Loader::isWebPathAllowed(filename))
+        {
+            Cpu::reportError(Cpu::KwdError, stderr, "Keywords::loadMidi() : '%s:%d' : access denied to '%s' : %s\n", codeLine._moduleName.c_str(), codeLineStart, filename.c_str(), codeLine._text.c_str());
+            return false;
+        }
 
         // Unique midi ID
         std::string idToken = tokens[2];
@@ -1221,7 +1236,8 @@ SPRITE_ALLOC_RESTART:;
         bool foundMapFile = true;
         size_t nameSuffix = filename.find_last_of(".");
         std::string filenameMap = filename.substr(0, nameSuffix) + ".map";
-        std::ifstream infile(filenameMap, std::ios::in);
+        std::ifstream infile;
+        if(Loader::isWebPathAllowed(filenameMap)) infile.open(filenameMap, std::ios::in);
         if(!infile.is_open())
         {
             foundMapFile = false;

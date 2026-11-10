@@ -13,6 +13,7 @@
 #include "cpu.h"
 #include "assembler.h"
 #include "compiler.h"
+#include "loader.h"
 #include "linker.h"
 
 
@@ -635,7 +636,13 @@ namespace Linker
         // Include file already loaded
         if(_subIncludeFiles.find(filename) != _subIncludeFiles.end()) return true;
 
-        std::ifstream infile(Assembler::getIncludePath() + "/" + filename);
+        std::string filepath = Assembler::getIncludePath() + "/" + filename;
+        if(!Loader::isWebPathAllowed(filepath))
+        {
+            Cpu::reportError(Cpu::LnkError, stderr, "Linker::loadInclude() : access denied to '%s'\n", filepath.c_str());
+            return false;
+        }
+        std::ifstream infile(filepath);
         if(!infile.is_open())
         {
             Cpu::reportError(Cpu::LnkError, stderr, "Linker::loadInclude() : Failed to open file : '%s'\n", filename.c_str());

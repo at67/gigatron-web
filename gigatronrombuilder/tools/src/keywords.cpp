@@ -6143,6 +6143,11 @@ RESTART_PRINT:
                 size_t slash = filepath.find_last_of("\\/");
                 filepath = (slash != std::string::npos) ? filepath.substr(0, slash) : ".";
                 filename = filepath + "/" + filename;
+                if(!Loader::isWebPathAllowed(filename))
+                {
+                    Cpu::reportError(Cpu::KwdError, stderr, "Keywords::LOAD() : '%s:%d' : access denied to '%s' : %s\n", codeLine._moduleName.c_str(), codeLineStart, filename.c_str(), codeLine._text.c_str());
+                    return false;
+                }
                 Image::TgaFile tgaFile;
 
                 //Cpu::reportError(Cpu::NoError, stderr, "\nKeywords::LOAD() : %s\n", filename.c_str());

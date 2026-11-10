@@ -61,6 +61,7 @@ namespace Loader
     int chdir(const char* path);
 #endif
     std::string getExeDir(void);
+    bool isWebPathAllowed(const std::string& path);
 
     void initialise(void);
 

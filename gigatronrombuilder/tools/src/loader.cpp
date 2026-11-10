@@ -85,7 +85,8 @@ namespace Loader
     std::string getExeDir(void)
     {
         char dir[PATH_MAX];
-        ssize_t result = readlink("/proc/self/exe", dir, PATH_MAX);
+        ssize_t result = readlink("/proc/self/exe", dir, PATH_MAX - 1);
+        if(result > 0) dir[result] = 0;
         std::string path = (result > 0) ? dir : ".";
         size_t slash = path.find_last_of("\\/");
         path = (slash != std::string::npos) ? path.substr(0, slash) : ".";
@@ -93,6 +94,37 @@ namespace Loader
         return path;
     }
 #endif
+
+    // ROM Builder web use: source files may only read from the build, runtime and font folders
+    bool isWebPathAllowed(const std::string& path)
+    {
+        auto resolvePath = [](const std::string& input, std::string& output) -> bool
+        {
+#ifdef _WIN32
+            char resolved[MAX_PATH];
+            if(_fullpath(resolved, input.c_str(), MAX_PATH) == nullptr) return false;
+#else
+            char resolved[PATH_MAX];
+            if(realpath(input.c_str(), resolved) == nullptr) return false;
+#endif
+            output = resolved;
+            Expression::replaceText(output, "\\", "/");
+            return true;
+        };
+
+        std::string target;
+        if(!resolvePath(path, target)) return false;
+
+        static const std::vector<std::string> allowedDirs = {"/../build", "/runtime", "/../res/font"};
+        for(const std::string& allowedDir : allowedDirs)
+        {
+            std::string root;
+            if(!resolvePath(getExePath() + allowedDir, root)) continue;
+            if(target == root  ||  target.compare(0, root.size() + 1, root + "/") == 0) return true;
+        }
+
+        return false;
+    }
 
     bool loadGt1File(const std::string& filename, Gt1File& gt1File)
     {

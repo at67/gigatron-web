@@ -24,3 +24,5 @@ qt2.xml
 build/
 __pycache__/
 build-emulator-WASM_c-Debug/
+
+gigatronshowcase/featured_shuffle.ini

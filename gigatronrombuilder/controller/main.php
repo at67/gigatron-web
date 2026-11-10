@@ -24,15 +24,21 @@ class main
         //    throw new \phpbb\exception\http_exception(403, 'NOT_AUTHORISED');
         //}
         // REGISTERED MEMBERS ONLY CHECK
-        global $phpbb_container;
-        $auth = $phpbb_container->get('auth');
-        if (!$auth->acl_get('u_')) {
-            throw new \phpbb\exception\http_exception(403, 'NOT_AUTHORISED');
-        }
+        $this->requireRegistered();
 
         $this->template->assign_vars(array('TITLE' => 'Gigatron ROM Builder',));
 
         return $this->helper->render('rombuilder_main.html', 'Gigatron ROM Builder');
+    }
+
+    private function requireRegistered()
+    {
+        global $phpbb_container;
+        $auth = $phpbb_container->get('auth');
+        if(!$auth->acl_get('u_'))
+        {
+            throw new \phpbb\exception\http_exception(403, 'NOT_AUTHORISED');
+        }
     }
 
     private function getUniquePrefix()
@@ -59,6 +65,8 @@ class main
 
     public function build()
     {
+        $this->requireRegistered();
+
         // Get the JSON data
         $json = file_get_contents('php://input');
         $data = json_decode($json, true);
@@ -88,6 +96,8 @@ class main
 
     public function buildMainmenu()
     {
+        $this->requireRegistered();
+
         // Get the JSON data
         $json = file_get_contents('php://input');
         $data = json_decode($json, true);
@@ -142,6 +152,8 @@ class main
 
     public function getRomFreeSpace()
     {
+        $this->requireRegistered();
+
         // Get the JSON data
         $json = file_get_contents('php://input');
         $data = json_decode($json, true);
@@ -169,6 +181,8 @@ class main
 
     public function download($filename)
     {
+        $this->requireRegistered();
+
         try {
             require_once(__DIR__ . '/../tools/php/rom_builder.php');
             $builder = new \RomBuilder();
@@ -219,6 +233,8 @@ class main
 
     public function serveRom($filename)
     {
+        $this->requireRegistered();
+
         try {
             require_once(__DIR__ . '/../tools/php/rom_builder.php');
             $builder = new \RomBuilder();
@@ -244,6 +260,8 @@ class main
 
     public function serveFont($fontName, $fileName)
     {
+        $this->requireRegistered();
+
         try {
             $fontPath = __DIR__ . '/../res/font/' . $fontName . '/' . $fileName;
 

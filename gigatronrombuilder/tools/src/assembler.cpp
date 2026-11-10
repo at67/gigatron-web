@@ -2180,6 +2180,11 @@ namespace Assembler
 
         std::string filepath = _includePath + "/" + tokens[1];
         std::replace(filepath.begin(), filepath.end(), '\\', '/');
+        if(!Loader::isWebPathAllowed(filepath))
+        {
+            Cpu::reportError(Cpu::AsmError, stderr, "Assembler::handleInclude() : access denied to '%s'\n", filepath.c_str());
+            return false;
+        }
         std::ifstream infile(filepath);
         if(!infile.is_open())
         {
