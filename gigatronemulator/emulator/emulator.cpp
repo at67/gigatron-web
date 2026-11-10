@@ -633,16 +633,17 @@ void Emulator::run(uint64_t cycles)
 
 void Emulator::runToVBlank()
 {
-    while(true)
+    // Each call emulates one frame and leaves that frame's audio at the start of the audio buffer, the write index
+    // is the sample count, (normally AUDIO_PER_FRAME, the first frame after a reset can be short)
+    _audioWriteIndex = 0;
+
+    for(uint64_t c=0; c<FRAME_CYCLE_LIMIT; c++)
     {
         process();
         if(_vSync < 0)
         {
             _vBlank = true;
             _vgaY = VSYNC_START;
-
-            // Skip first short vBlank, Gigatron is guaranteed to produce AUDIO_PER_FRAME samples in one frame
-            if(_audioWriteIndex  &&  _audioWriteIndex % AUDIO_PER_FRAME !=0) _audioWriteIndex = 0;
             break;
         }
     }

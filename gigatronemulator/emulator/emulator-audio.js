@@ -1,33 +1,127 @@
 let audioContext = null;
+let audioWorkletNode = null;
+let gainNode = null;
 let currentVolume = 0.5;
 let isMuted = false;
 let wasAutoMuted = false;
 let userMutedState = false;
 
-let tailTime = 0;
-let SAMPLE_BUFFER_SIZE = 260
-let SAMPLE_RATE = SAMPLE_BUFFER_SIZE*59.98;
-let RING_BUFFER_SIZE = SAMPLE_BUFFER_SIZE*4
+const SAMPLE_BUFFER_SIZE = 260; // samples per Gigatron frame, (130 x2 to get the sample rate over 8000Hz for some browsers)
+const SAMPLE_RATE = SAMPLE_BUFFER_SIZE*59.98;
 
-let audioReadIndex = 0;
+// The audio clock paces the emulator, frames are emulated until the worklet holds this much audio
+const AUDIO_TARGET_FILL = Math.round(SAMPLE_RATE*0.060);
 
-// Drift correction: the emulator is paced by the system clock and playback by the audio clock, so the
-// scheduled lead slowly drifts; hold it near the lead measured after start-up by dropping or repeating one
-// copy of a duplicated sample pair when the smoothed lead leaves the dead band
-const LEAD_SMOOTHING = 0.05;     // exponential average over ~20 updates
-const LEAD_DEAD_BAND = 0.010;    // seconds either side of the target
-const LEAD_SETTLE_TIME = 1.0;    // seconds after start/reset before the target is captured
-let leadAverage = null;
-let leadTarget = null;
-let leadCaptureTime = 0;
+// Wall time without the audio clock advancing before the emulator falls back to pacing by the wall clock
+const AUDIO_STALL_TIME = 50;
 
-let gainNode = null;
+// Fill accounting, samples sent to the worklet against the consumed count it reports back, extrapolated by the
+// audio clock between reports; the epoch changes on every flush so reports from before a flush are ignored
+let audioSamplesSent = 0;
+let audioReportConsumed = 0;
+let audioReportTime = 0;
+let audioEpoch = 0;
 
-// A suspended context or a waking audio device holds currentTime still; scheduling against a still clock
-// builds a backlog that later plays late, so resync on every update until the clock moves again
-const AUDIO_STALL_TIME = 50;     // milliseconds of wall time without the audio clock advancing
 let lastAudioClock = -1;
 let lastAudioClockWall = 0;
+
+// Reported by the worklet, (type audioStats in the console)
+let audioStats = {underruns: 0, underrunSamples: 0, overflowSamples: 0};
+
+
+// Runs on the audio thread, its source text is loaded through a Blob URL; it is never called on the main thread
+function gigatronAudioWorklet()
+{
+    const RING_SIZE = 8192;       // samples, ~0.5 seconds
+    const REPORT_INTERVAL = 4;    // render quanta, (128 samples each), between reports to the main thread
+    const UNDERRUN_FADE = 0.999;  // per sample decay of the held value while starved
+
+    class GigatronAudioProcessor extends AudioWorkletProcessor
+    {
+        constructor()
+        {
+            super();
+
+            this.ring = new Float32Array(RING_SIZE);
+            this.readIndex = 0;
+            this.writeIndex = 0;
+            this.consumed = 0;
+            this.epoch = 0;
+            this.held = 0.0;
+            this.primed = false;
+            this.starved = false;
+            this.underruns = 0;
+            this.underrunSamples = 0;
+            this.overflowSamples = 0;
+            this.quanta = 0;
+
+            this.port.onmessage = (event) => this.onMessage(event.data);
+        }
+
+        onMessage(data)
+        {
+            if(data instanceof Float32Array)
+            {
+                for(let i=0; i<data.length; i++)
+                {
+                    if(this.writeIndex - this.readIndex >= RING_SIZE)
+                    {
+                        this.overflowSamples += data.length - i;
+                        break;
+                    }
+                    this.ring[this.writeIndex++ % RING_SIZE] = data[i];
+                }
+            }
+            else if(data.flush !== undefined)
+            {
+                // Drop anything queued, the held value fades out by itself
+                this.readIndex = this.writeIndex;
+                this.consumed = 0;
+                this.epoch = data.flush;
+                this.primed = false;
+            }
+        }
+
+        process(inputs, outputs)
+        {
+            const output = outputs[0][0];
+            for(let i=0; i<output.length; i++)
+            {
+                if(this.readIndex < this.writeIndex)
+                {
+                    this.held = this.ring[this.readIndex++ % RING_SIZE];
+                    this.consumed++;
+                    this.primed = true;
+                    this.starved = false;
+                }
+                else
+                {
+                    // Starved, hold the last value and let it decay rather than dropping straight to zero; running
+                    // dry before any audio has arrived since a flush is not counted as an underrun
+                    if(this.primed)
+                    {
+                        if(!this.starved) this.underruns++;
+                        this.underrunSamples++;
+                        this.starved = true;
+                    }
+                    this.held *= UNDERRUN_FADE;
+                    if(Math.abs(this.held) < 1e-6) this.held = 0.0;
+                }
+                output[i] = this.held;
+            }
+
+            if(++this.quanta % REPORT_INTERVAL === 0)
+            {
+                this.port.postMessage({epoch: this.epoch, consumed: this.consumed, time: currentTime,
+                                       underruns: this.underruns, underrunSamples: this.underrunSamples, overflowSamples: this.overflowSamples});
+            }
+
+            return true;
+        }
+    }
+
+    registerProcessor('gigatron-audio', GigatronAudioProcessor);
+}
 
 
 function handleVisibilityChange()
@@ -89,8 +183,8 @@ function updateGain()
 {
     if(gainNode)
     {
-        // Short ramp rather than a step, so volume changes don't click
-        gainNode.gain.setTargetAtTime(currentVolume, audioContext.currentTime, 0.01);
+        // Short ramp rather than a step, so volume and mute changes don't click
+        gainNode.gain.setTargetAtTime(isMuted ? 0.0 : currentVolume, audioContext.currentTime, 0.01);
     }
 }
 
@@ -103,6 +197,7 @@ function toggleMute()
     const muteBtn = document.getElementById('mute-btn');
     if(muteBtn) muteBtn.textContent = isMuted ? '🔇' : '🔊';
 
+    updateGain();
     updateVolumeDisplay();
 }
 
@@ -129,157 +224,115 @@ function updateVolumeDisplay()
 
 function initAudio()
 {
-    audioContext = new AudioContext({sampleRate: SAMPLE_RATE}); // latencyHint: 0.06, 'interactive', 'balanced', 'playback'
-    console.log(`Audio: ${SAMPLE_RATE} : ${audioContext.sampleRate}`);
-    console.log(`Requested latency: 0.05, Actual baseLatency: ${audioContext.baseLatency}`);
+    // One context and worklet for the life of the page, later starts only flush
+    if(audioContext) return;
 
-    tailTime = 0;
-    audioReadIndex = 0;
+    audioContext = new AudioContext({sampleRate: SAMPLE_RATE});
 
-    leadAverage = null;
-    leadTarget = null;
-    leadCaptureTime = LEAD_SETTLE_TIME;
-
-    // One persistent gain node for volume, shared by every scheduled buffer
     gainNode = audioContext.createGain();
-    gainNode.gain.value = currentVolume;
+    gainNode.gain.value = isMuted ? 0.0 : currentVolume;
     gainNode.connect(audioContext.destination);
+
+    // Until the worklet is running the emulator paces itself by the wall clock, without audio
+    if(audioContext.audioWorklet)
+    {
+        const workletUrl = URL.createObjectURL(new Blob([`(${gigatronAudioWorklet.toString()})();`], {type: 'application/javascript'}));
+        audioContext.audioWorklet.addModule(workletUrl).then(() =>
+        {
+            URL.revokeObjectURL(workletUrl);
+
+            audioWorkletNode = new AudioWorkletNode(audioContext, 'gigatron-audio', {numberOfInputs: 0, numberOfOutputs: 1, outputChannelCount: [1]});
+            audioWorkletNode.port.onmessage = (event) => onAudioReport(event.data);
+            audioWorkletNode.connect(gainNode);
+            resetAudio();
+        }).catch((error) =>
+        {
+            console.error('Audio worklet failed to load:', error);
+        });
+    }
+    else
+    {
+        console.error('AudioWorklet is not available, (it needs HTTPS), the emulator will run without audio');
+    }
+
+    // The autoplay policy keeps the context suspended until a user gesture
+    document.addEventListener('pointerdown', resumeAudio);
+    document.addEventListener('keydown', resumeAudio);
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('focus', handleWindowFocus);
     window.addEventListener('blur', handleWindowBlur);
 }
 
-function updateAudio()
+function resumeAudio()
 {
-    if(!audioContext || !emulator) return;
-    if(audioContext.state === 'suspended') audioContext.resume();
+    if(audioContext  &&  audioContext.state !== 'running') audioContext.resume();
+}
 
-    let currentTime = audioContext.currentTime;
+function onAudioReport(report)
+{
+    audioStats.underruns = report.underruns;
+    audioStats.underrunSamples = report.underrunSamples;
+    audioStats.overflowSamples = report.overflowSamples;
 
-    let audioWriteIndex = Module.ccall('emulator_get_audio_write_index', 'number', ['number'], [emulator]);
-
-    // If the audio clock is not advancing then resync and return
-    let wallTime = performance.now();
-    if(currentTime !== lastAudioClock)
+    // Ignore fill reports from before the last flush, or before the first frame was sent after it
+    if(report.epoch === audioEpoch  &&  audioSamplesSent > 0)
     {
-        lastAudioClock = currentTime;
-        lastAudioClockWall = wallTime;
-    }
-    if(audioContext.state !== 'running'  ||  wallTime - lastAudioClockWall > AUDIO_STALL_TIME)
-    {
-        // Cut anything queued against the stalled clock, so it can't play late once the clock moves again
-        if(gainNode  &&  tailTime > currentTime)
-        {
-            gainNode.disconnect();
-            gainNode = audioContext.createGain();
-            gainNode.gain.value = currentVolume;
-            gainNode.connect(audioContext.destination);
-        }
-
-        resetAudio();
-        return;
-    }
-
-    // Prevent tailTime from falling behind
-    const minBufferLead = audioContext.baseLatency < 0.02 ? 0.030779490984919288 : 0.0; // dumb browsers like firefox need help
-    if(tailTime < currentTime + minBufferLead) tailTime = currentTime + minBufferLead;
-
-    let numAudioSamples = audioWriteIndex - audioReadIndex;
-
-    //console.log(`Audio: ${numAudioSamples} : ${currentTime.toFixed(2)} : ${tailTime.toFixed(2)}`);
-
-    // If muted then reset audio and return
-    if(isMuted)
-    {
-        resetAudio();
-        return;
-    }
-
-    // If readindex is behind, then return
-    if(numAudioSamples <= 0) return;
-
-    // Get raw audio buffer from C++
-    let bufferPtr = Module.ccall('emulator_get_audio_buffer', 'number', ['number'], [emulator]);
-    let audioRingBuffer = new Float32Array(Module.HEAPF32.buffer, bufferPtr, RING_BUFFER_SIZE);
-
-    // Outside the dead band, drop (lead too large) or repeat (lead too small) one copy of a duplicated sample pair
-    let correction = 0;
-    let correctionIndex = -1;
-    if(leadTarget !== null)
-    {
-        if(leadAverage > leadTarget + LEAD_DEAD_BAND)
-        {
-            correction = -1;
-        }
-        else if(leadAverage < leadTarget - LEAD_DEAD_BAND)
-        {
-            correction = 1;
-        }
-    }
-    if(correction !== 0)
-    {
-        for(let i=0; i<numAudioSamples-1; i++)
-        {
-            if(audioRingBuffer[(audioReadIndex + i) % RING_BUFFER_SIZE] === audioRingBuffer[(audioReadIndex + i + 1) % RING_BUFFER_SIZE])
-            {
-                correctionIndex = i;
-                break;
-            }
-        }
-        if(correctionIndex < 0)
-        {
-            correction = 0;
-        }
-    }
-
-    // Copy straight from the ring buffer into the audio buffer, applying any correction
-    let numOutputSamples = numAudioSamples + correction;
-    let buffer = audioContext.createBuffer(1, numOutputSamples, SAMPLE_RATE);
-    let channelData = buffer.getChannelData(0);
-    let outputIndex = 0;
-    for(let i=0; i<numAudioSamples; i++)
-    {
-        let sample = audioRingBuffer[(audioReadIndex + i) % RING_BUFFER_SIZE];
-        if(i === correctionIndex)
-        {
-            if(correction < 0)
-            {
-                continue;
-            }
-            channelData[outputIndex++] = sample;
-        }
-        channelData[outputIndex++] = sample;
-    }
-
-    // Advance read pointer by actual samples consumed from producer
-    audioReadIndex = audioReadIndex + numAudioSamples;
-
-    // Schedule the buffer through the shared gain node
-    let source = audioContext.createBufferSource();
-    source.buffer = buffer;
-    source.connect(gainNode);
-    source.start(tailTime);
-    tailTime += numOutputSamples / SAMPLE_RATE;
-
-    // Track the smoothed lead and capture the target once settled
-    let lead = tailTime - currentTime;
-    leadAverage = (leadAverage === null) ? lead : leadAverage + (lead - leadAverage)*LEAD_SMOOTHING;
-    if(leadTarget === null  &&  currentTime >= leadCaptureTime)
-    {
-        leadTarget = leadAverage;
+        audioReportConsumed = report.consumed;
+        audioReportTime = report.time;
     }
 }
 
+// True when the worklet is running on an audio clock that is actually advancing
+function isAudioClockRunning()
+{
+    if(!audioWorkletNode  ||  audioContext.state !== 'running') return false;
+
+    const wallTime = performance.now();
+    if(audioContext.currentTime !== lastAudioClock)
+    {
+        lastAudioClock = audioContext.currentTime;
+        lastAudioClockWall = wallTime;
+    }
+
+    return wallTime - lastAudioClockWall <= AUDIO_STALL_TIME;
+}
+
+// Samples queued in the worklet that have not been played yet
+function getAudioFill()
+{
+    let consumed = audioReportConsumed + Math.max(0.0, audioContext.currentTime - audioReportTime)*SAMPLE_RATE;
+    if(consumed > audioSamplesSent) consumed = audioSamplesSent;
+
+    return audioSamplesSent - consumed;
+}
+
+// Sends the frame just emulated to the worklet, or discards it when the audio clock isn't pacing the emulator
+function queueAudioFrame(audioPaced)
+{
+    const numSamples = Module.ccall('emulator_get_audio_write_index', 'number', ['number'], [emulator]);
+    if(!audioPaced  ||  numSamples <= 0) return;
+
+    // Consumption starts with the first frame after a flush
+    if(audioSamplesSent === 0)
+    {
+        audioReportConsumed = 0;
+        audioReportTime = audioContext.currentTime;
+    }
+
+    const bufferPtr = Module.ccall('emulator_get_audio_buffer', 'number', ['number'], [emulator]);
+    const samples = Module.HEAPF32.slice(bufferPtr >> 2, (bufferPtr >> 2) + numSamples);
+    audioWorkletNode.port.postMessage(samples, [samples.buffer]);
+    audioSamplesSent += numSamples;
+}
+
+// Drops queued audio and restarts the fill accounting
 function resetAudio()
 {
-    if(!audioContext || !emulator) return;
+    audioEpoch++;
+    audioSamplesSent = 0;
+    audioReportConsumed = 0;
+    audioReportTime = audioContext ? audioContext.currentTime : 0;
 
-    tailTime = audioContext.currentTime;
-    audioReadIndex = Module.ccall('emulator_get_audio_write_index', 'number', ['number'], [emulator]);
-
-    // Re-measure the natural lead after every resync
-    leadAverage = null;
-    leadTarget = null;
-    leadCaptureTime = audioContext.currentTime + LEAD_SETTLE_TIME;
+    if(audioWorkletNode) audioWorkletNode.port.postMessage({flush: audioEpoch});
 }

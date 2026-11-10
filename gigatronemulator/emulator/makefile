@@ -28,7 +28,7 @@ EXPORTS = _emulator_create \
 RUNTIME_METHODS = ccall cwrap HEAPU8 HEAPF32
 
 build:
-	emcc $(SOURCES) -o $(OUTPUT).js \
+	emcc $(SOURCES) -O3 -o $(OUTPUT).js \
 		-s EXPORTED_FUNCTIONS="[$(shell echo '$(EXPORTS)' | sed 's/ /,/g' | sed "s/[^,]*/'&'/g")]" \
 		-s EXPORTED_RUNTIME_METHODS="[$(shell echo '$(RUNTIME_METHODS)' | sed 's/ /,/g' | sed "s/[^,]*/'&'/g")]"
 

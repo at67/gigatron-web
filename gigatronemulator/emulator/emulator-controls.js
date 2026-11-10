@@ -6,7 +6,15 @@ let intervalId = null;
 
 let lastTime = 0;
 let accumulatedTime = 0;
-const CYCLES_PER_MS = 6250; // 6.25MHz / 1000
+let wasAudioPaced = false;
+
+const FRAME_TIME_MS = 1000.0/59.98;
+const MAX_DELTA_TIME = 100.0;       // milliseconds, limits wall clock catch up after the page was paused
+const MAX_FRAMES_PER_UPDATE = 4;    // limits catch up after a stall, so it can't take longer than real time
+
+// One ImageData reused for every frame, (allocating one per frame makes 1.2MB of garbage each time)
+let displayContext = null;
+let displayImage = null;
 
 // Button state - bits are 0 when pressed, 1 when idle
 let buttonState = 0xFF;
@@ -392,18 +400,13 @@ function startEmulator()
     if(!emulator || running) return;
     running = true;
 
-    // Fill audio ring buffer to stop startup glitches
-    for(let i=0; i<4; i++)
-    {
-        Module.ccall('emulator_run_to_vblank', null, ['number'], [emulator]);
-    }
-
     initAudio();
+    resumeAudio();
+    resetAudio();
 
-    if(audioContext.state === 'suspended')
-    {
-        audioContext.resume();
-    }
+    lastTime = performance.now();
+    accumulatedTime = 0;
+    wasAudioPaced = false;
 
     intervalId = requestAnimationFrame(runLoop);
 
@@ -465,40 +468,61 @@ function resetEmulator()
     console.log("Reset complete - select a ROM/GT1 file to load");
 }
 
-function runLoop(currentTime)
+function drawFrame()
 {
-    const deltaTime = currentTime - lastTime;
-    lastTime = currentTime;
-
-    // Skip first few frames until timing settles
-    if(deltaTime > 33)
+    if(!displayContext)
     {
-        resetAudio();
-        console.log(`Skipping frame with large delta: ${deltaTime.toFixed(2)}ms`);
-        intervalId = requestAnimationFrame(runLoop);
-        return;
+        displayContext = document.getElementById('display').getContext('2d');
+        displayImage = displayContext.createImageData(640, 480);
     }
 
-    // Run emulation for actual elapsed time
-    accumulatedTime += deltaTime;
-    const cyclesToRun = Math.floor(accumulatedTime * CYCLES_PER_MS);
-    Module.ccall('emulator_run', null, ['number', 'number'], [emulator, cyclesToRun]);
+    const fbPtr = Module.ccall('emulator_get_framebuffer', 'number', ['number'], [emulator]);
+    displayImage.data.set(Module.HEAPU8.subarray(fbPtr, fbPtr + 640*480*4));
+    displayContext.putImageData(displayImage, 0, 0);
+}
 
-    // Update display
-    let fbPtr = Module.ccall('emulator_get_framebuffer', 'number', ['number'], [emulator]);
-    let fb = new Uint8Array(Module.HEAPU8.buffer, fbPtr, 640 * 480 * 4);
-    let canvas = document.getElementById('display');
-    let ctx = canvas.getContext('2d');
-    let imageData = ctx.createImageData(640, 480);
-    imageData.data.set(fb);
-    ctx.putImageData(imageData, 0, 0);
+function runLoop(currentTime)
+{
+    const deltaTime = Math.min(currentTime - lastTime, MAX_DELTA_TIME);
+    lastTime = currentTime;
 
-    // Update audio on vBlank
-    if(Module.ccall('emulator_get_vblank', 'number', ['number'], [emulator])) updateAudio();
+    // Switching between the audio and wall clocks restarts the audio fill from scratch
+    const audioPaced = isAudioClockRunning();
+    if(audioPaced !== wasAudioPaced)
+    {
+        wasAudioPaced = audioPaced;
+        accumulatedTime = 0;
+        resetAudio();
+    }
 
-    updateLEDs();
+    let framesToRun = 0;
+    if(audioPaced)
+    {
+        // The audio clock paces emulation, run whole frames until the worklet holds the target fill
+        const deficit = AUDIO_TARGET_FILL - getAudioFill();
+        if(deficit > 0) framesToRun = Math.ceil(deficit / SAMPLE_BUFFER_SIZE);
+    }
+    else
+    {
+        // No running audio clock, (autoplay policy, stalled audio device or no worklet), so pace by the wall clock
+        accumulatedTime += deltaTime;
+        framesToRun = Math.floor(accumulatedTime / FRAME_TIME_MS);
+    }
+    framesToRun = Math.min(framesToRun, MAX_FRAMES_PER_UPDATE);
+    if(!audioPaced) accumulatedTime -= framesToRun*FRAME_TIME_MS;
 
-    accumulatedTime = 0;
+    for(let i=0; i<framesToRun; i++)
+    {
+        Module.ccall('emulator_run_to_vblank', null, ['number'], [emulator]);
+        queueAudioFrame(audioPaced);
+    }
+
+    // Only completed frames are drawn
+    if(framesToRun > 0)
+    {
+        drawFrame();
+        updateLEDs();
+    }
 
     intervalId = requestAnimationFrame(runLoop);
 }

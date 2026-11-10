@@ -23,6 +23,8 @@
 #define HPIXELS_START   13
 #define HPIXELS_END     173
 #define VSYNC_START     -36
+#define FRAME_LINES     521
+#define FRAME_CYCLE_LIMIT (HLINE_END*FRAME_LINES*2) // two frames of cycles, so runToVBlank can't hang if vSync never comes
 #define COLOUR_PALETTE  64
 #define DISPLAY_WIDTH   160
 #define DISPLAY_HEIGHT  120
