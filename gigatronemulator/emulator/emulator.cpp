@@ -46,6 +46,11 @@ private:
     float _audioBuffer[AUDIO_BUFFER_SIZE]={0};
     int _audioWriteIndex=0;
 
+    // DC blocker state
+    float _dcLastInput = 0.0f;
+    float _dcIntegrator = 0.0f;
+    bool _dcSeeded = false;
+
     uint64_t _lastVCPUDispatch = 0;
     static const uint64_t WATCHDOG_TIMEOUT_CYCLES = uint64_t(CLOCK_FREQUENCY * 3);
 
@@ -316,6 +321,7 @@ void Emulator::reset()
     _IN = 0xFF;
     _is64k = true;
     _audioWriteIndex = 0;
+    _dcSeeded = false;
 
     _vgaX = 0, _vgaY = VSYNC_START;
     _hSync = 0, _vSync = 0;
@@ -579,18 +585,20 @@ void Emulator::process()
             // Input
             float input = float(_XOUT) / 128.0f - 1.0f;
 
-            // Derivative, (to remove inherit Gigatron DC offset)
-            static float lastInput = 0.0f;
-            float derivative = input - lastInput;
-            lastInput = input;
-
-            // Integrate, (to restore low frequencies)
-            static float integrator = 0.0f;
-            integrator = integrator*0.9f + derivative;
+            // DC blocker, (~1Hz high pass so nothing audible is filtered), seeded from the first sample so the output starts at zero
+            if(!_dcSeeded)
+            {
+                _dcLastInput = input;
+                _dcIntegrator = 0.0f;
+                _dcSeeded = true;
+            }
+            float derivative = input - _dcLastInput;
+            _dcLastInput = input;
+            _dcIntegrator = _dcIntegrator*0.9992f + derivative;
 
             // Output, x2 to get sample rate over 8000Hz for some browsers
-            _audioBuffer[_audioWriteIndex++ % AUDIO_BUFFER_SIZE] = integrator;
-            _audioBuffer[_audioWriteIndex++ % AUDIO_BUFFER_SIZE] = integrator;
+            _audioBuffer[_audioWriteIndex++ % AUDIO_BUFFER_SIZE] = _dcIntegrator;
+            _audioBuffer[_audioWriteIndex++ % AUDIO_BUFFER_SIZE] = _dcIntegrator;
         }
         _vgaY++;
     }
