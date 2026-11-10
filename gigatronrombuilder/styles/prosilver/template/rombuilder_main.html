@@ -212,6 +212,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const romDisplay = document.getElementById('selected-rom-display');
         romDisplay.textContent = 'ROM' + romSelect.value;
     };
+
+    restoreBuilderState();
+});
+
+// Page restored intact from the browser's back/forward cache: drop the saved state so a later reload starts fresh
+window.addEventListener('pageshow', (e) =>
+{
+    if(e.persisted)
+    {
+        history.replaceState(null, '');
+    }
 });
 
 // ESC key support

@@ -201,6 +201,7 @@ function showBuildResult(success, title, content, buildResponse = null) {
         document.getElementById('modal-emulate-btn').addEventListener('click', () => {
             const romFilePath = buildResponse.rom_file;
             const filename = romFilePath.split('/').pop();
+            saveBuilderState(content, buildResponse);
             window.location.href = '/app.php/gigatronemulator?autoload_rom=' + encodeURIComponent(filename) + '&source=rombuilder';
         });
     } else {
@@ -213,6 +214,80 @@ function showBuildResult(success, title, content, buildResponse = null) {
     }
 
     modal.style.display = 'block';
+}
+
+// Saves the ROM Builder state into this history entry, so returning from the emulator can rebuild it if the browser reloads the page
+function saveBuilderState(buildOutput, buildResponse)
+{
+    const state =
+    {
+        romIndex: document.getElementById('base-rom-select').selectedIndex,
+        selectedFiles: window.fileBrowser.selectedFiles.map(file => ({path: file.path, fullPath: file.fullPath, alias: file.alias})),
+        menuConfig: menuConfig,
+        autoGridEnabled: autoGridEnabled,
+        gridAnchorIndex: gridAnchorIndex,
+        navigationMode: window.navigationMode,
+        uniquePrefix: window.uniquePrefix,
+        buildOutput: buildOutput,
+        buildResponse: buildResponse
+    };
+
+    history.replaceState({builderState: state}, '');
+}
+
+// Rebuilds the ROM Build Complete screen from a saved history entry; does nothing if there is no saved state or a saved file no longer exists
+async function restoreBuilderState()
+{
+    const state = history.state && history.state.builderState;
+    if(!state)
+    {
+        return;
+    }
+
+    // One-shot: a later reload of this entry starts fresh, as before
+    history.replaceState(null, '');
+
+    await window.fileBrowser.loaded;
+
+    const files = window.fileBrowser.files.internal || [];
+    const selectedFiles = [];
+    for(const saved of state.selectedFiles)
+    {
+        const file = files.find(f => f.path === saved.path);
+        if(!file)
+        {
+            return;
+        }
+
+        file.fullPath = saved.fullPath;
+        file.alias = saved.alias;
+        selectedFiles.push(file);
+    }
+
+    document.getElementById('base-rom-select').selectedIndex = state.romIndex;
+    window.fileBrowser.selectedFiles = selectedFiles;
+
+    // Menu items reference the selected file objects, so re-link them to the freshly loaded ones
+    Object.assign(menuConfig, state.menuConfig);
+    menuConfig.items.forEach(item =>
+    {
+        if(item.app)
+        {
+            item.app = selectedFiles.find(f => f.path === item.app.path) || item.app;
+        }
+    });
+
+    autoGridEnabled = state.autoGridEnabled;
+    gridAnchorIndex = state.gridAnchorIndex;
+    window.navigationMode = state.navigationMode;
+    window.uniquePrefix = state.uniquePrefix;
+
+    window.fileBrowser.renderFileTree();
+    window.fileBrowser.updateLoadingStatus();
+    updateStatusDisplay();
+    window.fileBrowser.setReadOnly(true);
+
+    showBuildResult(true, 'ROM Build Complete', state.buildOutput, state.buildResponse);
 }
 
 function hideBuildResult() {

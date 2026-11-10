@@ -19,7 +19,7 @@ class FileBrowser
         }
 
         this.initializeEventListeners();
-        this.loadFiles();
+        this.loaded = this.loadFiles();
     }
 
     initializeEventListeners()

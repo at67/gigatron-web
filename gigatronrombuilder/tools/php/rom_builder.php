@@ -52,6 +52,11 @@ class RomBuilder {
                     $section = "ROM$base_rom_version";
                     $apps_string = $parsed[$section]['apps'];
                     $apps = $this->parseCustomApps($apps_string);
+                    $invalid_app = $this->findInvalidCustomApp($apps);
+                    if($invalid_app !== null)
+                    {
+                        return ['success' => false, 'error' => 'Manifest entry not allowed: ' . $invalid_app];
+                    }
                     $apps = array_merge($apps, $app_overrides);
                 } catch (\Throwable $e) {
                     return [
@@ -161,6 +166,57 @@ class RomBuilder {
         }
 
         return $apps;
+    }
+
+    // Browser-supplied manifest entries may only reference .gt1/.gcl files inside the curated folders or the build folder
+    private function findInvalidCustomApp($apps)
+    {
+        $allowed_dirs = [];
+        foreach([$this->base_dir . '/../gigatronemulator/gt1', $this->romdeps_dir . '/Apps', $this->romdeps_dir . '/Core', $this->build_dir] as $dir)
+        {
+            $resolved = realpath($dir);
+            if($resolved !== false)
+            {
+                $allowed_dirs[] = $resolved . '/';
+            }
+        }
+
+        foreach($apps as $app)
+        {
+            $path = (strpos($app, '=') !== false) ? explode('=', $app, 2)[1] : $app;
+            if($path === '' || $path[0] === '/')
+            {
+                return $app;
+            }
+
+            $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+            if($extension !== 'gt1' && $extension !== 'gcl')
+            {
+                return $app;
+            }
+
+            $resolved = realpath($this->romsrc_dir . '/' . $path);
+            if($resolved === false)
+            {
+                return $app;
+            }
+
+            $inside = false;
+            foreach($allowed_dirs as $dir)
+            {
+                if(strpos($resolved, $dir) === 0)
+                {
+                    $inside = true;
+                    break;
+                }
+            }
+            if(!$inside)
+            {
+                return $app;
+            }
+        }
+
+        return null;
     }
 
     private function getRomApps($rom_version, $overrides = []) {
