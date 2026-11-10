@@ -26,3 +26,5 @@ __pycache__/
 build-emulator-WASM_c-Debug/
 
 gigatronshowcase/featured_shuffle.ini
+gigatronrombuilder/tools/gtBASIC/build/
+gigatronrombuilder/tools/gtASM/build/
