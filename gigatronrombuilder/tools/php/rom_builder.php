@@ -29,6 +29,14 @@ class RomBuilder {
             ];
         }
 
+        // One ROM script run at a time: runs share romsrc's temporary symlinks and fixed output filenames
+        $lock = fopen($this->build_dir . '/rom_build.lock', 'c');
+        if($lock === false)
+        {
+            return ['success' => false, 'error' => 'Could not open the build lock'];
+        }
+        flock($lock, LOCK_EX);
+
         // Change to romsrc directory for build
         $old_cwd = getcwd();
         chdir($this->romsrc_dir);
@@ -149,6 +157,8 @@ class RomBuilder {
             // Always restore working directory
             $this->cleanupTempSymlinks();
             chdir($old_cwd);
+            flock($lock, LOCK_UN);
+            fclose($lock);
         }
     }
 

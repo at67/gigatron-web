@@ -149,8 +149,8 @@ function setupMainmenuPreview() {
     // Initialize RAM size label
     updateRamSizeLabel();
 
-    // Initial render
-    renderPreview();
+    // Initial render, via the selected font so a custom font is loaded before drawing (loadFont renders in every case)
+    loadFont(menuConfig.selectedFont || 'system');
 
     function addToNewSequence(itemIndex) {
         if (window.navigationSequences.length >= maxSequences) {
