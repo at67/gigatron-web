@@ -10,6 +10,17 @@ function regenerateAutoGrid() {
     const gapX = parseInt(document.getElementById('grid-offset-x')?.value || 8);
     const gapY = parseInt(document.getElementById('grid-offset-y')?.value || 1);
 
+    if(menuConfig.items.length === 0)
+    {
+        return;
+    }
+
+    // The anchor is the last dragged item; the menu may have shrunk since (new build, deleted item)
+    if(gridAnchorIndex >= menuConfig.items.length)
+    {
+        gridAnchorIndex = 0;
+    }
+
     const anchorItem = menuConfig.items[gridAnchorIndex];
     const anchorRow = Math.floor(gridAnchorIndex / cols);
     const anchorCol = gridAnchorIndex % cols;
