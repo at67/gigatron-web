@@ -1,6 +1,7 @@
 # Gigatron Web Tools
 
 Public repository for Gigatron emulator, rombuilder and showcase phpBB extensions.
+AI-assisted using Anthropic’s Claude.
 
 ## Components
 - gigatronemulator/ - Web-based Gigatron emulator extension
